@@ -75,7 +75,7 @@ for i = 1:numel(syntheticFiles)
         %maxColor = max(max(reference(:),max(synthetic(:))));
 
         % Create a figure with two subplots
-        subplot(1,2,1);
+        subplot(1,3,1);
         img1 = imshow(synthetic);
         colormap(gca, jet(256));
         set(img1, 'AlphaData', ~isnan(synthetic))
@@ -84,7 +84,7 @@ for i = 1:numel(syntheticFiles)
         title('Synthetic');
         %colorbar(gca,'southoutside')
 
-        subplot(1,2,2);
+        subplot(1,3,2);
         img2 = imshow(reference);
         colormap(gca, jet(256));
         set(img2, 'AlphaData', ~isnan(synthetic))
@@ -92,7 +92,17 @@ for i = 1:numel(syntheticFiles)
         caxis([0 6])
         title('Reference');
         h = colorbar(gca,'southoutside');
-
+        
+        % !!! ADD ERROR MAP !!!
+        subplot(1,3,3);
+        img3 = imshow(abs(reference-synthetic));
+        set(img3, 'AlphaData', ~isnan(synthetic))
+        %caxis([0 6])
+        title('Absolute error');
+        h_err = colorbar(gca,'eastoutside');
+        set(get(h_err,'label'),'string','mm/day');
+        % !!! ADD ERROR MAP !!!
+        
         % Add a colorbar to the reference image subplot
         %h = colorbar('southoutside');
         set(h, 'Position', [0.25 0.1 0.5 0.04]);
@@ -112,8 +122,6 @@ for i = 1:numel(syntheticFiles)
             sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
                 ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         end
-
-        % !!! ADD ERROR MAP !!!
 
         % Save the current frame as a GIF
         set(gcf, 'color', 'white');

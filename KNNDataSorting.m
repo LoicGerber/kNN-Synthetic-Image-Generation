@@ -1,4 +1,4 @@
-function sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,longWindow,Weights,nbImages,inputDir)
+function sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,inputDir)
 
 %
 %
@@ -39,7 +39,9 @@ sortedData  = cell(totQDates, 1);
 
 if ~isempty(addVars)
     addVarsDates = table2array(additionalVars(:,'date'));
-    addVarsDates  = table2array(removevars(addVarsDates,'date'));
+    addVarsDates = table2array(removevars(addVarsDates,'date'));
+else
+    addVarsDates = [];
 end
 
 % Assign different weights
@@ -121,7 +123,7 @@ parfor qd = 1:totQDates
             else
                 learningAddVars = [];
             end
-            
+
             % Target variable comparison
             targetDistance = cellfun(@minus, queryDatesData(qd), learningDatesData(ld), 'UniformOutput', false);
             targetDistance = cellfun(@abs,targetDistance,'UniformOutput',false);
@@ -190,7 +192,7 @@ poolobj = gcp('nocreate');
 delete(poolobj);
 
 disp('Saving results...')
-save(fullfile(inputDir,'KNNSorting.mat'),'sortedDates', '-v7.3','-nocompression'); % Save Ranked Learning Dates per Each Query Dates
+save(fullfile(inputDir,'KNNSorting.mat'),'sortedDates', '-v7.3','-nocompression'); % Save Ranked Learning Dates per Query Date
 
 disp('KNN sorting done! Exiting function...')
 

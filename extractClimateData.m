@@ -17,7 +17,7 @@ datesFields        = matchingFields(ismember(lower(matchingFields), lower(vars+'
 
 % Create cell array with each variable in a separate column
 %num_vars = length(matchingDataFields);
-%climateDataAll = cell(numel(output_data.(matchingDataFields(1))), num_vars);
+%climateData = cell(numel(output_data.(matchingDataFields(1))), num_vars);
 climateData = table();
 for i = 1:length(matchingDataFields)
     climateData(:,i) = rawData.(matchingDataFields(i));
@@ -39,10 +39,10 @@ else
 end
 climateData = climateData(r,:);
 
-disp('Saving climateDataAll table...')
-allVarsSave = fullfile(inputDir, 'climateDataAll.mat');
+disp('Saving climateData table...')
+allVarsSave = fullfile(inputDir, 'climateData.mat');
 save(allVarsSave, 'climateData', '-v7.3','-nocompression');
-disp('climateDataAll table saved')
+disp('climateData table saved')
 
 toc
 
