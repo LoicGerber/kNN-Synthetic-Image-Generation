@@ -12,9 +12,7 @@ tic
 
 outputDirImages = [outputDir 'syntheticImages\'];
 % Check if output directories exist, if not create them
-if ~exist(outputDir, 'dir')
-    mkdir(outputDir)
-elseif ~exist(outputDirImages,'dir')
+if ~exist(outputDirImages,'dir')
     mkdir(outputDirImages)
 end
 

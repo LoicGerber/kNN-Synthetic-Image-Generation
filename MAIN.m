@@ -44,13 +44,13 @@ OutputType      = 1;    % output data file type, 1 = GeoTIFF, 2 = individual Net
 coordRefSysCode = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
-NetCDFtoInputs  = 1;    % 0 = create inputs,          1 = load inputs
+NetCDFtoInputs  = 0;    % 0 = create inputs,          1 = load inputs
 KNNsorting      = 0;    % 0 = create sorted data,     1 = load sorted data
 generateImage   = 1;    % 0 = IMAGE GENERATION OFF,   1 = IMAGE GENERATION ON
-metrics         = 1;    % 0 = metrics evaluation off, 1 = metrics evaluation on
 
 % Validation switch
 validation      = 0;    % 0 = VALIDATION OFF, 1 = VALIDATION ON (!!! BYPASSES PREVIOUS SWITCHES !!!)
+metricEval      = 1;    % 0 = metrics evaluation off, 1 = metrics evaluation on
 metric          = 0;    % 0 = RMSE, 1 = SPEM, 2 = SPAEF, 3 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
@@ -130,13 +130,15 @@ end
 disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 
 %% Validation (optional)
-if metrics == 1 || validation == 1
+if metricEval == 1 && validation == 1
     disp('--- 4. VALIDATION ---')
 
     validationMetric = validationMetrics(metric,outputDir);
     visualiseMetrics(validationMetric,metric,LdateStart,LdateEnd,outputDir);
 
     disp('--- 4. VALIDATION DONE ---')
+else
+    disp('--- VALIDATION SKIPPED ---')
 end
 
 tEnd = toc(tStart);

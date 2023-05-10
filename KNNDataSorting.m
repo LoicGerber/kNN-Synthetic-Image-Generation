@@ -184,7 +184,7 @@ parfor qd = 1:totQDates
     %toc
 end
 
-sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
+sortedDatesAll = [sortedDates sortedData]; % sortedDist sortedStd];
 sortedDates    = sortedDatesAll;
 
 % Shut down parallel pool
