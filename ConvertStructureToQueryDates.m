@@ -107,11 +107,12 @@ elseif validation == 1 % VALIDATION ON
     end
 end
 
-% Select closest varGen index for each Query date
+% Select closest targetVar index for each Query date
 nearestIdx = nan(size(queryDates));
 if validation == 0
     for i = 1:numel(queryDates)
-        [nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
+        %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
+        [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
         if nearest > longWindow
             nearestIdx(i) = nan;
         end
@@ -123,7 +124,7 @@ if validation == 0
             matchedTargetVarDates(i,2) = learningDatesDate(nearestIdx(i));
         end
     end
-    % Assign closest varGen map to each Query date
+    % Assign closest targetVar map to each Query date
     matchedTargetVarTable = table('Size',size(matchedTargetVarDates), 'VariableTypes',{'double', 'cell'});
     targetVarData = learningDates.(var);
     % Loop through the matched dates

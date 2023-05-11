@@ -44,9 +44,9 @@ OutputType      = 1;    % output data file type, 1 = GeoTIFF, 2 = individual Net
 coordRefSysCode = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
-NetCDFtoInputs  = 0;    % 0 = create inputs,          1 = load inputs
-KNNsorting      = 0;    % 0 = create sorted data,     1 = load sorted data
-generateImage   = 1;    % 0 = IMAGE GENERATION OFF,   1 = IMAGE GENERATION ON
+NetCDFtoInputs  = 1;    % 0 = create inputs,          1 = load inputs
+KNNsorting      = 1;    % 0 = create sorted data,     1 = load sorted data
+generateImage   = 0;    % 0 = IMAGE GENERATION OFF,   1 = IMAGE GENERATION ON
 
 % Validation switch
 validation      = 0;    % 0 = VALIDATION OFF, 1 = VALIDATION ON (!!! BYPASSES PREVIOUS SWITCHES !!!)
