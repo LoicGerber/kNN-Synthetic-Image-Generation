@@ -11,7 +11,7 @@ function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd
 tic
 
 % Learning dates - variable to be generated
-disp('  Processing ' + var + '...')
+disp('  Processing ' + var + ' for learningDates...')
 learningDates = rawData.(lower(var)+'Index');
 % Load data set
 targetVarData = rawData.(lower(var));

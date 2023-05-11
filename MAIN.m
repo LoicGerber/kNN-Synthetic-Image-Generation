@@ -20,13 +20,13 @@ tStart = tic;
 
 % All directories
 rawDir    = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';
-inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaResults1979\inputData\';
-outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaResults1979\output\';
+inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\inputData\';
+outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\output\';
 
 % ConvertStructureToInputs
 var             = "Et";                          % Variable to be generated, with "example"
 vars            = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
-addVars         = [];                            % Additional input variables, with ["example1","example2"]
+addVars         = ["test"];                      % Additional input variables, with ["example1","example2"]
 QdateStart      = 19790101;                      % YYYYMMDD - Start of the Generation period
 QdateEnd        = 19791231;                      % YYYYMMDD - End of the Generation period
 LdateStart      = 19800101;                      % YYYYMMDD - Start of the Learning period
@@ -44,12 +44,12 @@ OutputType      = 1;    % output data file type, 1 = GeoTIFF, 2 = individual Net
 coordRefSysCode = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
-NetCDFtoInputs  = 1;    % 0 = create inputs,          1 = load inputs
-KNNsorting      = 1;    % 0 = create sorted data,     1 = load sorted data
-generateImage   = 0;    % 0 = IMAGE GENERATION OFF,   1 = IMAGE GENERATION ON
+NetCDFtoInputs  = 0;    % 0 = create inputs,       1 = load inputs
+KNNsorting      = 1;    % 0 = create sorted data,  1 = load sorted data
+generateImage   = 1;    % 0 = image generation ON, 1 = image generation OFF
 
 % Validation switch
-validation      = 0;    % 0 = VALIDATION OFF, 1 = VALIDATION ON (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validation      = 0;    % 0 = validation OFF, 1 = validation ON (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricEval      = 1;    % 0 = metrics evaluation off, 1 = metrics evaluation on
 metric          = 0;    % 0 = RMSE, 1 = SPEM, 2 = SPAEF, 3 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
@@ -58,7 +58,7 @@ disp('--- 1. READING DATA ---')
 
 if NetCDFtoInputs == 0 && validation == 0
     disp('Formatting input data for production run...')
-    rawData = ConvertNetCDFtoStructure(rawDir,inputDir);
+    rawData = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
     climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
     learningDates  = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
     [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validation,outputTime,inputDir,outputDir);
@@ -67,7 +67,7 @@ if NetCDFtoInputs == 0 && validation == 0
     R = [];
 elseif validation == 1
     disp('Formatting input data for validation run...')
-    rawData = ConvertNetCDFtoStructure(rawDir,inputDir);
+    rawData = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
     climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
     learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
     [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validation,outputTime,inputDir,outputDir);
@@ -118,13 +118,13 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 %% Generation of Synthetic Images
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
-if generateImage == 1 && validation == 0
+if generateImage == 0 && validation == 0
     GenerateSynImages(var,learningDates,sortedDates,R,outputDir,GenerationType,OutputType);
 elseif validation == 1
     OutputType = 1;
     GenerateSynImages(var,learningDates,sortedDates,R,outputDir,GenerationType,OutputType);
-elseif generateImage == 0 && validation == 0
-    disp('generateImage flag == 0, no synthetic images generated...')
+elseif generateImage == 1 && validation == 0
+    disp('generateImage flag == 1, no synthetic images generated...')
 end
 
 disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')

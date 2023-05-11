@@ -39,7 +39,7 @@ sortedData  = cell(totQDates, 1);
 
 if ~isempty(addVars)
     addVarsDates = table2array(additionalVars(:,'date'));
-    addVarsDates = table2array(removevars(addVarsDates,'date'));
+    addVarsData  = table2array(removevars(additionalVars,'date'));
 else
     addVarsDates = [];
 end
@@ -88,14 +88,15 @@ parfor qd = 1:totQDates
         queryAddVars = cell(1, numel(addVars));
         idx = find(addVarsDates == currentQDate);
         for j = 1:numel(addVars)
-            queryAddVars(1,j) = additionalVars(idx,j);
+            queryAddVars(1,j) = addVarsData(idx,j);
         end
     else
         queryAddVars = [];
     end
 
     % Compute the distances between the query climate and the climate for each learning date
-    distances = cell(totLDates, 3);
+    addVarsDistance = cell(totLDates,2);
+    distances       = cell(totLDates, 3);
     % Display progress - only for serial computing
     %fprintf(1,'    Progress for current query date: %3.0f%%\n',progress);
     for ld = 1:totLDates
@@ -118,7 +119,7 @@ parfor qd = 1:totQDates
                 learningAddVars = cell(1, numel(addVars));
                 idx = find(addVarsDates == currentLDate);
                 for j = 1:numel(addVars)
-                    learningAddVars(1,j) = additionalVars(idx,j);
+                    learningAddVars(1,j) = addVarsData(idx,j);
                 end
             else
                 learningAddVars = [];
@@ -132,17 +133,27 @@ parfor qd = 1:totQDates
             targetDistance = targetDistance.*weightsTarget;
 
             % Additional variable comparison
+            % 1 distance, 2 std
             if ~isempty(addVars)
-                addVarsDistance = cellfun(@minus, queryAddVars, learningAddVars, 'UniformOutput', false);
-                addVarsDistance = cellfun(@abs,addVarsDistance,'UniformOutput',false);
-                addVarsDistance = cellfun(@(x) mean(x,'all','omitnan'),addVarsDistance,'UniformOutput',false);
-                addVarsDistance = sum(cellfun(@double,addVarsDistance),1,'omitnan');
-                addVarsDistance = addVarsDistance.*weightsAddVars;
+                addVarsDistance{ld,1} = cellfun(@minus, queryAddVars, learningAddVars, 'UniformOutput', false);
+                addVarsDistance{ld,1} = cellfun(@abs,addVarsDistance{ld,1},'UniformOutput',false);
+                addVarsDistance{ld,1} = cellfun(@(x) mean(x,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
+                addVarsDistance{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
+                addVarsDistance{ld,1} = sum(cellfun(@double,addVarsDistance{ld,1}),1,'omitnan');
+                addVarsDistance{ld,2} = sum(cellfun(@double,addVarsDistance{ld,2}),1,'omitnan');
+                if numel(addVars) == 1
+                    addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
+                    addVarsDistance{ld,2} = addVarsDistance{ld,2} .* cell2mat(weightsAddVars);
+                else
+                    addVarsDistance{ld,1} = num2cell(cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars));
+                    addVarsDistance{ld,2} = num2cell(cell2mat(addVarsDistance{ld,2}) .* cell2mat(weightsAddVars));
+                end
             else
-                addVarsDistance = 0;
+                addVarsDistance{ld,1} = 0;
+                addVarsDistance{ld,2} = 0;
             end
-            % targetDistance = targetDistance.*weights.targetVar;
-    
+            
+            % Climate distance
             % 1 date, 2 distance, 3 std
             distances{ld,1} = currentLDate;
             distances{ld,2} = cellfun(@minus, learningClimate, queryClimate, 'UniformOutput', false);
@@ -157,8 +168,8 @@ parfor qd = 1:totQDates
             distances{ld,2} = sum(cellfun(@double,distances{ld,2}),1,'omitnan');
             distances{ld,3} = sum(cellfun(@double,distances{ld,3}),1,'omitnan');
             % !!! if not all query dates have a close target map, bias towards those without map because distance will always be smaller !!!
-            distances{ld,2} = sum(distances{ld,2},2,'omitnan')+targetDistance+addVarsDistance;
-            distances{ld,3} = sum(distances{ld,3},2,'omitnan');
+            distances{ld,2} = sum(distances{ld,2},2,'omitnan')+targetDistance+addVarsDistance{ld,1};
+            distances{ld,3} = sum(distances{ld,3},2,'omitnan')+addVarsDistance{ld,2};
         else
             % If not enough climate days available, skip until loop reaches longWindow
             %warning(['Climate data available is shorter than longWindow, ' num2str(currentLDate) ' skipped.'])
