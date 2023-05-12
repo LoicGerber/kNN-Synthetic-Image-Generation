@@ -19,14 +19,14 @@ delete(poolobj);
 tStart = tic;
 
 % All directories
-rawDir    = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';
-inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\inputData\';
-outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\output\';
+rawDir    = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';   % Path to raw data
+inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaResults1979\inputData\';         % Path to saved input data
+outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaResults1979\output\';            % Path to results
 
 % ConvertStructureToInputs
 var             = "Et";                          % Variable to be generated, with "example"
 vars            = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
-addVars         = ["test"];                      % Additional input variables, with ["example1","example2"]
+addVars         = [];                            % Additional input variables, with ["example1","example2"]
 QdateStart      = 19790101;                      % YYYYMMDD - Start of the Generation period
 QdateEnd        = 19791231;                      % YYYYMMDD - End of the Generation period
 LdateStart      = 19800101;                      % YYYYMMDD - Start of the Learning period
@@ -44,13 +44,12 @@ OutputType      = 1;    % output data file type, 1 = GeoTIFF, 2 = individual Net
 coordRefSysCode = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
-NetCDFtoInputs  = 0;    % 0 = create inputs,       1 = load inputs
+NetCDFtoInputs  = 1;    % 0 = create inputs,       1 = load inputs
 KNNsorting      = 1;    % 0 = create sorted data,  1 = load sorted data
-generateImage   = 1;    % 0 = image generation ON, 1 = image generation OFF
+generateImage   = 0;    % 0 = image generation ON, 1 = image generation OFF
 
 % Validation switch
 validation      = 0;    % 0 = validation OFF, 1 = validation ON (!!! BYPASSES PREVIOUS SWITCHES !!!)
-metricEval      = 1;    % 0 = metrics evaluation off, 1 = metrics evaluation on
 metric          = 0;    % 0 = RMSE, 1 = SPEM, 2 = SPAEF, 3 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
@@ -58,22 +57,20 @@ disp('--- 1. READING DATA ---')
 
 if NetCDFtoInputs == 0 && validation == 0
     disp('Formatting input data for production run...')
-    rawData = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
-    climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
-    learningDates  = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validation,outputTime,inputDir,outputDir);
-    additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-    R = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    R = [];
+    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
+    GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
+    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
+    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
+    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir);
+    additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif validation == 1
     disp('Formatting input data for validation run...')
-    rawData = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
-    climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
-    learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validation,outputTime,inputDir,outputDir);
-    additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-    R = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    R = [];
+    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
+    GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
+    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
+    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
+    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir);
+    additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif NetCDFtoInputs == 1 && validation == 0
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
@@ -88,9 +85,8 @@ elseif NetCDFtoInputs == 1 && validation == 0
     additionalVars = load(fullfile(inputDir,'additionalVars.mat'));
     additionalVars = additionalVars.additionalVars;
     disp('Loading R.mat file...')
-    R              = load(fullfile(inputDir,'R.mat'));
-    R              = R.R;
-    R              = [];
+    GeoRef         = load(fullfile(inputDir,'R.mat'));
+    GeoRef         = GeoRef.GeoRef;
 end
 disp('Loading Weights.mat file...')
 Weights       = createWeights(var,vars,addVars,inputDir);
@@ -119,10 +115,10 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if generateImage == 0 && validation == 0
-    GenerateSynImages(var,learningDates,sortedDates,R,outputDir,GenerationType,OutputType);
+    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType);
 elseif validation == 1
     OutputType = 1;
-    GenerateSynImages(var,learningDates,sortedDates,R,outputDir,GenerationType,OutputType);
+    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType);
 elseif generateImage == 1 && validation == 0
     disp('generateImage flag == 1, no synthetic images generated...')
 end
@@ -130,7 +126,7 @@ end
 disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 
 %% Validation (optional)
-if metricEval == 1 && validation == 1
+if validation == 1
     disp('--- 4. VALIDATION ---')
 
     validationMetric = validationMetrics(metric,outputDir);

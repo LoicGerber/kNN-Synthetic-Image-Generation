@@ -1,4 +1,4 @@
-function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validation,outputTime,inputDir,outputDir)
+function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir)
 
 %
 %
@@ -28,13 +28,13 @@ if validation == 0 % VALIDATION OFF
         queryDates = datesAll(r);
         queryDates = setdiff(queryDates, learningDatesDate);
     elseif outputTime == 2 % monthly
+        [r,~]      = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        queryDates = datesAll(r);
         % Convert dailyDates to a matrix of year, month, and day components
         dateVec    = datevec(datetime(datesAll,'ConvertFrom','yyyyMMdd'));
         % Find the indices of the dates where the day component is the last day of the month
         lastDays   = find(dateVec(:,3) == eomday(dateVec(:,1), dateVec(:,2)));
         % Select the dates that are not in learningDates
-        [r,~]      = find(datesAll>=QdateStart & datesAll<=QdateEnd);
-        queryDates = datesAll(r);
         queryDates = setdiff(queryDates(lastDays), learningDatesDate);
     else
         error('Invalid outputTime value')
@@ -51,27 +51,6 @@ elseif validation == 1 % VALIDATION ON
         % Select the dates that are not in learningDates
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         queryDates = datesAll(r);
-        % Define learningDates as itself minus the query dates
-        ismem = ismember(learningDatesDate, queryDates);
-        learningDataValidation  = learningDates(~ismem,:);
-        learningDatesValidation = learningDatesDate(ismem);
-        referenceValidation     = table2cell(learningDates(ismem,var));
-        for i = 1:size(learningDatesValidation,1)
-            disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
-            t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
-            tagstruct.ImageLength         = imgLength;
-            tagstruct.ImageWidth          = imgWidth;
-            tagstruct.Compression         = Tiff.Compression.None;
-            tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-            tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-            tagstruct.BitsPerSample       = 32;
-            tagstruct.SamplesPerPixel     = 1;
-            tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-            t.setTag(tagstruct);
-            t.write(single(referenceValidation{i,1}));
-            t.close();
-        end
-        learningDates = learningDataValidation;
     elseif outputTime == 2 % monthly
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         queryDates = datesAll(r);
@@ -81,11 +60,15 @@ elseif validation == 1 % VALIDATION ON
         lastDays   = find(dateVec(:,3) == eomday(dateVec(:,1), dateVec(:,2)));
         % Select the dates that are not in learningDates
         queryDates = queryDates(lastDays);
-        % Define learningDates as itself minus the query dates
-        ismem      = ismember(learningDatesDate, queryDates);
-        learningDataValidation  = learningDates(~ismem,:);
-        learningDatesValidation = learningDatesDate(ismem);
-        referenceValidation     = table2cell(learningDates(ismem,var));
+    else
+        error('Invalid outputTime value')
+    end
+    % Define learningDates as itself minus the query dates
+    ismem = ismember(learningDatesDate, queryDates);
+    learningDataValidation  = learningDates(~ismem,:);
+    learningDatesValidation = learningDatesDate(ismem);
+    referenceValidation     = table2cell(learningDates(ismem,var));
+    if isempty(GeoRef)
         for i = 1:size(learningDatesValidation,1)
             disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
             t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
@@ -101,10 +84,14 @@ elseif validation == 1 % VALIDATION ON
             t.write(single(referenceValidation{i,1}));
             t.close();
         end
-        learningDates = learningDataValidation;
     else
-        error('Invalid outputTime value')
+        for i = 1:size(learningDatesValidation,1)
+            disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
+            geotiffwrite(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), ...
+                single(referenceValidation{i,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+        end
     end
+    learningDates = learningDataValidation;
 end
 
 % Select closest targetVar index for each Query date

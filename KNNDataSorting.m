@@ -23,7 +23,6 @@ end
 % file containing date and target and same for queryDates
 climateDates = table2array(climateData(:,'date'));
 climateData  = table2array(removevars(climateData,'date'));
-% the learning dates are ranked based on a criterion that quantifies their distance to a given query date
 
 totQDates = size(queryDates,1);
 totLDates = size(learningDates,1);
@@ -167,7 +166,6 @@ parfor qd = 1:totQDates
             distances{ld,3}(shortWindow+1:end,:) = num2cell(cell2mat(distances{ld,3}(shortWindow+1:end,:)) .* cell2mat(weightsLong));
             distances{ld,2} = sum(cellfun(@double,distances{ld,2}),1,'omitnan');
             distances{ld,3} = sum(cellfun(@double,distances{ld,3}),1,'omitnan');
-            % !!! if not all query dates have a close target map, bias towards those without map because distance will always be smaller !!!
             distances{ld,2} = sum(distances{ld,2},2,'omitnan')+targetDistance+addVarsDistance{ld,1};
             distances{ld,3} = sum(distances{ld,3},2,'omitnan')+addVarsDistance{ld,2};
         else

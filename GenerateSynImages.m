@@ -1,4 +1,4 @@
-function GenerateSynImages(var,learningDates,sortedDates,R,outputDir,GenerationType,OutputType)
+function GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType)
 
 %
 %
@@ -53,22 +53,22 @@ for rowIndex = 1:size(sortedDates,1)
         outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
         disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
-        if isempty(R)
+        if isempty(GeoRef)
             disp('    Georeferencing files missing! Unreferenced output...')
             t = Tiff(fullDestinationFileName, 'w');
-            tagstruct.ImageLength  = imgLength;
-            tagstruct.ImageWidth   = imgWidth;
-            tagstruct.Compression  = Tiff.Compression.None;
-            tagstruct.SampleFormat = Tiff.SampleFormat.IEEEFP;
-            tagstruct.Photometric  = Tiff.Photometric.MinIsBlack;
-            tagstruct.BitsPerSample = 32;
-            tagstruct.SamplesPerPixel = 1;
+            tagstruct.ImageLength         = imgLength;
+            tagstruct.ImageWidth          = imgWidth;
+            tagstruct.Compression         = Tiff.Compression.None;
+            tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+            tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+            tagstruct.BitsPerSample       = 32;
+            tagstruct.SamplesPerPixel     = 1;
             tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
             t.setTag(tagstruct);
             t.write(single(resultImages{rowIndex,1}));
             t.close();
         else
-            geotiffwrite(fullDestinationFileName,single(resultImages{rowIndex,1}),R,'TiffTags',struct('Compression',Tiff.Compression.None));
+            geotiffwrite(fullDestinationFileName,single(resultImages{rowIndex,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
         end
     elseif OutputType == 2
         % Store the resulting image in a geolocated netCDF file
@@ -94,19 +94,19 @@ for rowIndex = 1:size(sortedDates,1)
         % End definition mode
         netcdf.endDef(ncid);
         % Define metadata attributes
-        if ~isempty(R)
-            if ~isempty(R.GeographicCRS)
+        if ~isempty(GeoRef)
+            if ~isempty(GeoRef.GeographicCRS)
                 ncwriteatt(fullDestinationFileName, '/', 'grid_mapping', 'geographic');
-                ncwriteatt(fullDestinationFileName, '/', 'crs', R.GeographicCRS.Name);
+                ncwriteatt(fullDestinationFileName, '/', 'crs', GeoRef.GeographicCRS.Name);
             else
                 ncwriteatt(fullDestinationFileName, '/', 'grid_mapping', 'geographic');
                 ncwriteatt(fullDestinationFileName, '/', 'geographic', 'crs', 'WGS 84');
             end
-            ncwriteatt(fullDestinationFileName, '/', 'xllcorner', R.LongitudeLimits(1));
-            ncwriteatt(fullDestinationFileName, '/', 'yllcorner', R.LatitudeLimits(1));
-            ncwriteatt(fullDestinationFileName, '/', 'cellsize', [R.CellExtentInLatitude R.CellExtentInLongitude]);
-            ncwriteatt(fullDestinationFileName, '/', 'columnStart', R.ColumnsStartFrom);
-            ncwriteatt(fullDestinationFileName, '/', 'rowStart', R.RowsStartFrom);
+            ncwriteatt(fullDestinationFileName, '/', 'xllcorner', GeoRef.LongitudeLimits(1));
+            ncwriteatt(fullDestinationFileName, '/', 'yllcorner', GeoRef.LatitudeLimits(1));
+            ncwriteatt(fullDestinationFileName, '/', 'cellsize', [GeoRef.CellExtentInLatitude GeoRef.CellExtentInLongitude]);
+            ncwriteatt(fullDestinationFileName, '/', 'columnStart', GeoRef.ColumnsStartFrom);
+            ncwriteatt(fullDestinationFileName, '/', 'rowStart', GeoRef.RowsStartFrom);
         end
         ncwriteatt(fullDestinationFileName, '/', 'date', num2str(sortedDates(rowIndex,1)),'Datatype','string');
         ncwriteatt(fullDestinationFileName, '/', 'nodata_value', -9999);
