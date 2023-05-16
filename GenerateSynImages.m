@@ -26,6 +26,13 @@ imgWidth  = size(learningData{1},2);
 selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 resultImages   = cell(size(sortedDates, 1), 1);
 
+% Display progress
+progress = 0;
+if OutputType == 1
+    fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+else
+    fprintf(1,'Downloading synthetic images as NetCDF files: %3.0f%%\n',progress);
+end
 % Loop through each row in sortedDates
 for rowIndex = 1:size(sortedDates,1)
     % Loop through the second to the nbKNNth column of the current row
@@ -52,9 +59,9 @@ for rowIndex = 1:size(sortedDates,1)
         % Write the resulting image to a GeoTIFF file
         outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
-        disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
+        %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
         if isempty(GeoRef)
-            disp('    Georeferencing files missing! Unreferenced output...')
+            %disp('    Georeferencing files missing! Unreferenced output...')
             t = Tiff(fullDestinationFileName, 'w');
             tagstruct.ImageLength         = imgLength;
             tagstruct.ImageWidth          = imgWidth;
@@ -71,54 +78,93 @@ for rowIndex = 1:size(sortedDates,1)
             geotiffwrite(fullDestinationFileName,single(resultImages{rowIndex,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
         end
     elseif OutputType == 2
+        % Assign the CRS value
+        crs_wkt = wktstring(GeoRef.GeographicCRS);
+        % Extract the EPSG code from the WKT string using regular expressions
+        expression = 'ID\["EPSG",(\d+)\]';
+        tokens = regexp(crs_wkt, expression, 'tokens');
+        crs_value = tokens{1};
         % Store the resulting image in a geolocated netCDF file
         outputBaseName = string(sortedDates(rowIndex,1)) + '.nc';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
-        disp(['  Writing netCDF file ' num2str(rowIndex) '/' num2str(size(sortedDates,1))]);
+        %disp(['  Writing netCDF file ' num2str(rowIndex) '/' num2str(size(sortedDates,1))]);
         % Create a new netCDF file and define dimensions
-        ncid = netcdf.create(fullDestinationFileName,'NETCDF4');
-        dimid_x = netcdf.defDim(ncid,'x',size(resultImages{rowIndex,1},2));
-        dimid_y = netcdf.defDim(ncid,'y',size(resultImages{rowIndex,1},1));
-        dimid_lat = netcdf.defDim(ncid,'lat',size(resultImages{rowIndex,1},1));
-        dimid_lon = netcdf.defDim(ncid,'lon',size(resultImages{rowIndex,1},2));
+        ncid       = netcdf.create(fullDestinationFileName,'NETCDF4');
+        dimid_lat  = netcdf.defDim(ncid,'lat',GeoRef.RasterSize(1));
+        dimid_lon  = netcdf.defDim(ncid,'lon',GeoRef.RasterSize(2));
+        dimid_time = netcdf.defDim(ncid,'time',1);
         % Define variables
-        varid = netcdf.defVar(ncid,'resultImage','double',[dimid_y,dimid_x]);
-        latid = netcdf.defVar(ncid,'lat','double',[dimid_lat,dimid_lon]);
-        lonid = netcdf.defVar(ncid,'lon','double',[dimid_lat,dimid_lon]);
+        %varid = netcdf.defVar(ncid,var,'double',[dimid_lat,dimid_lon]);
+        varid  = netcdf.defVar(ncid,var,'double',[dimid_lon,dimid_lat]);
+        timeid = netcdf.defVar(ncid,'time','double',dimid_time);
+        latid  = netcdf.defVar(ncid,'lat','double',dimid_lat);
+        lonid  = netcdf.defVar(ncid,'lon','double',dimid_lon);
         % Define attributes
         netcdf.putAtt(ncid,varid,'long_name',var);
+        netcdf.putAtt(ncid,timeid,'long_name','time');
+        netcdf.putAtt(ncid,timeid,'units','days since 1970-01-01 00:00:00');
         netcdf.putAtt(ncid,latid,'long_name','latitude');
         netcdf.putAtt(ncid,latid,'units','degrees_north');
         netcdf.putAtt(ncid,lonid,'long_name','longitude');
         netcdf.putAtt(ncid,lonid,'units','degrees_east');
+        % Assign the CRS as a global attribute to the netCDF file
+        netcdf.putAtt(ncid, netcdf.getConstant('NC_GLOBAL'), 'crs_wkt', crs_wkt);
+        netcdf.putAtt(ncid, netcdf.getConstant('NC_GLOBAL'), 'crs', crs_value);
         % End definition mode
         netcdf.endDef(ncid);
+
+        % Assign latitude and longitude values
+        %lat = GeoRef.LatitudeLimits(2)  : -GeoRef.CellExtentInLatitude : GeoRef.LatitudeLimits(1);
+        %lon = GeoRef.LongitudeLimits(1) : GeoRef.CellExtentInLongitude : GeoRef.LongitudeLimits(2);
+
+        % Assign latitude and longitude values
+        lat_start = GeoRef.LatitudeLimits(2);
+        lat_end   = GeoRef.LatitudeLimits(1);
+        lon_start = GeoRef.LongitudeLimits(1);
+        lon_end   = GeoRef.LongitudeLimits(2);
+        lat_size  = size(resultImages{rowIndex,1}, 1);
+        lon_size  = size(resultImages{rowIndex,1}, 2);
+        lat_step  = (lat_end - lat_start) / lat_size;
+        lon_step  = (lon_end - lon_start) / lon_size;
+        lat       = lat_start:lat_step:lat_end;
+        lon       = lon_start:lon_step:lon_end;
+        % Adjust the size of lat and lon vectors to match the image dimensions
+        lat       = lat(1:lat_size);
+        lon       = lon(1:lon_size);
+        % Assign latitude and longitude values to the corresponding variables
+        netcdf.putVar(ncid,latid,lat);
+        netcdf.putVar(ncid,lonid,lon);
+        % Assign date
+        dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
+        yearStr  = dateStr(1:4);
+        monthStr = dateStr(5:6);
+        dayStr   = dateStr(7:8);
+        dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
+        time = datenum(dateStrFormatted, 'yyyy-mm-dd');
+        netcdf.putVar(ncid, timeid, time);
         % Define metadata attributes
-        if ~isempty(GeoRef)
-            if ~isempty(GeoRef.GeographicCRS)
-                ncwriteatt(fullDestinationFileName, '/', 'grid_mapping', 'geographic');
-                ncwriteatt(fullDestinationFileName, '/', 'crs', GeoRef.GeographicCRS.Name);
-            else
-                ncwriteatt(fullDestinationFileName, '/', 'grid_mapping', 'geographic');
-                ncwriteatt(fullDestinationFileName, '/', 'geographic', 'crs', 'WGS 84');
-            end
-            ncwriteatt(fullDestinationFileName, '/', 'xllcorner', GeoRef.LongitudeLimits(1));
-            ncwriteatt(fullDestinationFileName, '/', 'yllcorner', GeoRef.LatitudeLimits(1));
-            ncwriteatt(fullDestinationFileName, '/', 'cellsize', [GeoRef.CellExtentInLatitude GeoRef.CellExtentInLongitude]);
-            ncwriteatt(fullDestinationFileName, '/', 'columnStart', GeoRef.ColumnsStartFrom);
-            ncwriteatt(fullDestinationFileName, '/', 'rowStart', GeoRef.RowsStartFrom);
-        end
-        ncwriteatt(fullDestinationFileName, '/', 'date', num2str(sortedDates(rowIndex,1)),'Datatype','string');
+        ncwriteatt(fullDestinationFileName, '/', 'crs', crs_value);
+        ncwriteatt(fullDestinationFileName, '/', 'xllcorner', GeoRef.LongitudeLimits(1));
+        ncwriteatt(fullDestinationFileName, '/', 'yllcorner', GeoRef.LatitudeLimits(2));
+        ncwriteatt(fullDestinationFileName, '/', 'origin', [GeoRef.LongitudeLimits(1) GeoRef.LatitudeLimits(2)]);
+        ncwriteatt(fullDestinationFileName, '/', 'cellsize', [GeoRef.CellExtentInLatitude GeoRef.CellExtentInLongitude]);
+        ncwriteatt(fullDestinationFileName, '/', 'columnStart', GeoRef.ColumnsStartFrom);
+        ncwriteatt(fullDestinationFileName, '/', 'rowStart', GeoRef.RowsStartFrom);
+        ncwriteatt(fullDestinationFileName, '/', 'date', sortedDates{rowIndex, 1},'Datatype','string');
         ncwriteatt(fullDestinationFileName, '/', 'nodata_value', -9999);
         % Write data to variable
-        ncwrite(fullDestinationFileName, 'resultImage', single(resultImages{rowIndex,1}));
+        ncwrite(fullDestinationFileName, var, single(resultImages{rowIndex,1})');
         % Close the netCDF file
         netcdf.close(ncid);
     else
         error('Unknown output type! Choose 1 for GeoTiff or 2 for NetCDF...')
     end
+    % Display computation progress
+    progress = (100*(rowIndex/size(sortedDates,1)));
+    fprintf(1,'\b\b\b\b%3.0f%%',progress);
 end
 
+fprintf('\n')
 toc
 
 end

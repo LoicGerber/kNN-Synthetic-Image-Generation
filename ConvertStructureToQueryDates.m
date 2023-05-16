@@ -20,7 +20,7 @@ imgLength = size(learningDates{1,2}{1,1},1);
 imgWidth  = size(learningDates{1,2}{1,1},2);
 
 % Query dates and adapt Learning dates if Validation ON
-if validation == 0 % VALIDATION OFF
+if validation == 1 % VALIDATION OFF
     % Query dates are all dates in query window, without dates in Learning dates
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
@@ -39,7 +39,7 @@ if validation == 0 % VALIDATION OFF
     else
         error('Invalid outputTime value')
     end
-elseif validation == 1 % VALIDATION ON
+elseif validation == 0 % VALIDATION ON
     % Query dates are all dates in query window, replacing dates in Learning dates
     if ~exist(outputDir,'dir')
         mkdir(outputDir)
@@ -68,9 +68,12 @@ elseif validation == 1 % VALIDATION ON
     learningDataValidation  = learningDates(~ismem,:);
     learningDatesValidation = learningDatesDate(ismem);
     referenceValidation     = table2cell(learningDates(ismem,var));
+    % Display progress
+    progress = 0;
+    fprintf(1,'  Reference images for validation download progress: %3.0f%%\n',progress);
     if isempty(GeoRef)
         for i = 1:size(learningDatesValidation,1)
-            disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
+            %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
             t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
             tagstruct.ImageLength         = imgLength;
             tagstruct.ImageWidth          = imgWidth;
@@ -83,12 +86,18 @@ elseif validation == 1 % VALIDATION ON
             t.setTag(tagstruct);
             t.write(single(referenceValidation{i,1}));
             t.close();
+            % Display computation progress
+            progress = (100*(i/size(learningDatesValidation,1)));
+            fprintf(1,'\b\b\b\b%3.0f%%',progress);
         end
     else
         for i = 1:size(learningDatesValidation,1)
-            disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
+            %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
             geotiffwrite(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), ...
                 single(referenceValidation{i,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+            % Display computation progress
+            progress = (100*(i/size(learningDatesValidation,1)));
+            fprintf(1,'\b\b\b\b%3.0f%%',progress);
         end
     end
     learningDates = learningDataValidation;
@@ -96,7 +105,7 @@ end
 
 % Select closest targetVar index for each Query date
 nearestIdx = nan(size(queryDates));
-if validation == 0
+if validation == 1 % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
@@ -127,7 +136,7 @@ if validation == 0
             matchedTargetVarTable{i, 2} = {nan(size(targetVarData{1,1}))};
         end
     end
-elseif validation == 1
+elseif validation == 0 % validation ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
     matchedTargetVarTable = table('Size',size(matchedTargetVarDates), 'VariableTypes',{'double', 'cell'});
     targetVarData = learningDates.(var);
@@ -141,6 +150,7 @@ end
 % Rename the columns
 matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(var)};
 queryDates = matchedTargetVarTable;
+fprintf('\n')
 disp('  Saving Query dates, may take a while depending on input size...')
 save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
 

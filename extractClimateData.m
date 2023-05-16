@@ -26,11 +26,11 @@ climateData.Properties.VariableNames = matchingDataFields;
 climateData.("date") = rawData.(datesFields(1));
 climateData = movevars(climateData,'date','Before',1);
 
-if validation == 0
+if validation == 1 % validation OFF
     % Take all available climate dates
     [r,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(min(QdateStart,LdateStart),'ConvertFrom','yyyyMMdd')-days(longWindow) ...
         & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(max(QdateEnd,LdateEnd),'ConvertFrom','yyyymmdd'));
-elseif validation == 1
+elseif validation == 0 % validation ON
     % Take dates only within Learning dates range
     [r,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(LdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
         & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(LdateEnd,'ConvertFrom','yyyymmdd'));

@@ -18,7 +18,7 @@ data = ones(1, length(varsAll));
 
 Weights = array2table(data, 'VariableNames', varsAll);
 
-disp('  Saving Weights...')
+disp('  Saving generic Weights.mat...')
 save(fullfile(inputDir,'Weights.mat'), 'Weights', '-v7.3','-nocompression');
 
 toc

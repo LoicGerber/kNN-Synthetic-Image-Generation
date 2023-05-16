@@ -49,25 +49,25 @@ for i = 1:numel(refImages)
     %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
     currentDate = convertCharsToStrings(strrep(refImageDate,'.tif',''));
 
-    if metric == 0
+    if metric == 1
         % Calculate the RMSE
         validationMetric(i,1) = currentDate;
         validationMetric(i,2) = sqrt(immse(synImage,refImage));
         % Display the RMSE for this pair of images
         %fprintf('RMSE for %s: %.4f\n', currentDate, validationMetric(i,2));
-    elseif metric == 1
+    elseif metric == 2
         % Calculate the SPEM
         validationMetric(i,1) = currentDate;
         validationMetric(i,2) = spem(synImage,refImage);
         % Display the SPEM for this pair of images
         %fprintf('SPEM for %s: %.4f\n', currentDate, validationMetric(i,2));
-    elseif metric == 2
+    elseif metric == 3
         % Calculate the SPAEF
         validationMetric(i,1) = currentDate;
         validationMetric(i,2) = spaef(synImage,refImage);
         % Display the SPAEF for this pair of images
         %fprintf('SPAEF for %s: %.4f\n', currentDate, validationMetric(i,2));
-    elseif metric == 3
+    elseif metric == 4
         % Calculate the SPOMF absolute error
         validationMetric(i,1) = currentDate;
         validationMetric(i,2) = spae_metric(synImage,refImage);

@@ -15,25 +15,25 @@ plot(datetime(validationMetric(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyy
     validationMetric(:,2));
 yline(mean(validationMetric(:,2)),'-',['Mean: ' num2str(mean(validationMetric(:,2)))],'Color','r')
 ylim([0 1.4])
-if metric == 0
+if metric == 1
     title('RMSE')
-elseif metric == 1
-    title('SPEM')
 elseif metric == 2
-    title('SPAEF')
+    title('SPEM')
 elseif metric == 3
+    title('SPAEF')
+elseif metric == 4
     title('SPOMF')
 end
 subtitle(['Learning periode: ' char(datetime(LdateStart,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy')) ...
     ' - ' char(datetime(LdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'))])
 xlabel('Date')
-if metric == 0
+if metric == 1
     ylabel('RMSE')
-elseif metric == 1
-    ylabel('SPEM')
 elseif metric == 2
-    ylabel('SPAEF')
+    ylabel('SPEM')
 elseif metric == 3
+    ylabel('SPAEF')
+elseif metric == 4
     ylabel('SPOMF')
 end
 set(gcf, 'color', 'white');
@@ -109,16 +109,16 @@ for i = 1:numel(syntheticFiles)
         set(get(h,'label'),'string','mm/day');
 
         % Set the title of the figure to the name of the images
-        if metric == 0
+        if metric == 1
             sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
                 ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric(i,2),'%1.5f') '}']})
-        elseif metric == 1
-            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
-                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         elseif metric == 2
             sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
-                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
+                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         elseif metric == 3
+            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
+                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
+        elseif metric == 4
             sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
                 ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         end
