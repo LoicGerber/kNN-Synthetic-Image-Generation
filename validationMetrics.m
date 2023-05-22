@@ -19,7 +19,7 @@ refImages = dir(fullfile(refDir, '*.tif'));
 % Check that there are no extra generated images
 synImages = dir(fullfile(synDir, '*.tif'));
 if numel(refImages) ~= numel(synImages)
-    error('Number of reference images and synthetic images does not match');
+    error('Numbers of reference and synthetic images do not match');
 end
 
 % Initialize an array to store the RMSE values

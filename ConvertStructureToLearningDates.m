@@ -1,4 +1,4 @@
-function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir)
+function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir)
 
 %
 %
@@ -17,6 +17,12 @@ learningDates = rawData.(lower(var)+'Index');
 targetVarData = rawData.(lower(var));
 % extract possible learning dates
 [r,~] = find(learningDates>=LdateStart & learningDates<=LdateEnd);
+if optimPrep == 0
+    if LdateStart ~= QdateStart
+        [rQ,~] = find(learningDates>=QdateStart & learningDates<=QdateEnd);
+        r = unique([r; rQ]);
+    end
+end
 learningDates = learningDates(r);
 targetVarData = targetVarData(r);
 

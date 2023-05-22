@@ -1,4 +1,4 @@
-function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir)
+function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -20,7 +20,7 @@ imgLength = size(learningDates{1,2}{1,1},1);
 imgWidth  = size(learningDates{1,2}{1,1},2);
 
 % Query dates and adapt Learning dates if Validation ON
-if validation == 1 % VALIDATION OFF
+if validation == 1 && optimPrep == 1 % VALIDATION OFF
     % Query dates are all dates in query window, without dates in Learning dates
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
@@ -39,7 +39,7 @@ if validation == 1 % VALIDATION OFF
     else
         error('Invalid outputTime value')
     end
-elseif validation == 0 % VALIDATION ON
+elseif validation == 0 || optimPrep == 0 % validation or optimPrep ON
     % Query dates are all dates in query window, replacing dates in Learning dates
     if ~exist(outputDir,'dir')
         mkdir(outputDir)
@@ -105,7 +105,7 @@ end
 
 % Select closest targetVar index for each Query date
 nearestIdx = nan(size(queryDates));
-if validation == 1 % validation OFF
+if validation == 1 && optimPrep == 1 % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
@@ -136,7 +136,7 @@ if validation == 1 % validation OFF
             matchedTargetVarTable{i, 2} = {nan(size(targetVarData{1,1}))};
         end
     end
-elseif validation == 0 % validation ON
+elseif validation == 0 || optimPrep == 0 % validation or optimPrep ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
     matchedTargetVarTable = table('Size',size(matchedTargetVarDates), 'VariableTypes',{'double', 'cell'});
     targetVarData = learningDates.(var);

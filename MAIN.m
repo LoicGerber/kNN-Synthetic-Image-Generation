@@ -23,23 +23,24 @@ tStart = tic;
 
 % All directories
 rawDir    = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';           % Path to raw data
-inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\inputData\';     % Path to saved input data
-outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\output\';        % Path to results
+inputDir  = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\inputData\';                 % Path to saved input data
+outputDir = 'X://LoicGerber\knn_image_generation\syntheticImageGeneration\test\output\';                    % Path to results
 
 % ConvertStructureToInputs
 var             = "Et";                          % Variable to be generated, with "example"
 vars            = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars         = [];                            % Additional input variables, with ["example1","example2"]
-QdateStart      = 20000101;                      % YYYYMMDD - Start of the Generation period
-QdateEnd        = 20000105;                      % YYYYMMDD - End of the Generation period
-LdateStart      = 19800101;                      % YYYYMMDD - Start of the Learning period
-LdateEnd        = 19800131;                      % YYYYMMDD - End of the Learning period
+QdateStart      = 19800101;                      % YYYYMMDD - Start of the Generation period
+QdateEnd        = 19800110;                      % YYYYMMDD - End of the Generation period
+LdateStart      = 20000101;                      % YYYYMMDD - Start of the Learning period
+LdateEnd        = 20000331;                      % YYYYMMDD - End of the Learning period
 outputTime      = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
-longWindow      = 30;                            % number of days to consider for the long climate window
+
 
 % KNNDataGeneration
 shortWindow     = 5;    % number of days to consider for the short climate window
-nbImages        = 5;    % number of days to consider for the generation of images
+longWindow      = 30;   % number of days to consider for the long climate window
+nbImages        = 5;    % K, number of days to consider for the generation of images
 
 % GenerateSynImages
 GenerationType  = 2;    % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
@@ -47,6 +48,7 @@ OutputType      = 1;    % output data file type, 1 = GeoTIFF, 2 = individual Net
 coordRefSysCode = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
+parallelComputing = 1; % 0 = parallel computing ON, 1 = parallel computing OFF
 NetCDFtoInputs  = 1;    % 0 = create inputs,          1 = load inputs
 loadOptiWeights = 1;    % 0 = create generic weights, 1 = load weights
 KNNsorting      = 0;    % 0 = create sorted data,     1 = load sorted data
@@ -58,28 +60,29 @@ metricViz       = 1;    % 0 = visualisation ON, 1 = visualisation OFF
 metric          = 1;    % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
+optimPrep       = 0;    % 0 = optimisation preparation ON, 1 = optimisation preparation OFF
 optimisation    = 0;    % 0 = optimisation ON, 1 = optimisation OFF
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
 
-if NetCDFtoInputs == 0 && validation == 1
+if (NetCDFtoInputs == 0 && validation == 1) || optimPrep == 0
     disp('Formatting input data for production run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
-    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir);
+    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,optimPrep,inputDir);
+    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif validation == 0
     disp('Formatting input data for validation run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,inputDir);
-    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,rawData,climateData,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,outputTime,inputDir,outputDir);
+    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,optimPrep,inputDir);
+    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-elseif (NetCDFtoInputs == 1 && validation == 1) || optimisation == 0
+elseif NetCDFtoInputs == 1 && validation == 1
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
     queryDates     = queryDates.queryDates;
@@ -111,11 +114,15 @@ disp('--- 1. READING DATA DONE ---')
 disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
-if KNNsorting == 0 || validation == 0
-    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimisation,inputDir);
+if KNNsorting == 0 || validation == 0 || optimPrep == 0
+    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimisation,parallelComputing,inputDir);
 elseif KNNsorting == 1 && validation == 1
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
+    sortedDates = sortedDates.sortedDates;
+elseif optimPrep == 1
+    disp('Loading KNNDistances.mat file...')
+    sortedDates = load(fullfile(inputDir,'KNNDistances.mat'));
     sortedDates = sortedDates.sortedDates;
 end
 
@@ -150,24 +157,24 @@ end
 %% Optimisation
 if optimisation == 0
     disp('--- 4. OPTIMISATION ---')
-
-    % --- Fati ---
-    % fun = @(x)-(ErrorFunction(FindImageIndex(Day,Mean,x.Et_W,x.wCloseAggreTmin,x.wCloseAggreP,x.wTmax,x.wTmin,x.wP,x.wMODIS,x.wMYD,x.wShadow,x.wClosestLandsat),Workspace2));
-    % results = bayesopt(fun,[wCloseAggreTmax,wCloseAggreTmin,wCloseAggreP,wTmax,wTmin,wP,wMODIS,wMYD,wShadow,wClosestLandsat],'Verbose',1,...
-    %     'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',1);
-    % --- Fati ---
     
     
     % Get the table variable names
-    variableNames = Weights.Properties.VariableNames;
+    variableNames = string(Weights.Properties.VariableNames);
     % Iterate over each variable
+    bayesWeights = [];
     for i = 1:numel(variableNames)
-        bayesWeights.variableNames{i} = optimizableVariable(variableNames{i},[0,1],'Type','real');
+        %bayesWeights{i} = optimizableVariable(variableNames{i},[0,1],'Type','real');
+        eval(sprintf('%s = optimizableVariable(variableNames{i}, [0,1], ''Type'', ''real'');', variableNames{i}));
+        eval(sprintf('bayesWeights = [bayesWeights %s];',variableNames{i}));
     end
     % Set up the Bayesian optimization
-    fun = @(x)computeObjectiveOptim(Weights,var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,metric,inputDir,outputDir);
+    %fun = @(x)computeObjectiveOptim(x.bayesWeights,var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,metric,inputDir,outputDir);
+    fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
+        var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,metric,inputDir,outputDir);
     % Run the Bayesian optimization
-    results = bayesopt(bOptim,Weights,'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',1);
+    %results = bayesopt(fun,bayesWeights,'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',1);
+    results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW],'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',1);
     % Retrieve the optimal weights
     optimalWeights = results.XAtMinObjective;
     
