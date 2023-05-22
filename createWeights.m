@@ -12,7 +12,13 @@ tic
 
 climShort = strcat(vars,'_ShortW');
 climLong  = strcat(vars,'_LongW');
-varsAll = [var climShort climLong addVars];
+targetW   = strcat(var,'_W');
+if ~isempty(addVars)
+    addVarsW  = strcat(addVars,'_W');
+else
+    addVarsW = [];
+end
+varsAll = [targetW climShort climLong addVarsW];
 
 data = ones(1, length(varsAll));
 

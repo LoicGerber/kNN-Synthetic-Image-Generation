@@ -35,7 +35,6 @@ end
 disp('Saving additionalVars table...')
 allVarsSave = fullfile(inputDir, 'additionalVars.mat');
 save(allVarsSave, 'additionalVars', '-v7.3','-nocompression');
-disp('additionalVars table saved')
 
 toc
 

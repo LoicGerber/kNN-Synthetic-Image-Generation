@@ -75,10 +75,8 @@ for i = 1:length(files)
         % Create the output structure
         rawData.(varname)   = data;
         rawData.(varnameID) = dates;
-
-        disp(strcat("  ",varname,' processed...'))
     else
-        disp(strcat("  ",varname,' not in variables of interest, file not processed...'))
+        disp(strcat("  '",varname,"' not in variables of interest, file not processed..."))
     end
 end
 

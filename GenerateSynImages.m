@@ -150,7 +150,7 @@ for rowIndex = 1:size(sortedDates,1)
         ncwriteatt(fullDestinationFileName, '/', 'cellsize', [GeoRef.CellExtentInLatitude GeoRef.CellExtentInLongitude]);
         ncwriteatt(fullDestinationFileName, '/', 'columnStart', GeoRef.ColumnsStartFrom);
         ncwriteatt(fullDestinationFileName, '/', 'rowStart', GeoRef.RowsStartFrom);
-        ncwriteatt(fullDestinationFileName, '/', 'date', sortedDates{rowIndex, 1},'Datatype','string');
+        ncwriteatt(fullDestinationFileName, '/', 'date', string(sortedDates{rowIndex, 1}),'Datatype','string');
         ncwriteatt(fullDestinationFileName, '/', 'nodata_value', -9999);
         % Write data to variable
         ncwrite(fullDestinationFileName, var, single(resultImages{rowIndex,1})');

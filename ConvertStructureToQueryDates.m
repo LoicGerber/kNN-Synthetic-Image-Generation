@@ -11,7 +11,7 @@ function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStar
 tic
 
 % Query dates - variable to be generated
-disp('  Processing ' + var + ' for queryDates...')
+disp("  Processing '" + var + "' for queryDates...")
 
 datesAll = climateData.date;
 learningDatesDate = learningDates.date;

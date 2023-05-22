@@ -78,15 +78,9 @@ for i = 1:numel(refImages)
     end
 end
 
-% Calculate the average metric
-avgMetricValues = mean(validationMetric(:,2));
-% Display the average metric
-fprintf('Average: %.4f\n', avgMetricValues);
-
-disp('Saving validation metric table...')
+disp('Saving validationMetric.mat table...')
 validationSave = fullfile(outputDir,'validationMetric.mat');
 save(validationSave, 'validationMetric');
-disp('validationMetric table saved')
 
 toc
 

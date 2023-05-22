@@ -42,7 +42,6 @@ climateData = climateData(r,:);
 disp('Saving climateData table...')
 allVarsSave = fullfile(inputDir, 'climateData.mat');
 save(allVarsSave, 'climateData', '-v7.3','-nocompression');
-disp('climateData table saved')
 
 toc
 
