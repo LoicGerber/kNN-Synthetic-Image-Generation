@@ -8,8 +8,6 @@ function climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,Ldate
 %
 %
 
-tic
-
 % Get fieldnames matching the string
 matchingFields     = string(fieldnames(rawData));
 matchingDataFields = matchingFields(ismember(lower(matchingFields), lower(vars)));
@@ -47,7 +45,5 @@ climateData = climateData(r,:);
 disp('Saving climateData table...')
 allVarsSave = fullfile(inputDir, 'climateData.mat');
 save(allVarsSave, 'climateData', '-v7.3','-nocompression');
-
-toc
 
 end

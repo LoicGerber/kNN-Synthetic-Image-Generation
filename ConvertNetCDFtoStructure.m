@@ -13,8 +13,6 @@ function rawData = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir)
 % files must be named with the variable. Example: precipitation data must
 % be called pre.nc
 
-tic
-
 % Check if output directories exist, if not create them
 if ~exist(inputDir, 'dir')
     mkdir(inputDir)
@@ -84,7 +82,5 @@ end
 % allVarsSave = fullfile(inputDir, 'allVariables.mat');
 % save(allVarsSave, '-struct', 'output_data');
 % disp('All variables processed and saved to allVariables.mat...')
-
-toc
 
 end

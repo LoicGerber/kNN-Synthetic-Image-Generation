@@ -8,8 +8,6 @@ function validationMetric = validationMetrics(metric,optimisation,outputDir)
 %
 %
 
-tic
-
 % Define the two directories
 refDir = fullfile(outputDir,'referenceImages');
 synDir = fullfile(outputDir,'syntheticImages');
@@ -85,7 +83,5 @@ if optimisation == 1
 else % for optimisation run
     validationMetric = mean(validationMetric(:,2));
 end
-
-toc
 
 end

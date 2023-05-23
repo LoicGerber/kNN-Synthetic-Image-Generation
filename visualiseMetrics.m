@@ -8,8 +8,6 @@ function visualiseMetrics(validationMetric,metric,LdateStart,LdateEnd,outputDir)
 %
 %
 
-tic
-
 figure(1)
 plot(datetime(validationMetric(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
     validationMetric(:,2));
@@ -138,8 +136,6 @@ for i = 1:numel(syntheticFiles)
         %pause(0.05);
     end
 end
-
-toc
 
 end
 

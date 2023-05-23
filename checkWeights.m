@@ -1,5 +1,13 @@
 function allWeights = checkWeights(Weights,learningDates)
 
+%
+%
+%
+% REDO DOCUMENTATION
+%
+%
+%
+
 varNames       = learningDates.Properties.VariableNames;       % Extract columns name
 varNames       = varNames(~ismember(varNames,{'Dates','Date'})); % Remove the 'Dates' variable name
 uniqueVarNames = cellfun(@(x) strsplit(x, '-'), varNames, 'UniformOutput', false);

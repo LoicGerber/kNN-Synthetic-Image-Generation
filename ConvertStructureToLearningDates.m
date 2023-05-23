@@ -8,8 +8,6 @@ function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd
 %
 %
 
-tic
-
 % Learning dates - variable to be generated
 disp("  Processing '" + var + "' for learningDates...")
 learningDates = rawData.(lower(var)+'Index');
@@ -42,7 +40,5 @@ learningDates_table = table(learningDates,targetVarData,'VariableNames',['date',
 learningDates = learningDates_table;
 disp('  Saving Learning dates, may take a while depending on input size...')
 save(fullfile(inputDir,'learningDates.mat'), 'learningDates', '-v7.3','-nocompression');
-
-toc
 
 end

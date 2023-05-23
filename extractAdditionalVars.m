@@ -8,8 +8,6 @@ function additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,Qdate
 %
 %
 
-tic
-
 if ~isempty(addVars)
     % Get fieldnames matching the string
     matchingFields     = string(fieldnames(rawData));
@@ -35,8 +33,6 @@ end
 disp('Saving additionalVars table...')
 allVarsSave = fullfile(inputDir, 'additionalVars.mat');
 save(allVarsSave, 'additionalVars', '-v7.3','-nocompression');
-
-toc
 
 end
 

@@ -131,10 +131,10 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if generateImage == 0 && validation == 1 && optimisation == 1
-    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType);
+    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,OutputType);
 elseif validation == 0
     OutputType = 1;
-    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType);
+    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,OutputType);
 elseif optimisation == 0
     disp('Optimisation run, synthetic image generation skipped...')
 elseif generateImage == 1 && validation == 1

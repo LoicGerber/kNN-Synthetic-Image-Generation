@@ -8,8 +8,6 @@ function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStar
 %
 %
 
-tic
-
 % Query dates - variable to be generated
 disp("  Processing '" + var + "' for queryDates...")
 
@@ -153,7 +151,5 @@ queryDates = matchedTargetVarTable;
 fprintf('\n')
 disp('  Saving Query dates, may take a while depending on input size...')
 save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
-
-toc
 
 end

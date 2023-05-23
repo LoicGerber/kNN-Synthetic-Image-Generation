@@ -1,4 +1,4 @@
-function GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,OutputType)
+function GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,OutputType)
 
 %
 %
@@ -7,8 +7,6 @@ function GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,Genera
 %
 %
 %
-
-tic
 
 outputDirImages = [outputDir 'syntheticImages\'];
 % Check if output directories exist, if not create them
@@ -28,11 +26,13 @@ selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 resultImages   = cell(size(sortedDates, 1), 1);
 
 % Display progress
-progress = 0;
-if OutputType == 1
-    fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
-else
-    fprintf(1,'Downloading synthetic images as NetCDF files: %3.0f%%\n',progress);
+if optimisation == 1
+    progress = 0;
+    if OutputType == 1
+        fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+    else
+        fprintf(1,'Downloading synthetic images as NetCDF files: %3.0f%%\n',progress);
+    end
 end
 % Loop through each row in sortedDates
 for rowIndex = 1:size(sortedDates,1)
@@ -160,12 +160,15 @@ for rowIndex = 1:size(sortedDates,1)
     else
         error('Unknown output type! Choose 1 for GeoTiff or 2 for NetCDF...')
     end
-    % Display computation progress
-    progress = (100*(rowIndex/size(sortedDates,1)));
-    fprintf(1,'\b\b\b\b%3.0f%%',progress);
+    if optimisation == 1
+        % Display computation progress
+        progress = (100*(rowIndex/size(sortedDates,1)));
+        fprintf(1,'\b\b\b\b%3.0f%%',progress);
+    end
 end
 
-fprintf('\n')
-toc
+if optimisation == 1
+    fprintf('\n')
+end
 
 end
