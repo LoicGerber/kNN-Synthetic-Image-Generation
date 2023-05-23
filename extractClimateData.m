@@ -1,4 +1,4 @@
-function climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,validation,optimPrep,inputDir)
+function climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir)
 
 %
 %
@@ -24,22 +24,12 @@ climateData.Properties.VariableNames = matchingDataFields;
 climateData.("date") = rawData.(datesFields(1));
 climateData = movevars(climateData,'date','Before',1);
 
-if validation == 1 && optimPrep == 1 % validation OFF
-    % Take all available climate dates
-    [r,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(min(QdateStart,LdateStart),'ConvertFrom','yyyyMMdd')-days(longWindow) ...
-        & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(max(QdateEnd,LdateEnd),'ConvertFrom','yyyymmdd'));
-elseif validation == 0 || optimPrep == 0 % validation or optimisation preparation ON
-    % Take dates only within Learning dates range
-    [r,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(LdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
-        & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(LdateEnd,'ConvertFrom','yyyymmdd'));
-    if LdateStart ~= QdateStart
-        [rVal,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(QdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
-            & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(QdateEnd,'ConvertFrom','yyyymmdd'));
-        r = unique([r; rVal]);
-    end
-else
-    error('Validation value is either 0 (OFF) or 1 (ON)...')
-end
+[rLD,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(LdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
+    & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(LdateEnd,'ConvertFrom','yyyymmdd'));
+[rQD,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(QdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
+    & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(QdateEnd,'ConvertFrom','yyyymmdd'));
+r = unique([rLD; rQD]);
+
 climateData = climateData(r,:);
 
 disp('Saving climateData table...')
