@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(metric,outputDir)
+function validationMetric = validationMetrics(metric,optimisation,outputDir)
 
 %
 %
@@ -45,7 +45,7 @@ for i = 1:numel(refImages)
     refImage(isnan(refImage)) = -999;
     synImage = imread(synImagePath);
     synImage(isnan(synImage)) = -999;
-    
+
     %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
     currentDate = convertCharsToStrings(strrep(refImageDate,'.tif',''));
 
@@ -78,9 +78,13 @@ for i = 1:numel(refImages)
     end
 end
 
-disp('Saving validationMetric.mat table...')
-validationSave = fullfile(outputDir,'validationMetric.mat');
-save(validationSave, 'validationMetric');
+if optimisation == 1
+    disp('Saving validationMetric.mat table...')
+    validationSave = fullfile(outputDir,'validationMetric.mat');
+    save(validationSave, 'validationMetric');
+else % for optimisation run
+    validationMetric = mean(validationMetric(:,2));
+end
 
 toc
 

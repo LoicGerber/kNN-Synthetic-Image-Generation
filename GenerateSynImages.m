@@ -15,6 +15,7 @@ outputDirImages = [outputDir 'syntheticImages\'];
 if ~exist(outputDirImages,'dir')
     mkdir(outputDirImages)
 end
+delete(fullfile(outputDirImages,'*'));
 
 % Preallocate variables for efficiency
 learningDatesDate = table2array(learningDates(:,'date'));
