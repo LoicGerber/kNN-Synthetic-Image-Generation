@@ -25,6 +25,9 @@ imgWidth  = size(learningData{1},2);
 selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 %resultImages   = cell(size(sortedDates, 1), 1);
 
+if bootstrap == 0
+    disp(['Bootstrap switch ON, using ' num2str(ensemble) ' ensembles'])
+end
 % Display progress
 if optimisation == 1
     progress = 0;
@@ -38,7 +41,9 @@ end
 for rowIndex = 1:size(sortedDates,1)
     if bootstrap == 0
         resultImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
-        bootstrapWeights = 1 - normalize(sortedDates{rowIndex,3},'range'); % normalise distance (3) / std (4) to [0 1]
+        invDistance      = 1 ./ sortedDates{rowIndex,3};
+        bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
+        %bootstrapWeights = invDistance/sum(invDistance);
         for bs = 1:ensemble
             bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true,bootstrapWeights);
             % Find the index of the current image in the Dates variable

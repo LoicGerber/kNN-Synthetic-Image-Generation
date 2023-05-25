@@ -49,9 +49,9 @@ coordRefSysCode   = 4326; % Coordinate reference system code, WGS84 = 4326, http
 
 % Functions switches
 parallelComputing = 1;    % 0 = parallel computing ON,  1 = parallel computing OFF
-NetCDFtoInputs    = 0;    % 0 = create inputs,          1 = load inputs
-loadOptiWeights   = 0;    % 0 = create generic weights, 1 = load weights
-KNNsorting        = 0;    % 0 = create sorted data,     1 = load sorted data
+NetCDFtoInputs    = 1;    % 0 = create inputs,          1 = load inputs
+loadOptiWeights   = 1;    % 0 = create generic weights, 1 = load weights
+KNNsorting        = 1;    % 0 = create sorted data,     1 = load sorted data
 generateImage     = 0;    % 0 = image generation ON,    1 = image generation OFF
 bootstrap         = 0;    % 0 = bootstrap ON,           1 = bootstrap OFF
 
