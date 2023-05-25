@@ -35,6 +35,7 @@ QdateEnd          = 19800110;                      % YYYYMMDD - End of the Gener
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20000331;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
+precision         = 1;                             % Precision needed, 1 = single, 2 = double
 
 % KNNDataGeneration
 shortWindow       = 5;    % number of days to consider for the short climate window
@@ -69,7 +70,7 @@ disp('--- 1. READING DATA ---')
 
 if (NetCDFtoInputs == 0 && validation == 1) || optimPrep == 0
     disp('Formatting input data for production run...')
-    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
+    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
     climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
@@ -77,7 +78,7 @@ if (NetCDFtoInputs == 0 && validation == 1) || optimPrep == 0
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif validation == 0 
     disp('Formatting input data for validation run...')
-    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,rawDir,inputDir);
+    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
     climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
