@@ -63,7 +63,8 @@ for i = 1:length(files)
             day_start = time_datenum(j);
             day_end   = day_start + 1;
             time_idx  = find(time_datenum >= day_start & time_datenum < day_end);
-            data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'double');
+            %data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'double');
+            data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'single');
             dates{j}  = datestr(day_start,'yyyymmdd');
         end
 
