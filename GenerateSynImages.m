@@ -40,6 +40,47 @@ end
 % Loop through each row in sortedDates
 for rowIndex = 1:size(sortedDates,1)
     if bootstrap == 0
+        % Find the index of the current image in the Dates variable
+        [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
+        % Select the Landsat image from the Landsat variable and add it to selectedImages
+        for imageIndex = 1:length(sortedDates{rowIndex,2})
+            selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
+        end
+        % Calculate either the mode or the mean of the selected Landsat images
+        if GenerationType == 1
+            % Calculate the mode and save it to resultImages
+            resultImages = mode(selectedImages(:,:,:),3);
+        elseif GenerationType == 2
+            % Calculate the mean and save it to resultImages
+            resultImages = mean(selectedImages(:,:,:),3);
+        elseif GenerationType == 3
+            % Calculate the median and save it to resultImages
+            resultImages = median(selectedImages(:,:,:),3);
+        else
+            error('Generation type not defined!')
+        end
+        % Write the resulting image to a GeoTIFF file
+        outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
+        fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
+        %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
+        if isempty(GeoRef)
+            %disp('    Georeferencing files missing! Unreferenced output...')
+            t = Tiff(fullDestinationFileName, 'w');
+            tagstruct.ImageLength         = imgLength;
+            tagstruct.ImageWidth          = imgWidth;
+            tagstruct.Compression         = Tiff.Compression.None;
+            tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+            tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+            tagstruct.BitsPerSample       = 32;
+            tagstruct.SamplesPerPixel     = 1;
+            tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+            t.setTag(tagstruct);
+            t.write(single(resultImages));
+            t.close();
+        else
+            geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+        end
+        % bootstrap
         resultImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
         invDistance      = 1 ./ sortedDates{rowIndex,3};
         bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
@@ -89,7 +130,7 @@ for rowIndex = 1:size(sortedDates,1)
         end
         resultImagesMean = mean(resultImages(:,:,:),3);
         % Write the resulting image to a GeoTIFF file
-        outputBaseName = string(sortedDates(rowIndex,1)) + '_All.tif';
+        outputBaseName = string(sortedDates(rowIndex,1)) + '_BootstrapAll.tif';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
         %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
         if isempty(GeoRef)

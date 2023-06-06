@@ -1,5 +1,5 @@
 %function sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir)
-function sortedDates = KNNSortingOptim(var,addVars,shortWindow,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,inputDir)
+function sortedDates = KNNSortingOptim(addVars,shortWindow,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,inputDir)
 
 %
 %
@@ -25,8 +25,9 @@ weightsTarget = Et_W;
 weightsShort  = [Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW];
 weightsLong   = [Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW];
 if ~isempty(addVars)
-    idxAddVars     = contains(weightsNames,addVars);
-    weightsAddVars = bayesWeights(:,idxAddVars);
+    error('addVars weights handling not implemented yet')
+    %idxAddVars     = contains(weightsNames,addVars);
+    %weightsAddVars = bayesWeights(:,idxAddVars);
 else
     weightsAddVars = [];
 end

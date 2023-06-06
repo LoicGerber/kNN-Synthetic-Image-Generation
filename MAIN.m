@@ -23,8 +23,8 @@ tStart = tic;
 
 % All directories
 rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\';           % Path to raw data
-inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';                 % Path to saved input data
-outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';                    % Path to results
+inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';      % Path to saved input data
+outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';         % Path to results
 
 % ConvertStructureToInputs
 var               = "Et";                          % Variable to be generated, with "example"
@@ -50,11 +50,11 @@ coordRefSysCode   = 4326; % Coordinate reference system code, WGS84 = 4326, http
 
 % Functions switches
 parallelComputing = 1;    % 0 = parallel computing ON,  1 = parallel computing OFF
-NetCDFtoInputs    = 0;    % 0 = create inputs,          1 = load inputs
-loadOptiWeights   = 0;    % 0 = create generic weights, 1 = load weights
-KNNsorting        = 0;    % 0 = create sorted data,     1 = load sorted data
-generateImage     = 0;    % 0 = image generation ON,    1 = image generation OFF
-bootstrap         = 0;    % 0 = bootstrap ON,           1 = bootstrap OFF
+NetCDFtoInputs    = 1;    % 0 = create inputs,          1 = load inputs
+loadOptiWeights   = 1;    % 0 = create generic weights, 1 = load weights
+KNNsorting        = 1;    % 0 = create sorted data,     1 = load sorted data
+generateImage     = 1;    % 0 = image generation ON,    1 = image generation OFF
+bootstrap         = 1;    % 0 = bootstrap ON,           1 = bootstrap OFF
 
 % Validation switch
 validation        = 1;    % 0 = validation ON,    1 = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -63,7 +63,7 @@ metric            = 1;    % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-o
 
 % Bayesian optimisation switch
 optimPrep         = 1;    % 0 = optimisation preparation ON, 1 = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-optimisation      = 1;    % 0 = optimisation ON, 1 = optimisation OFF
+optimisation      = 0;    % 0 = optimisation ON, 1 = optimisation OFF (!!! run AFTER optimisation preparation !!!)
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
@@ -172,7 +172,7 @@ if optimisation == 0
     end
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
-        var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,metric,optimisation,inputDir,outputDir);
+        var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
     % Run the Bayesian optimization
     if parallelComputing == 0
         results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
