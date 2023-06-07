@@ -69,7 +69,7 @@ disp('Starting loop to sort learning dates for each query date...')
 %fprintf(1,'Progress: %3.0f%%\n',progress);
 %fprintf(['\n' repmat('.',1,totQDates) '\n\n']);
 
-if parallelComputing == 0
+if parallelComputing == true
     parfor qd = 1:totQDates % parallel computing
         currentQDate = queryDatesDate(qd);
         dayOfYearQ = day(datetime(currentQDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
@@ -148,7 +148,7 @@ if parallelComputing == 0
                     targetDistance{ld} = cellfun(@abs,targetDistance{ld},'UniformOutput',false);
                     targetDistance{ld} = cellfun(@(x) mean(x,'all','omitnan'),targetDistance{ld},'UniformOutput',false);
                     targetDistance{ld} = sum(cellfun(@double,targetDistance{ld}),1,'omitnan');
-                    if optimisation == 1
+                    if optimisation == false
                         targetDistance{ld} = targetDistance{ld}.*weightsTarget;
                     end
 
@@ -161,7 +161,7 @@ if parallelComputing == 0
                         addVarsDistance{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
                         addVarsDistance{ld,1} = sum(cellfun(@double,addVarsDistance{ld,1}),1,'omitnan');
                         addVarsDistance{ld,2} = sum(cellfun(@double,addVarsDistance{ld,2}),1,'omitnan');
-                        if optimisation == 1
+                        if optimisation == false
                             if numel(addVars) == 1
                                 addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
                                 addVarsDistance{ld,2} = addVarsDistance{ld,2} .* cell2mat(weightsAddVars);
@@ -183,7 +183,7 @@ if parallelComputing == 0
                     climateDistance{ld,3} = cellfun(@(x) std(x,0,'all','omitnan'),climateDistance{ld,2},'UniformOutput',false);
                     climateDistance{ld,2} = cellfun(@(x) mean(x,'all','omitnan'),climateDistance{ld,2},'UniformOutput',false);
                     % Assign weights to corresponding index
-                    if optimisation == 1
+                    if optimisation == false
                         climateDistance{ld,2}(1:shortWindow,:)     = num2cell(cell2mat(climateDistance{ld,2}(1:shortWindow,:))     .* cell2mat(weightsShort));
                         climateDistance{ld,2}(shortWindow+1:end,:) = num2cell(cell2mat(climateDistance{ld,2}(shortWindow+1:end,:)) .* cell2mat(weightsLong));
                         climateDistance{ld,3}(1:shortWindow,:)     = num2cell(cell2mat(climateDistance{ld,3}(1:shortWindow,:))     .* cell2mat(weightsShort));
@@ -210,7 +210,7 @@ if parallelComputing == 0
 
         % Learning dates distance: 1 date, 2 distance, 3 std
         distance = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
-        if optimisation == 1
+        if optimisation == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
             distancesBest   = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
@@ -238,7 +238,7 @@ if parallelComputing == 0
         %toc
     end
 
-    if optimisation == 1
+    if optimisation == false
         sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
         sortedDates    = sortedDatesAll;
     else
@@ -330,7 +330,7 @@ else % serial computing
                     targetDistance{ld} = cellfun(@abs,targetDistance{ld},'UniformOutput',false);
                     targetDistance{ld} = cellfun(@(x) mean(x,'all','omitnan'),targetDistance{ld},'UniformOutput',false);
                     targetDistance{ld} = sum(cellfun(@double,targetDistance{ld}),1,'omitnan');
-                    if optimisation == 1
+                    if optimisation == false
                         targetDistance{ld} = targetDistance{ld}.*weightsTarget;
                     end
 
@@ -343,7 +343,7 @@ else % serial computing
                         addVarsDistance{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
                         addVarsDistance{ld,1} = sum(cellfun(@double,addVarsDistance{ld,1}),1,'omitnan');
                         addVarsDistance{ld,2} = sum(cellfun(@double,addVarsDistance{ld,2}),1,'omitnan');
-                        if optimisation == 1
+                        if optimisation == false
                             if numel(addVars) == 1
                                 addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
                                 addVarsDistance{ld,2} = addVarsDistance{ld,2} .* cell2mat(weightsAddVars);
@@ -365,7 +365,7 @@ else % serial computing
                     climateDistance{ld,3} = cellfun(@(x) std(x,0,'all','omitnan'),climateDistance{ld,2},'UniformOutput',false);
                     climateDistance{ld,2} = cellfun(@(x) mean(x,'all','omitnan'),climateDistance{ld,2},'UniformOutput',false);
                     % Assign weights to corresponding index
-                    if optimisation == 1
+                    if optimisation == false
                         climateDistance{ld,2}(1:shortWindow,:)     = num2cell(cell2mat(climateDistance{ld,2}(1:shortWindow,:))     .* cell2mat(weightsShort));
                         climateDistance{ld,2}(shortWindow+1:end,:) = num2cell(cell2mat(climateDistance{ld,2}(shortWindow+1:end,:)) .* cell2mat(weightsLong));
                         climateDistance{ld,3}(1:shortWindow,:)     = num2cell(cell2mat(climateDistance{ld,3}(1:shortWindow,:))     .* cell2mat(weightsShort));
@@ -392,7 +392,7 @@ else % serial computing
 
         % Learning dates distance: 1 date, 2 distance, 3 std
         distance = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
-        if optimisation == 1
+        if optimisation == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
             distancesBest   = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
@@ -420,7 +420,7 @@ else % serial computing
         %toc
     end
 
-    if optimisation == 1
+    if optimisation == false
         sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
         sortedDates    = sortedDatesAll;
     else
@@ -430,7 +430,7 @@ else % serial computing
     fprintf('\n')
 end
 
-if optimisation == 1
+if optimisation == false
     disp('Saving KNNSorting.mat file...')
     save(fullfile(inputDir,'KNNSorting.mat'),'sortedDates', '-v7.3','-nocompression'); % Save Ranked Learning Dates per Query Date
 else

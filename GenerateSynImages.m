@@ -25,11 +25,11 @@ imgWidth  = size(learningData{1},2);
 selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 %resultImages   = cell(size(sortedDates, 1), 1);
 
-if bootstrap == 0
+if bootstrap == true
     disp(['Bootstrap switch ON, using ' num2str(ensemble) ' ensembles'])
 end
 % Display progress
-if optimisation == 1
+if optimisation == false
     progress = 0;
     if OutputType == 1
         fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
@@ -39,7 +39,7 @@ if optimisation == 1
 end
 % Loop through each row in sortedDates
 for rowIndex = 1:size(sortedDates,1)
-    if bootstrap == 0
+    if bootstrap == true
         % Find the index of the current image in the Dates variable
         [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
         % Select the Landsat image from the Landsat variable and add it to selectedImages
@@ -275,14 +275,14 @@ for rowIndex = 1:size(sortedDates,1)
             error('Unknown output type! Choose 1 for GeoTiff or 2 for NetCDF...')
         end
     end
-    if optimisation == 1
+    if optimisation == false
         % Display computation progress
         progress = (100*(rowIndex/size(sortedDates,1)));
         fprintf(1,'\b\b\b\b%3.0f%%',progress);
     end
 end
 
-if optimisation == 1
+if optimisation == false
     fprintf('\n')
 end
 

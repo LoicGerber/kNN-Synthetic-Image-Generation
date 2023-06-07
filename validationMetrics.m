@@ -76,7 +76,7 @@ for i = 1:numel(refImages)
     end
 end
 
-if optimisation == 1
+if optimisation == false
     disp('Saving validationMetric.mat table...')
     validationSave = fullfile(outputDir,'validationMetric.mat');
     save(validationSave, 'validationMetric');

@@ -15,7 +15,7 @@ learningDates = rawData.(lower(var)+'Index');
 targetVarData = rawData.(lower(var));
 % extract possible learning dates
 [r,~] = find(learningDates>=LdateStart & learningDates<=LdateEnd);
-if optimPrep == 0
+if optimPrep == true
     if LdateStart ~= QdateStart
         [rQ,~] = find(learningDates>=QdateStart & learningDates<=QdateEnd);
         r = unique([r; rQ]);

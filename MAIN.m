@@ -49,26 +49,27 @@ OutputType        = 1;    % output data file type, 1 = GeoTIFF, 2 = individual N
 coordRefSysCode   = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
-parallelComputing = 1;    % 0 = parallel computing ON,  1 = parallel computing OFF
-NetCDFtoInputs    = 1;    % 0 = create inputs,          1 = load inputs
-loadOptiWeights   = 1;    % 0 = create generic weights, 1 = load weights
-KNNsorting        = 1;    % 0 = create sorted data,     1 = load sorted data
-generateImage     = 1;    % 0 = image generation ON,    1 = image generation OFF
-bootstrap         = 1;    % 0 = bootstrap ON,           1 = bootstrap OFF
+parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
+NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
+loadOptiWeights   = false;    % true = create generic weights, false = load weights
+KNNsorting        = false;    % true = create sorted data,     false = load sorted data
+generateImage     = false;    % true = image generation ON,    false = image generation OFF
+bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
-validation        = 1;    % 0 = validation ON,    1 = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-metricViz         = 1;    % 0 = visualisation ON, 1 = visualisation OFF
-metric            = 1;    % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
+validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+metricViz         = false;    % true = visualisation ON, false = visualisation OFF
+metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
-optimPrep         = 1;    % 0 = optimisation preparation ON, 1 = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-optimisation      = 0;    % 0 = optimisation ON, 1 = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+nbOptiRuns        = 10;       % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
 
-if (NetCDFtoInputs == 0 && validation == 1) || optimPrep == 0
+if (NetCDFtoInputs == true && validation == false) || optimPrep == true
     disp('Formatting input data for production run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
@@ -76,7 +77,7 @@ if (NetCDFtoInputs == 0 && validation == 1) || optimPrep == 0
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
     [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-elseif validation == 0 
+elseif validation == true
     disp('Formatting input data for validation run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
@@ -84,7 +85,7 @@ elseif validation == 0
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
     [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-elseif NetCDFtoInputs == 1 && validation == 1
+elseif NetCDFtoInputs == false && validation == false
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
     queryDates     = queryDates.queryDates;
@@ -101,10 +102,10 @@ elseif NetCDFtoInputs == 1 && validation == 1
     GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     GeoRef         = GeoRef.GeoRef;
 end
-if loadOptiWeights == 0
+if loadOptiWeights == true
     disp('Creating generic Weights.mat file...')
     Weights = createWeights(var,vars,addVars,inputDir);
-elseif loadOptiWeights == 1
+elseif loadOptiWeights == false
     disp('Loading Weights.mat file...')
     Weights = load(fullfile(inputDir,'Weights.mat'));
     Weights = Weights.Weights;
@@ -116,13 +117,13 @@ disp('--- 1. READING DATA DONE ---')
 disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
-if KNNsorting == 0 || validation == 0 || optimPrep == 0
+if KNNsorting == true || validation == true || optimPrep == true
     sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimisation,parallelComputing,inputDir);
-elseif KNNsorting == 1 && validation == 1 && optimisation == 1
+elseif KNNsorting == false && validation == false && optimisation == false
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
     sortedDates = sortedDates.sortedDates;
-elseif optimPrep == 1 && optimisation == 0
+elseif optimPrep == false && optimisation == true
     disp('Loading KNNDistances.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNDistances.mat'));
     sortedDates = sortedDates.sortedDates;
@@ -133,21 +134,21 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 %% Generation of Synthetic Images
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
-if generateImage == 0 && validation == 1 && optimisation == 1
+if generateImage == true && validation == false && optimisation == false
     GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
-elseif validation == 0
-    OutputType = 1;
+elseif validation == true
+    OutputType = false;
     GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
-elseif optimisation == 0
+elseif optimisation == true
     disp('Optimisation run, synthetic image generation skipped...')
-elseif generateImage == 1 && validation == 1
+elseif generateImage == false && validation == false
     disp('Synthetic image generation skipped...')
 end
 
 disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 
 %% Validation
-if (validation == 0 || metricViz == 0) && optimisation == 1
+if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
     validationMetric = validationMetrics(metric,optimisation,outputDir);
@@ -157,7 +158,7 @@ if (validation == 0 || metricViz == 0) && optimisation == 1
 end
 
 %% Optimisation
-if optimisation == 0
+if optimisation == true
     disp('--- 4. OPTIMISATION ---')
     
     
@@ -174,12 +175,12 @@ if optimisation == 0
     fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
         var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
     % Run the Bayesian optimization
-    if parallelComputing == 0
+    if parallelComputing == true
         results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
-            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',10,'UseParallel',true);
+            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
     else
         results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
-            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',10);
+            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
     end
     % Retrieve the optimal weights
     optimalWeights = results.XAtMinObjective;
