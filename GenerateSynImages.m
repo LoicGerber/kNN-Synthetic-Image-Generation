@@ -81,12 +81,13 @@ for rowIndex = 1:size(sortedDates,1)
             geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
         end
         % bootstrap
-        resultImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
-        invDistance      = 1 ./ sortedDates{rowIndex,3};
-        bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
+        resultImages     = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
+        %invDistance      = 1 ./ sortedDates{rowIndex,3};
+        %bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
         %bootstrapWeights = invDistance/sum(invDistance);
         for bs = 1:ensemble
-            bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true,bootstrapWeights);
+            %bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true,bootstrapWeights);
+            bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true);
             % Find the index of the current image in the Dates variable
             [~, dateIndex] = ismember(bootstrapDates,learningDatesDate);
             % Select the Landsat image from the Landsat variable and add it to selectedImages

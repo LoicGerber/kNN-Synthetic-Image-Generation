@@ -16,6 +16,7 @@ targetVarData = rawData.(lower(var));
 % extract possible learning dates
 [r,~] = find(learningDates>=LdateStart & learningDates<=LdateEnd);
 if optimPrep == true
+    % if in preparation for optimisation, include Query dates in Learning dates
     if LdateStart ~= QdateStart
         [rQ,~] = find(learningDates>=QdateStart & learningDates<=QdateEnd);
         r = unique([r; rQ]);

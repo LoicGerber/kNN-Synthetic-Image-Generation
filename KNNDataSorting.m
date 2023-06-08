@@ -17,6 +17,7 @@ elseif any(size(queryDates)==0)
     error('At least one dimension of QueryDates is 0! Code exited...')
 end
 
+
 % the learning dates are ranked based on a criterion that quantifies their distance to a given query date
 
 % adaptation to have only one big climateDataAll file, one learningDates
@@ -24,14 +25,21 @@ end
 climateDates = table2array(climateData(:,'date'));
 climateMaps  = table2array(removevars(climateData,'date'));
 
-totQDates = size(queryDates,1);
-totLDates = size(learningDates,1);
-
 queryDatesDate = table2array(queryDates(:,1));
 queryDatesData = table2array(queryDates(:,2));
 
 learningDatesDate = table2array(learningDates(:,1));
 learningDatesData = table2array(learningDates(:,2));
+
+if optimisation == false
+    % Define learningDates as itself minus the query dates
+    ismem = ismember(learningDatesDate, queryDatesDate);
+    learningDatesDate = learningDatesDate(~ismem);
+    learningDatesData = learningDatesData(~ismem);
+end
+
+totQDates = size(queryDatesDate,1);
+totLDates = size(learningDatesDate,1);
 
 sortedDates   = cell(totQDates, 1);
 sortedData    = cell(totQDates, 1);

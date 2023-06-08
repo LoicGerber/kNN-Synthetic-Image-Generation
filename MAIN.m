@@ -38,54 +38,47 @@ outputTime        = 1;                             % Image generation timestep: 
 precision         = 1;                             % Precision needed, 1 = single, 2 = double
 
 % KNNDataGeneration
-shortWindow       = 5;    % number of days to consider for the short climate window
-longWindow        = 30;   % number of days to consider for the long climate window
-nbImages          = 5;    % K, number of days to consider for the generation of images
+shortWindow       = 5;        % number of days to consider for the short climate window
+longWindow        = 30;       % number of days to consider for the long climate window
+nbImages          = 5;        % K, number of days to consider for the generation of images
 
 % GenerateSynImages
-ensemble          = 20;   % when using bootstrap, number of ensembles created
-GenerationType    = 2;    % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
-OutputType        = 1;    % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
-coordRefSysCode   = 4326; % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
+ensemble          = 20;       % when using bootstrap, number of ensembles created
+GenerationType    = 2;        % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
+OutputType        = 1;        % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
+coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
-loadOptiWeights   = false;    % true = create generic weights, false = load weights
-KNNsorting        = false;    % true = create sorted data,     false = load sorted data
-generateImage     = false;    % true = image generation ON,    false = image generation OFF
-bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
+NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
+createOptiWeights = false;    % true = create generic weights, false = load optimised weights
+KNNsorting        = true;    % true = create sorted data,     false = load sorted data
+generateImage     = true;    % true = image generation ON,    false = image generation OFF
+bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
+validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;    % true = visualisation ON, false = visualisation OFF
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
 optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
-nbOptiRuns        = 10;       % Number of runs for the Bayesian optimisation
+optimisation      = false;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+nbOptiRuns        = 5;       % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
 
-if (NetCDFtoInputs == true && validation == false) || optimPrep == true
-    disp('Formatting input data for production run...')
+if NetCDFtoInputs == true || optimPrep == true || validationPrep == true
+    disp('Formatting input data for production/weights optimisation/validation run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
     climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
+    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-elseif validation == true
-    disp('Formatting input data for validation run...')
-    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
-    GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
-    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir);
-    additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
-elseif NetCDFtoInputs == false && validation == false
+elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
     queryDates     = queryDates.queryDates;
@@ -102,13 +95,13 @@ elseif NetCDFtoInputs == false && validation == false
     GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     GeoRef         = GeoRef.GeoRef;
 end
-if loadOptiWeights == true
+if createOptiWeights == true
     disp('Creating generic Weights.mat file...')
     Weights = createWeights(var,vars,addVars,inputDir);
-elseif loadOptiWeights == false
-    disp('Loading Weights.mat file...')
-    Weights = load(fullfile(inputDir,'Weights.mat'));
-    Weights = Weights.Weights;
+elseif createOptiWeights == false
+    disp('Loading optimisedWeights.mat file...')
+    optimisedWeights = load(fullfile(inputDir,'optimisedWeights.mat'));
+    Weights = optimisedWeights.optimisedWeights;
 end
 
 disp('--- 1. READING DATA DONE ---')
@@ -117,9 +110,9 @@ disp('--- 1. READING DATA DONE ---')
 disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
-if KNNsorting == true || validation == true || optimPrep == true
+if KNNsorting == true || (validationPrep == true && validation == false) || optimPrep == true
     sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimisation,parallelComputing,inputDir);
-elseif KNNsorting == false && validation == false && optimisation == false
+elseif KNNsorting == false && validationPrep == false && optimPrep == false
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
     sortedDates = sortedDates.sortedDates;
@@ -137,7 +130,7 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 if generateImage == true && validation == false && optimisation == false
     GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
 elseif validation == true
-    OutputType = false;
+    OutputType = 1;
     GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
 elseif optimisation == true
     disp('Optimisation run, synthetic image generation skipped...')
@@ -183,8 +176,9 @@ if optimisation == true
             'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
     end
     % Retrieve the optimal weights
-    optimalWeights = results.XAtMinObjective;
-    
+    disp('  Saving optimisedWeights.mat...')
+    optimisedWeights = results.XAtMinObjective;
+    save(fullfile(inputDir,'optimisedWeights.mat'), 'optimisedWeights', '-v7.3','-nocompression');
     
     disp('--- 4. OPTIMISATION DONE ---')
 end

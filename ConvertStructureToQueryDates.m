@@ -1,4 +1,4 @@
-function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validation,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -18,13 +18,16 @@ imgLength = size(learningDates{1,2}{1,1},1);
 imgWidth  = size(learningDates{1,2}{1,1},2);
 
 % Query dates and adapt Learning dates if Validation ON
-if validation == false && optimPrep == false % VALIDATION OFF
+if validationPrep == false && optimPrep == false % VALIDATION OFF
     % Query dates are all dates in query window, without dates in Learning dates
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         queryDates = datesAll(r);
         queryDates = setdiff(queryDates, learningDatesDate);
+        if isempty(queryDates)
+            error('Query dates match with learning dates, nothing to generate')
+        end
     elseif outputTime == 2 % monthly
         [r,~]      = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         queryDates = datesAll(r);
@@ -34,10 +37,13 @@ if validation == false && optimPrep == false % VALIDATION OFF
         lastDays   = find(dateVec(:,3) == eomday(dateVec(:,1), dateVec(:,2)));
         % Select the dates that are not in learningDates
         queryDates = setdiff(queryDates(lastDays), learningDatesDate);
+        if isempty(queryDates)
+            error('Query dates match with learning dates, nothing to generate')
+        end
     else
         error('Invalid outputTime value')
     end
-elseif validation == true || optimPrep == true % validation or optimPrep ON
+elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     % Query dates are all dates in query window, replacing dates in Learning dates
     if ~exist(outputDir,'dir')
         mkdir(outputDir)
@@ -103,7 +109,7 @@ end
 
 % Select closest targetVar index for each Query date
 nearestIdx = nan(size(queryDates));
-if validation == false && optimPrep == false % validation OFF
+if validationPrep == false && optimPrep == false % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
@@ -134,7 +140,7 @@ if validation == false && optimPrep == false % validation OFF
             matchedTargetVarTable{i, 2} = {nan(size(targetVarData{1,1}))};
         end
     end
-elseif validation == true || optimPrep == true % validation or optimPrep ON
+elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
     matchedTargetVarTable = table('Size',size(matchedTargetVarDates), 'VariableTypes',{'double', 'cell'});
     targetVarData = learningDates.(var);
