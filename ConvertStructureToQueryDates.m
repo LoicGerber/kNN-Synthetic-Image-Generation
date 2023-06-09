@@ -51,6 +51,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     if ~exist(fullfile(outputDir,'referenceImages'),'dir')
         mkdir(fullfile(outputDir,'referenceImages'))
     end
+    delete(fullfile(outputDir,'referenceImages','*'));
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);

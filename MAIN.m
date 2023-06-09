@@ -30,17 +30,17 @@ outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn
 var               = "Et";                          % Variable to be generated, with "example"
 vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
-QdateStart        = 19800101;                      % YYYYMMDD - Start of the Generation period
-QdateEnd          = 19800110;                      % YYYYMMDD - End of the Generation period
+QdateStart        = 20000601;                      % YYYYMMDD - Start of the Generation period
+QdateEnd          = 20000610;                      % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
-LdateEnd          = 20000331;                      % YYYYMMDD - End of the Learning period
+LdateEnd          = 20001231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
 precision         = 1;                             % Precision needed, 1 = single, 2 = double
 
 % KNNDataGeneration
 shortWindow       = 5;        % number of days to consider for the short climate window
 longWindow        = 30;       % number of days to consider for the long climate window
-nbImages          = 5;        % K, number of days to consider for the generation of images
+nbImages          = 10;       % K, number of days to consider for the generation of images
 
 % GenerateSynImages
 ensemble          = 20;       % when using bootstrap, number of ensembles created
@@ -50,11 +50,11 @@ coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, 
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
+NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
 createOptiWeights = false;    % true = create generic weights, false = load optimised weights
-KNNsorting        = true;    % true = create sorted data,     false = load sorted data
-generateImage     = true;    % true = image generation ON,    false = image generation OFF
-bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
+KNNsorting        = false;    % true = create sorted data,     false = load sorted data
+generateImage     = false;    % true = image generation ON,    false = image generation OFF
+bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
 validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -64,8 +64,8 @@ metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Pha
 
 % Bayesian optimisation switch
 optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-optimisation      = false;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
-nbOptiRuns        = 5;       % Number of runs for the Bayesian optimisation
+optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+nbOptiRuns        = 5;        % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
@@ -95,7 +95,7 @@ elseif NetCDFtoInputs == false && validationPrep == false
     GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     GeoRef         = GeoRef.GeoRef;
 end
-if createOptiWeights == true
+if createOptiWeights == true || optimPrep == true || optimisation == true
     disp('Creating generic Weights.mat file...')
     Weights = createWeights(var,vars,addVars,inputDir);
 elseif createOptiWeights == false
@@ -111,7 +111,7 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if KNNsorting == true || (validationPrep == true && validation == false) || optimPrep == true
-    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimisation,parallelComputing,inputDir);
+    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,parallelComputing,inputDir);
 elseif KNNsorting == false && validationPrep == false && optimPrep == false
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
