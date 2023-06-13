@@ -1,5 +1,5 @@
 %function sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir)
-function sortedDates = KNNSortingOptim(addVars,shortWindow,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,inputDir)
+function sortedDates = KNNSortingOptim(sortedDates,addVars,shortWindow,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir)
 
 %
 %
@@ -10,8 +10,12 @@ function sortedDates = KNNSortingOptim(addVars,shortWindow,Et_W,Tavg_ShortW,Tmin
 %
 
 % 1 Q date, 2 L dates, 3 target distance, 4 addVars distances, 5 climate distances, 6 std
-distances = load(fullfile(inputDir,'KNNDistances.mat'));
-distances = distances.sortedDates;
+if saveOptimPrep == true
+    distances = load(fullfile(inputDir,'KNNDistances.mat'));
+    distances = distances.sortedDates;
+else
+    distances = sortedDates;
+end
 
 % Assign different weights
 % weightsNames  = {bayesWeights.Name};
@@ -51,7 +55,7 @@ for qd = 1:totQDates
         currentLDate = distances{1,2}{ld,1};
         % Target variable comparison
         targetDistance{ld,1} = distances{qd,3}{ld,1};
-        targetDistance{ld,1} = targetDistance{ld,1}.*weightsTarget;
+        targetDistance{ld,1} = targetDistance{ld,1} .* weightsTarget;
 
         % Additional variable comparison
         if ~isempty(addVars)
@@ -72,16 +76,16 @@ for qd = 1:totQDates
         % Climate distance
         climateDistance{ld,1} = currentLDate;
         climateDistance{ld,2} = distances{qd,5}{ld,1};
-        climateDistance{ld,2}(1:shortWindow,:)     = num2cell(cell2mat(climateDistance{ld,2}(1:shortWindow,:))     .* weightsShort);
-        climateDistance{ld,2}(shortWindow+1:end,:) = num2cell(cell2mat(climateDistance{ld,2}(shortWindow+1:end,:)) .* weightsLong);
-        climateDistance{ld,2} = sum(cellfun(@double,climateDistance{ld,2}),1,'omitnan');
+        climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
+        climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
+        climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
         climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
         
         % Std climate distance
         stdDistance{ld,1} = distances{qd,6}{ld,1};
-        stdDistance{ld,1}(1:shortWindow,:)     = num2cell(cell2mat(stdDistance{ld,1}(1:shortWindow,:))     .* weightsShort);
-        stdDistance{ld,1}(shortWindow+1:end,:) = num2cell(cell2mat(stdDistance{ld,1}(shortWindow+1:end,:)) .* weightsLong);
-        stdDistance{ld,1} = sum(cellfun(@double,stdDistance{ld,1}),1,'omitnan');
+        stdDistance{ld,1}(1,:) = stdDistance{ld,1}(1,:) .* weightsShort;
+        stdDistance{ld,1}(2,:) = stdDistance{ld,1}(2,:) .* weightsLong;
+        stdDistance{ld,1} = sum(stdDistance{ld,1},1,'omitnan');
         stdDistance{ld,1} = sum(stdDistance{ld,1},2,'omitnan')+addVarsDistance{ld,2};
     end
 

@@ -63,7 +63,8 @@ metricViz         = false;    % true = visualisation ON, false = visualisation O
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
-optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+optimPrep         = true;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+saveOptimPrep     = false;
 optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
 nbOptiRuns        = 5;        % Number of runs for the Bayesian optimisation
 
@@ -111,7 +112,7 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if KNNsorting == true || (validationPrep == true && validation == false) || optimPrep == true
-    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,parallelComputing,inputDir);
+    sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir);
 elseif KNNsorting == false && validationPrep == false && optimPrep == false
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
@@ -154,6 +155,9 @@ end
 if optimisation == true
     disp('--- 4. OPTIMISATION ---')
     
+    if saveOptimPrep == true
+        sortedDates = [];
+    end
     
     % Get the table variable names
     variableNames = string(Weights.Properties.VariableNames);
@@ -166,7 +170,7 @@ if optimisation == true
     end
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
-        var,addVars,learningDates,shortWindow,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
+        var,addVars,learningDates,sortedDates,saveOptimPrep,shortWindow,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
     % Run the Bayesian optimization
     if parallelComputing == true
         results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
