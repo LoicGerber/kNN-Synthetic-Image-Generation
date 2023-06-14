@@ -1,5 +1,5 @@
 %function sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir)
-function sortedDates = KNNSortingOptim(sortedDates,addVars,shortWindow,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir)
+function sortedDates = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir)
 
 %
 %
@@ -65,8 +65,8 @@ for qd = 1:totQDates
                 addVarsDistance{ld,2} = addVarsDistance{ld,2} .* weightsAddVars;
             else
                 addVarsDistance{:,ld} = distances{:,ld};
-                addVarsDistance{:,ld} = num2cell(cell2mat(addVarsDistance{:,ld}) .* weightsAddVars);
-                addVarsDistance{ld,2} = num2cell(cell2mat(addVarsDistance{ld,2}) .* weightsAddVars);
+                addVarsDistance{:,ld} = addVarsDistance{:,ld} .* weightsAddVars;
+                addVarsDistance{ld,2} = addVarsDistance{ld,2} .* weightsAddVars;
             end
         else
             addVarsDistance{ld,1} = 0;
@@ -97,9 +97,9 @@ for qd = 1:totQDates
     distSorted      = distancesSort(1:nbImages,2);
     stdSorted       = distancesSort(1:nbImages,3);
     sortedDates{qd} = currentQDate;
-    sortedData{qd}  = cellfun(@double,distancesBest);
-    sortedDist{qd}  = cellfun(@double,distSorted);
-    sortedStd{qd}   = cellfun(@double,stdSorted);
+    sortedData{qd}  = cell2mat(distancesBest);
+    sortedDist{qd}  = cell2mat(distSorted);
+    sortedStd{qd}   = cell2mat(stdSorted);
 end
 
 sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];

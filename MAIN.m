@@ -111,7 +111,7 @@ disp('--- 1. READING DATA DONE ---')
 disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
-if KNNsorting == true || (validationPrep == true && validation == false) || optimPrep == true
+if KNNsorting == true || validationPrep == true || optimPrep == true
     sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir);
 elseif KNNsorting == false && validationPrep == false && optimPrep == false
     disp('Loading sortedDates.mat file...')
@@ -170,7 +170,7 @@ if optimisation == true
     end
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
-        var,addVars,learningDates,sortedDates,saveOptimPrep,shortWindow,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
+        var,addVars,learningDates,sortedDates,saveOptimPrep,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
     % Run the Bayesian optimization
     if parallelComputing == true
         results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
