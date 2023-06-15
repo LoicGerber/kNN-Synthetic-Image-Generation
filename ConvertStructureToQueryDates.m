@@ -1,4 +1,4 @@
-function [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -14,8 +14,8 @@ disp("  Processing '" + var + "' for queryDates...")
 datesAll = climateData.date;
 learningDatesDate = learningDates.date;
 
-imgLength = size(learningDates{1,2}{1,1},1);
-imgWidth  = size(learningDates{1,2}{1,1},2);
+%imgLength = size(learningDates{1,2}{1,1},1);
+%imgWidth  = size(learningDates{1,2}{1,1},2);
 
 % Query dates and adapt Learning dates if Validation ON
 if validationPrep == false && optimPrep == false % VALIDATION OFF
@@ -43,6 +43,7 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
     else
         error('Invalid outputTime value')
     end
+    refValidation = [];
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     % Query dates are all dates in query window, replacing dates in Learning dates
     if ~exist(outputDir,'dir')
@@ -73,38 +74,48 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     learningDataValidation  = learningDates(~ismem,:);
     learningDatesValidation = learningDatesDate(ismem);
     referenceValidation     = table2cell(learningDates(ismem,var));
+    imagesRefValidation     = nan(size(referenceValidation{1,1},1),size(referenceValidation{1,1},2),size(learningDatesValidation,1));
     % Display progress
-    progress = 0;
-    fprintf(1,'  Reference images for validation download progress: %3.0f%%\n',progress);
-    if isempty(GeoRef)
-        for i = 1:size(learningDatesValidation,1)
-            %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
-            t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
-            tagstruct.ImageLength         = imgLength;
-            tagstruct.ImageWidth          = imgWidth;
-            tagstruct.Compression         = Tiff.Compression.None;
-            tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-            tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-            tagstruct.BitsPerSample       = 32;
-            tagstruct.SamplesPerPixel     = 1;
-            tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-            t.setTag(tagstruct);
-            t.write(single(referenceValidation{i,1}));
-            t.close();
-            % Display computation progress
-            progress = (100*(i/size(learningDatesValidation,1)));
-            fprintf(1,'\b\b\b\b%3.0f%%',progress);
-        end
-    else
-        for i = 1:size(learningDatesValidation,1)
-            %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
-            geotiffwrite(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), ...
-                single(referenceValidation{i,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
-            % Display computation progress
-            progress = (100*(i/size(learningDatesValidation,1)));
-            fprintf(1,'\b\b\b\b%3.0f%%',progress);
-        end
+%     progress = 0;
+%     fprintf(1,'  Reference images for validation download progress: %3.0f%%\n',progress);
+%     if isempty(GeoRef)
+%         for i = 1:size(learningDatesValidation,1)
+%             %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
+%             t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
+%             tagstruct.ImageLength         = imgLength;
+%             tagstruct.ImageWidth          = imgWidth;
+%             tagstruct.Compression         = Tiff.Compression.None;
+%             tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+%             tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+%             tagstruct.BitsPerSample       = 32;
+%             tagstruct.SamplesPerPixel     = 1;
+%             tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+%             t.setTag(tagstruct);
+%             t.write(single(referenceValidation{i,1}));
+%             t.close();
+%             % Display computation progress
+%             progress = (100*(i/size(learningDatesValidation,1)));
+%             fprintf(1,'\b\b\b\b%3.0f%%',progress);
+%             imagesRefValidation(:,:,i) = referenceValidation{i,1};
+%         end
+%     else
+%         for i = 1:size(learningDatesValidation,1)
+%             %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
+%             geotiffwrite(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), ...
+%                 single(referenceValidation{i,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+%             imagesRefValidation(:,:,i) = referenceValidation{i,1};
+%             % Display computation progress
+%             progress = (100*(i/size(learningDatesValidation,1)));
+%             fprintf(1,'\b\b\b\b%3.0f%%',progress);
+%         end
+%     end
+    for i = 1:size(learningDatesValidation,1)
+        imagesRefValidation(:,:,i) = referenceValidation{i,1};
     end
+    refValidation.date = learningDatesValidation;
+    refValidation.maps = imagesRefValidation;
+    disp('Saving refValidation.mat file...')
+    save(fullfile(inputDir,'refValidation.mat'), 'refValidation', '-v7.3','-nocompression');
     learningDates = learningDataValidation;
 end
 

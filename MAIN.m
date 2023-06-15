@@ -22,7 +22,7 @@ delete(poolobj);
 tStart = tic;
 
 % All directories
-rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\';           % Path to raw data
+rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';           % Path to raw data
 inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';      % Path to saved input data
 outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';         % Path to results
 
@@ -51,7 +51,7 @@ coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
 NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
-createOptiWeights = false;    % true = create generic weights, false = load optimised weights
+createGenWeights  = true;    % true = create generic weights, false = load optimised weights
 KNNsorting        = false;    % true = create sorted data,     false = load sorted data
 generateImage     = false;    % true = image generation ON,    false = image generation OFF
 bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
@@ -77,7 +77,7 @@ if NetCDFtoInputs == true || optimPrep == true || validationPrep == true
     GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
     climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
-    [queryDates,learningDates] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir);
+    [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
@@ -96,10 +96,10 @@ elseif NetCDFtoInputs == false && validationPrep == false
     GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     GeoRef         = GeoRef.GeoRef;
 end
-if createOptiWeights == true || optimPrep == true || optimisation == true
+if createGenWeights == true || optimPrep == true || optimisation == true
     disp('Creating generic Weights.mat file...')
     Weights = createWeights(var,vars,addVars,inputDir);
-elseif createOptiWeights == false
+elseif createGenWeights == false
     disp('Loading optimisedWeights.mat file...')
     optimisedWeights = load(fullfile(inputDir,'optimisedWeights.mat'));
     Weights = optimisedWeights.optimisedWeights;
@@ -128,11 +128,8 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 %% Generation of Synthetic Images
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
-if generateImage == true && validation == false && optimisation == false
-    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
-elseif validation == true
-    OutputType = 1;
-    GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,optimisation,bootstrap,ensemble,OutputType);
+if (generateImage == true || validation == true) && optimisation == false
+    synImages = GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
 elseif optimisation == true
     disp('Optimisation run, synthetic image generation skipped...')
 elseif generateImage == false && validation == false
@@ -145,7 +142,7 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(metric,optimisation,outputDir);
+    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,inputDir,outputDir);
     visualiseMetrics(validationMetric,metric,LdateStart,LdateEnd,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
@@ -162,22 +159,18 @@ if optimisation == true
     % Get the table variable names
     variableNames = string(Weights.Properties.VariableNames);
     % Iterate over each variable
-    bayesWeights = [];
     for i = 1:numel(variableNames)
-        %bayesWeights{i} = optimizableVariable(variableNames{i},[0,1],'Type','real');
-        eval(sprintf('%s = optimizableVariable(variableNames{i}, [0,1], ''Type'', ''real'');', variableNames{i}));
-        eval(sprintf('bayesWeights = [bayesWeights %s];',variableNames{i}));
+        bayesWeights(i) = optimizableVariable(variableNames{i}, [0, 1], 'Type', 'real');
     end
     % Set up the Bayesian optimization
-    fun = @(x)computeObjectiveOptim(x.Et_W,x.Tavg_ShortW,x.Tmin_ShortW,x.Tmax_ShortW,x.Pre_ShortW,x.Tavg_LongW,x.Tmin_LongW,x.Tmax_LongW,x.Pre_LongW, ...
-        var,addVars,learningDates,sortedDates,saveOptimPrep,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,optimisation,inputDir,outputDir);
+    fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), x.(9), ...
+        var, addVars, learningDates, sortedDates, refValidation, saveOptimPrep, nbImages, ...
+        GeoRef, GenerationType, bootstrap, ensemble, metric, optimisation, inputDir, outputDir);
     % Run the Bayesian optimization
     if parallelComputing == true
-        results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
-            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
+        results = bayesopt(fun,bayesWeights,'Verbose',2,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
     else
-        results = bayesopt(fun,[Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW], ...
-            'Verbose',1,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
+        results = bayesopt(fun,bayesWeights,'Verbose',2,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
     end
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')

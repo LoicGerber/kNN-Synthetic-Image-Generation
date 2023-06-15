@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(metric,optimisation,outputDir)
+function validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,outputDir)
 
 %
 %
@@ -8,44 +8,39 @@ function validationMetric = validationMetrics(metric,optimisation,outputDir)
 %
 %
 
-% Define the two directories
-refDir = fullfile(outputDir,'referenceImages');
-synDir = fullfile(outputDir,'syntheticImages');
+synValidation = synImages;
 
-% Get a list of all files in the reference directory
-refImages = dir(fullfile(refDir, '*.tif'));
-% Check that there are no extra generated images
-synImages = dir(fullfile(synDir, '*.tif'));
-if numel(refImages) ~= numel(synImages)
+refImages = refValidation.maps;
+refDates  = refValidation.date;
+synImages = synValidation.maps;
+synDates  = synValidation.date;
+
+if size(refImages,3) ~= size(synImages,3)
     error('Numbers of reference and synthetic images do not match');
 end
 
 % Initialize an array to store the RMSE values
-validationMetric = zeros(numel(refImages), 2);
+validationMetric = zeros(size(refImages,3), 2);
 
 % Loop through each file in the reference directory
-for i = 1:numel(refImages)
+for i = 1:size(refImages,3)
     % Get the reference image filename and full path
-    refImageDate = refImages(i).name;
-    refImagePath = fullfile(refDir, refImageDate);
-
+    refImageDate = refDates(i);
     % Get the generated image filename and full path
-    synImageDate = refImages(i).name;
-    synImagePath = fullfile(synDir, synImageDate);
-
-    % Check that the generated image file exists and has the correct name
-    if ~exist(synImagePath, 'file')
-        error('Synthetic image %s does not exist or has the wrong name', synImageDate);
-    end
+    synImageDate = synDates(i);
 
     % Load the reference and generated images
-    refImage = imread(refImagePath);
+    refImage = refImages(:,:,i);
     refImage(isnan(refImage)) = -999;
-    synImage = imread(synImagePath);
+    synImage = synImages(:,:,i);
     synImage(isnan(synImage)) = -999;
 
     %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
-    currentDate = convertCharsToStrings(strrep(refImageDate,'.tif',''));
+    if refImageDate == synImageDate
+        currentDate = refImageDate;
+    else
+        error('Dates do not match')
+    end
 
     if metric == 1
         % Calculate the RMSE
