@@ -75,45 +75,12 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     learningDatesValidation = learningDatesDate(ismem);
     referenceValidation     = table2cell(learningDates(ismem,var));
     imagesRefValidation     = nan(size(referenceValidation{1,1},1),size(referenceValidation{1,1},2),size(learningDatesValidation,1));
-    % Display progress
-%     progress = 0;
-%     fprintf(1,'  Reference images for validation download progress: %3.0f%%\n',progress);
-%     if isempty(GeoRef)
-%         for i = 1:size(learningDatesValidation,1)
-%             %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
-%             t = Tiff(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), 'w');
-%             tagstruct.ImageLength         = imgLength;
-%             tagstruct.ImageWidth          = imgWidth;
-%             tagstruct.Compression         = Tiff.Compression.None;
-%             tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-%             tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-%             tagstruct.BitsPerSample       = 32;
-%             tagstruct.SamplesPerPixel     = 1;
-%             tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-%             t.setTag(tagstruct);
-%             t.write(single(referenceValidation{i,1}));
-%             t.close();
-%             % Display computation progress
-%             progress = (100*(i/size(learningDatesValidation,1)));
-%             fprintf(1,'\b\b\b\b%3.0f%%',progress);
-%             imagesRefValidation(:,:,i) = referenceValidation{i,1};
-%         end
-%     else
-%         for i = 1:size(learningDatesValidation,1)
-%             %disp(['  Saving ',num2str(learningDatesValidation(i)),' reference image for validation...'])
-%             geotiffwrite(fullfile(outputDir,'referenceImages',strcat(num2str(learningDatesValidation(i)),'.tif')), ...
-%                 single(referenceValidation{i,1}),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
-%             imagesRefValidation(:,:,i) = referenceValidation{i,1};
-%             % Display computation progress
-%             progress = (100*(i/size(learningDatesValidation,1)));
-%             fprintf(1,'\b\b\b\b%3.0f%%',progress);
-%         end
-%     end
+    % Create matrix of reference dates
     for i = 1:size(learningDatesValidation,1)
         imagesRefValidation(:,:,i) = referenceValidation{i,1};
     end
     refValidation.date = learningDatesValidation;
-    refValidation.maps = imagesRefValidation;
+    refValidation.maps = single(imagesRefValidation);
     disp('Saving refValidation.mat file...')
     save(fullfile(inputDir,'refValidation.mat'), 'refValidation', '-v7.3','-nocompression');
     learningDates = learningDataValidation;

@@ -74,7 +74,6 @@ sortedData    = cell(totQDates, 1);
 sortedTarget  = cell(totQDates, 1);
 sortedAddVars = cell(totQDates, 1);
 sortedDist    = cell(totQDates, 1);
-sortedStd     = cell(totQDates, 1);
 
 if ~isempty(addVars)
     addVarsDates = table2array(additionalVars(:,'date'));
@@ -147,8 +146,8 @@ if parallelComputing == true
 
         % Compute the distances between the query climate and the climate for each learning date
         targetDistance  = cell(totLDates,1);
-        addVarsDistance = cell(totLDates,2);
-        climateDistance = cell(totLDates,3);
+        addVarsDistance = cell(totLDates,1);
+        climateDistance = cell(totLDates,2);
         % Display progress - only for serial computing
         %fprintf(1,'    Progress for current query date: %3.0f%%\n',progress);
         for ld = 1:totLDates
@@ -180,56 +179,44 @@ if parallelComputing == true
                     end
 
                     % Target variable comparison
-                    targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryDatesData(qd), learningDatesData(ld), 'UniformOutput', false);
-                    targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
+                    targetDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            queryDatesData(qd), learningDatesData(ld,1), 'UniformOutput', false);
+                    targetDistance{ld,1} = sum(cell2mat(targetDistance{ld,1}),1,'omitnan');
                     if optimPrep == false
-                        targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                        targetDistance{ld,1} = targetDistance{ld,1}.*weightsTarget;
                     end
 
                     % Additional variable comparison
-                    % 1 distance, 2 std
+                    % 1 distance
                     if ~isempty(addVars)
-                        addVarsDistance{1,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                        addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                             queryAddVars, learningAddVars, 'UniformOutput', false);
-                        addVarsDistance{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
                         addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
-                        addVarsDistance{ld,2} = sum(cell2mat(addVarsDistance{ld,2}),1,'omitnan');
                         if optimPrep == false
                             if numel(addVars) == 1
                                 addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
-                                addVarsDistance{ld,2} = addVarsDistance{ld,2} .* cell2mat(weightsAddVars);
                             else
                                 addVarsDistance{ld,1} = num2cell(cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars));
-                                addVarsDistance{ld,2} = num2cell(cell2mat(addVarsDistance{ld,2}) .* cell2mat(weightsAddVars));
                             end
                         end
                     else
                         addVarsDistance{ld,1} = 0;
-                        addVarsDistance{ld,2} = 0;
                     end
 
                     % Climate distance
-                    % 1 date, 2 distance, 3 std
-                    climateDistAll = cell(ld,3);
+                    % 1 date, 2 distance
+                    climateDistAll = cell(ld,1);
                     climateDistAll{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                         learningClimate, queryClimate, 'UniformOutput', false);
-                    climateDistAll{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),climateDistAll{ld,1},'UniformOutput',false);
                     climateDistance{ld,1} = currentLDate;
                     climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
                     climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
-                    climateDistance{ld,3}(1,:) = sum(cell2mat(climateDistAll{ld,2}(1:shortWindow,:)),1,'omitnan');
-                    climateDistance{ld,3}(2,:) = sum(cell2mat(climateDistAll{ld,2}(shortWindow+1:end,:)),1,'omitnan');
                     % Assign weights to corresponding index
                     if optimPrep == false
                         climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
                         climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
-                        climateDistance{ld,3}(1,:) = climateDistance{ld,3}(1,:) .* cell2mat(weightsShort);
-                        climateDistance{ld,3}(2,:) = climateDistance{ld,3}(2,:) .* cell2mat(weightsLong);
                         climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                        climateDistance{ld,3} = sum(climateDistance{ld,3},1,'omitnan');
                         climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
-                        climateDistance{ld,3} = sum(climateDistance{ld,3},2,'omitnan')+addVarsDistance{ld,2};
                     end
                 else
                     % If not enough climate days available, skip until loop reaches longWindow
@@ -243,37 +230,33 @@ if parallelComputing == true
             end
         end
 
-        % Learning dates distance: 1 date, 2 distance, 3 std
+        % Learning dates distance: 1 date, 2 distance
         distance        = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
         targetDistance  = targetDistance(~cellfun('isempty',targetDistance),:);
-        addVarsDistance = addVarsDistance(~cellfun('isempty',addVarsDistance(:,1)),:);
+        addVarsDistance = addVarsDistance(~cellfun('isempty',addVarsDistance),:);
         if optimPrep == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
             distancesBest   = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
-            stdSorted       = distancesSort(1:nbImages,3);
             sortedDates{qd} = currentQDate;
             sortedData{qd}  = cell2mat(distancesBest);
             sortedDist{qd}  = cell2mat(distSorted);
-            sortedStd{qd}   = cell2mat(stdSorted);
         else
             distancesBest     = distance(:,1);
             distSorted        = distance(:,2);
-            stdSorted         = distance(:,3);
             sortedDates{qd}   = currentQDate;
             sortedData{qd}    = distancesBest;
             sortedTarget{qd}  = targetDistance;
-            sortedAddVars{qd} = addVarsDistance(:,1);
+            sortedAddVars{qd} = addVarsDistance;
             sortedDist{qd}    = distSorted;
-            sortedStd{qd}     = stdSorted;
         end
     end
 
     if optimPrep == false
-        sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
+        sortedDatesAll = [sortedDates sortedData sortedDist];
         sortedDates    = sortedDatesAll;
     else
-        sortedDatesAll = [sortedDates sortedData sortedTarget sortedAddVars sortedDist sortedStd];
+        sortedDatesAll = [sortedDates sortedData sortedTarget sortedAddVars sortedDist];
         sortedDates    = sortedDatesAll;
     end
 
@@ -323,8 +306,8 @@ else % serial computing
 
         % Compute the distances between the query climate and the climate for each learning date
         targetDistance  = cell(totLDates,1);
-        addVarsDistance = cell(totLDates,2);
-        climateDistance = cell(totLDates,3);
+        addVarsDistance = cell(totLDates,1);
+        climateDistance = cell(totLDates,2);
         climateDistAll  = cell(1,3);
         % Display progress - only for serial computing
         progress = 0;
@@ -367,50 +350,35 @@ else % serial computing
                     end
 
                     % Additional variable comparison
-                    % 1 distance, 2 std
+                    % 1 distance
                     if ~isempty(addVars)
                         addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                             queryAddVars, learningAddVars, 'UniformOutput', false);
-                        %addVarsDistance{ld,1} = cellfun(@minus, queryAddVars, learningAddVars, 'UniformOutput', false);
-                        %addVarsDistance{ld,1} = cellfun(@abs,addVarsDistance{ld,1},'UniformOutput',false);
-                        %addVarsDistance{ld,1} = cellfun(@(x) mean(x,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
-                        addVarsDistance{ld,2} = cellfun(@(x) std(x,0,'all','omitnan'),addVarsDistance{ld,1},'UniformOutput',false);
                         addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
-                        addVarsDistance{ld,2} = sum(cell2mat(addVarsDistance{ld,2}),1,'omitnan');
                         if optimPrep == false
                             if numel(addVars) == 1
                                 addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
-                                addVarsDistance{ld,2} = addVarsDistance{ld,2} .* cell2mat(weightsAddVars);
                             else
                                 addVarsDistance{ld,1} = cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars);
-                                addVarsDistance{ld,2} = cell2mat(addVarsDistance{ld,2}) .* cell2mat(weightsAddVars);
                             end
                         end
                     else
                         addVarsDistance{ld,1} = 0;
-                        addVarsDistance{ld,2} = 0;
                     end
 
                     % Climate distance
-                    % 1 date, 2 distance, 3 std
+                    % 1 date, 2 distance
                     climateDistAll{1,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                         learningClimate, queryClimate, 'UniformOutput', false);
-                    climateDistAll{1,2} = cellfun(@(x) std(x,0,'all','omitnan'),climateDistAll{1,1},'UniformOutput',false);
                     climateDistance{ld,1} = currentLDate;
                     climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
                     climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{1,1}(shortWindow+1:end,:)),1,'omitnan');
-                    climateDistance{ld,3}(1,:) = sum(cell2mat(climateDistAll{1,2}(1:shortWindow,:)),1,'omitnan');
-                    climateDistance{ld,3}(2,:) = sum(cell2mat(climateDistAll{1,2}(shortWindow+1:end,:)),1,'omitnan');
                     % Assign weights to corresponding index
                     if optimPrep == false
                         climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
                         climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
-                        climateDistance{ld,3}(1,:) = climateDistance{ld,3}(1,:) .* cell2mat(weightsShort);
-                        climateDistance{ld,3}(2,:) = climateDistance{ld,3}(2,:) .* cell2mat(weightsLong);
                         climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                        climateDistance{ld,3} = sum(climateDistance{ld,3},1,'omitnan');
                         climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
-                        climateDistance{ld,3} = sum(climateDistance{ld,3},2,'omitnan')+addVarsDistance{ld,2};
                     end
                 else
                     % If not enough climate days available, skip until loop reaches longWindow
@@ -430,29 +398,25 @@ else % serial computing
     	    fprintf(1,'\b\b\b\b%3.0f%%',progress);
         end
 
-        % Learning dates distance: 1 date, 2 distance, 3 std
+        % Learning dates distance: 1 date, 2 distance
         distance        = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
         targetDistance  = targetDistance(~cellfun('isempty',targetDistance),:);
-        addVarsDistance = addVarsDistance(~cellfun('isempty',addVarsDistance(:,1)),:);
+        addVarsDistance = addVarsDistance(~cellfun('isempty',addVarsDistance),:);
         if optimPrep == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
             distancesBest   = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
-            stdSorted       = distancesSort(1:nbImages,3);
             sortedDates{qd} = currentQDate;
             sortedData{qd}  = cell2mat(distancesBest);
             sortedDist{qd}  = cell2mat(distSorted);
-            sortedStd{qd}   = cell2mat(stdSorted);
         else
             distancesBest     = distance(:,1);
             distSorted        = distance(:,2);
-            stdSorted         = distance(:,3);
             sortedDates{qd}   = currentQDate;
             sortedData{qd}    = distancesBest;
             sortedTarget{qd}  = targetDistance;
-            sortedAddVars{qd} = addVarsDistance(:,1);
+            sortedAddVars{qd} = addVarsDistance;
             sortedDist{qd}    = distSorted;
-            sortedStd{qd}     = stdSorted;
         end
 
         % Display progression - for parallel computing
@@ -463,10 +427,10 @@ else % serial computing
     end
 
     if optimPrep == false
-        sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
+        sortedDatesAll = [sortedDates sortedData sortedDist];
         sortedDates    = sortedDatesAll;
     else
-        sortedDatesAll = [sortedDates sortedData sortedTarget sortedAddVars sortedDist sortedStd];
+        sortedDatesAll = [sortedDates sortedData sortedTarget sortedAddVars sortedDist];
         sortedDates    = sortedDatesAll;
     end
     fprintf('\n')

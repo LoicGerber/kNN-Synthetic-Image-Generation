@@ -1,4 +1,4 @@
-function visualiseMetrics(validationMetric,metric,LdateStart,LdateEnd,outputDir)
+function visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,outputDir)
 
 %
 %
@@ -38,42 +38,34 @@ set(gcf, 'color', 'white');
 grid on
 saveas(gcf,strcat(outputDir,'validation.png'))
 
-
 % Set the output GIF file name
-gifName = fullfile(outputDir,'validation.gif');
+gifVal = fullfile(outputDir,'validation.gif');
+gifErr = fullfile(outputDir,'error.gif');
 
-% Specify the directories containing the images
-syntheticDir = fullfile(outputDir,'syntheticImages/');
-referenceDir = fullfile(outputDir,'referenceImages/');
-
-% Get a list of all the TIFF files in each directory
-syntheticFiles = dir(fullfile(syntheticDir, '*.tif'));
-referenceFiles = dir(fullfile(referenceDir, '*.tif'));
+refDates = refValidation.date;
+refData  = refValidation.maps;
+synDates = synImages.date;
+synData  = synImages.maps;
 
 % Create an empty figure
 figure(2);
 
 % Loop over each file in the synthetic directory and find the corresponding
 % file in the reference directory
-for i = 1:numel(syntheticFiles)
-    % Extract the filename and extension of the current synthetic file
-    [~, syntheticName, syntheticExt] = fileparts(syntheticFiles(i).name);
-
+for i = 1:size(synData,3)
     % Find the corresponding file in the reference directory with the same name
-    referenceIndex = find(strcmp({referenceFiles.name}, [syntheticName syntheticExt]));
-
+    referenceIndex = find(refDates == synDates(i));
+    
     % If a matching file is found, display the two images side by side
     if ~isempty(referenceIndex)
         % Load the two images
-        synthetic = imread(fullfile(syntheticDir, syntheticFiles(i).name));
+        synthetic = synData(:,:,i);
         synthetic(synthetic==-999) = NaN;
-        reference = imread(fullfile(referenceDir, referenceFiles(referenceIndex).name));
+        reference = refData(:,:,referenceIndex);
         reference(reference==-999) = NaN;
-        %minColor = min(min(reference(:),min(synthetic(:))));
-        %maxColor = max(max(reference(:),max(synthetic(:))));
 
         % Create a figure with two subplots
-        subplot(1,3,1);
+        subplot(1,2,1);
         img1 = imshow(synthetic);
         colormap(gca, jet(256));
         set(img1, 'AlphaData', ~isnan(synthetic))
@@ -82,7 +74,7 @@ for i = 1:numel(syntheticFiles)
         title('Synthetic');
         %colorbar(gca,'southoutside')
 
-        subplot(1,3,2);
+        subplot(1,2,2);
         img2 = imshow(reference);
         colormap(gca, jet(256));
         set(img2, 'AlphaData', ~isnan(synthetic))
@@ -90,17 +82,7 @@ for i = 1:numel(syntheticFiles)
         caxis([0 6])
         title('Reference');
         h = colorbar(gca,'southoutside');
-        
-        % !!! ADD ERROR MAP !!!
-        subplot(1,3,3);
-        img3 = imshow(abs(reference-synthetic));
-        set(img3, 'AlphaData', ~isnan(synthetic))
-        %caxis([0 6])
-        title('Absolute error');
-        h_err = colorbar(gca,'eastoutside');
-        set(get(h_err,'label'),'string','mm/day');
-        % !!! ADD ERROR MAP !!!
-        
+
         % Add a colorbar to the reference image subplot
         %h = colorbar('southoutside');
         set(h, 'Position', [0.25 0.1 0.5 0.04]);
@@ -108,16 +90,16 @@ for i = 1:numel(syntheticFiles)
 
         % Set the title of the figure to the name of the images
         if metric == 1
-            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                 ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         elseif metric == 2
-            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                 ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         elseif metric == 3
-            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                 ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         elseif metric == 4
-            sgtitle({['{\bf\fontsize{14}' syntheticName '}'], ...
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                 ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         end
 
@@ -127,16 +109,64 @@ for i = 1:numel(syntheticFiles)
         im = frame2im(frame);
         [imind, cm] = rgb2ind(im, 256);
         if i == 1
-            imwrite(imind, cm, gifName, 'gif', 'Loopcount', numel(syntheticFiles), 'DelayTime', 0.1);
+            imwrite(imind, cm, gifVal, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
         else
-            imwrite(imind, cm, gifName, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+            imwrite(imind, cm, gifVal, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+        end
+    end
+end
+
+% Create an empty figure
+figure(3);
+% Loop over each file in the synthetic directory and find the corresponding
+% file in the reference directory
+for i = 1:size(synData,3)
+    % Find the corresponding file in the reference directory with the same name
+    referenceIndex = find(refDates == synDates(i));
+    
+    % If a matching file is found, display the two images side by side
+    if ~isempty(referenceIndex)
+        % Load the two images
+        synthetic = synData(:,:,i);
+        synthetic(synthetic==-999) = NaN;
+        reference = refData(:,:,referenceIndex);
+        reference(reference==-999) = NaN;
+
+        % ERROR MAP
+        subplot(1,1,1);
+        errMap = imshow(reference-synthetic);
+        set(errMap, 'AlphaData', ~isnan(synthetic))
+        %caxis([0 6])
+        title('Absolute error');
+        h_err = colorbar(gca,'eastoutside');
+        set(get(h_err,'label'),'string','mm/day');
+
+        % Set the title of the figure to the name of the images
+        if metric == 1
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric(i,2),'%1.5f') '}']})
+        elseif metric == 2
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric(i,2),'%1.5f') '}']})
+        elseif metric == 3
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
+        elseif metric == 4
+            sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric(i,2),'%1.5f') '}']})
         end
 
-        % Pause for a short time to create animation effect
-        %pause(0.05);
+        % Save the current frame as a GIF
+        set(gcf, 'color', 'white');
+        frame = getframe(gcf);
+        im = frame2im(frame);
+        [imind, cm] = rgb2ind(im, 256);
+        if i == 1
+            imwrite(imind, cm, gifErr, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
+        else
+            imwrite(imind, cm, gifErr, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+        end
     end
 end
 
 end
-
-

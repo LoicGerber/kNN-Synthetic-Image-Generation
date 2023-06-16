@@ -22,9 +22,9 @@ delete(poolobj);
 tStart = tic;
 
 % All directories
-rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';           % Path to raw data
-inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';      % Path to saved input data
-outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';         % Path to results
+rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';   % Path to raw data
+inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';         % Path to saved input data
+outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';            % Path to results
 
 % ConvertStructureToInputs
 var               = "Et";                          % Variable to be generated, with "example"
@@ -57,15 +57,15 @@ generateImage     = false;    % true = image generation ON,    false = image gen
 bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
-validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validationPrep    = true;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validation        = true;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;    % true = visualisation ON, false = visualisation OFF
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
-optimPrep         = true;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;
-optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+optimisation      = false;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
 nbOptiRuns        = 5;        % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
@@ -95,6 +95,11 @@ elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading GeoRef.mat file...')
     GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     GeoRef         = GeoRef.GeoRef;
+    if optimisation == true || validation == true
+        disp('Loading refValidation.mat file...')
+        refValidation = load(fullfile(inputDir,'refValidation.mat'));
+        refValidation = refValidation.refValidation;
+    end
 end
 if createGenWeights == true || optimPrep == true || optimisation == true
     disp('Creating generic Weights.mat file...')
@@ -142,8 +147,8 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,inputDir,outputDir);
-    visualiseMetrics(validationMetric,metric,LdateStart,LdateEnd,outputDir);
+    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,outputDir);
+    visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 end

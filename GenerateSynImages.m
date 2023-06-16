@@ -292,7 +292,7 @@ for rowIndex = 1:size(sortedDates,1)
 end
 
 synImages.date = cell2mat(sortedDates(:,1));
-synImages.maps = imagesSynValidation;
+synImages.maps = single(imagesSynValidation);
 disp('Saving synValidation.mat file...')
 save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
 
