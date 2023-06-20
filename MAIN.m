@@ -30,8 +30,8 @@ outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn
 var               = "Et";                          % Variable to be generated, with "example"
 vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
-QdateStart        = 20000601;                      % YYYYMMDD - Start of the Generation period
-QdateEnd          = 20000610;                      % YYYYMMDD - End of the Generation period
+QdateStart        = 19990601;                      % YYYYMMDD - Start of the Generation period
+QdateEnd          = 19990610;                      % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20001231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
@@ -43,22 +43,22 @@ longWindow        = 30;       % number of days to consider for the long climate 
 nbImages          = 10;       % K, number of days to consider for the generation of images
 
 % GenerateSynImages
-ensemble          = 20;       % when using bootstrap, number of ensembles created
+ensemble          = 10;       % when using bootstrap, number of ensembles created
 GenerationType    = 2;        % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
 OutputType        = 1;        % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
 coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
+NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
 createGenWeights  = true;    % true = create generic weights, false = load optimised weights
-KNNsorting        = false;    % true = create sorted data,     false = load sorted data
-generateImage     = false;    % true = image generation ON,    false = image generation OFF
-bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
+KNNsorting        = true;    % true = create sorted data,     false = load sorted data
+generateImage     = true;    % true = image generation ON,    false = image generation OFF
+bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
-validationPrep    = true;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-validation        = true;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;    % true = visualisation ON, false = visualisation OFF
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 

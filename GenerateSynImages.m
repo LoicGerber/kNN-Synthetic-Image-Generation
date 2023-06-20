@@ -89,6 +89,10 @@ for rowIndex = 1:size(sortedDates,1)
         %bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
         %bootstrapWeights = invDistance/sum(invDistance);
         for bs = 1:ensemble
+            outputDirBootstrap = [outputDirImages ['bootstrapEnsemble_' num2str(bs)]];
+            if ~exist(outputDirBootstrap,'dir')
+                mkdir(outputDirBootstrap)
+            end
             %bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true,bootstrapWeights);
             bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true);
             % Find the index of the current image in the Dates variable
@@ -111,8 +115,8 @@ for rowIndex = 1:size(sortedDates,1)
                 error('Generation type not defined!')
             end
             % Write the resulting image to a GeoTIFF file
-            outputBaseName = string(sortedDates(rowIndex,1)) + '_' + bs + '.tif';
-            fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
+            outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
+            fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
             %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
             if isempty(GeoRef)
                 %disp('    Georeferencing files missing! Unreferenced output...')
@@ -134,7 +138,7 @@ for rowIndex = 1:size(sortedDates,1)
         end
         resultImagesMean = mean(resultImages(:,:,:),3);
         % Write the resulting image to a GeoTIFF file
-        outputBaseName = string(sortedDates(rowIndex,1)) + '_BootstrapAll.tif';
+        outputBaseName = string(sortedDates(rowIndex,1)) + '_bootstrapMean.tif';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
         %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
         if isempty(GeoRef)
@@ -291,13 +295,13 @@ for rowIndex = 1:size(sortedDates,1)
     end
 end
 
+if optimisation == false
+    fprintf('\n')
+end
+
 synImages.date = cell2mat(sortedDates(:,1));
 synImages.maps = single(imagesSynValidation);
 disp('Saving synValidation.mat file...')
 save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
-
-if optimisation == false
-    fprintf('\n')
-end
 
 end
