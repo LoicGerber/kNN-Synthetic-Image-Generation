@@ -66,7 +66,7 @@ metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Pha
 optimPrep         = true;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;
 optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
-nbOptiRuns        = 5;        % Number of runs for the Bayesian optimisation
+nbOptiRuns        = 50;        % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
@@ -170,17 +170,17 @@ if optimisation == true
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), x.(9), ...
         var, addVars, learningDates, sortedDates, refValidation, saveOptimPrep, nbImages, ...
-        GeoRef, GenerationType, bootstrap, ensemble, metric, optimisation, inputDir, outputDir);
+        GeoRef, GenerationType, bootstrap, ensemble, metric, validation, optimisation, inputDir, outputDir);
     % Run the Bayesian optimization
     if parallelComputing == true
-        results = bayesopt(fun,bayesWeights,'Verbose',2,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
+        results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
     else
-        results = bayesopt(fun,bayesWeights,'Verbose',2,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
+        results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
     end
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')
     optimisedWeights = results.XAtMinObjective;
-    optimisedWeights = array2table(table2array(optimisedWeights) ./ sum(table2array(optimisedWeights)),'VariableNames', results.XAtMinObjective.Properties.VariableNames);
+    optimisedWeights = array2table(table2array(optimisedWeights) ./ sum(table2array(optimisedWeights)),'VariableNames', results.XAtMinObjective.Properties.VariableNames)
     save(fullfile(inputDir,'optimisedWeights.mat'), 'optimisedWeights', '-v7.3','-nocompression');
     
     disp('--- 4. OPTIMISATION DONE ---')
