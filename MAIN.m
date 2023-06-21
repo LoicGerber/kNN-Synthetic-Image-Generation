@@ -30,8 +30,8 @@ outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn
 var               = "Et";                          % Variable to be generated, with "example"
 vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
-QdateStart        = 19990601;                      % YYYYMMDD - Start of the Generation period
-QdateEnd          = 19990610;                      % YYYYMMDD - End of the Generation period
+QdateStart        = 20000601;                      % YYYYMMDD - Start of the Generation period
+QdateEnd          = 20000610;                      % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20001231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
@@ -50,11 +50,11 @@ coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, 
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
+NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
 createGenWeights  = true;    % true = create generic weights, false = load optimised weights
-KNNsorting        = true;    % true = create sorted data,     false = load sorted data
-generateImage     = true;    % true = image generation ON,    false = image generation OFF
-bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
+KNNsorting        = false;    % true = create sorted data,     false = load sorted data
+generateImage     = false;    % true = image generation ON,    false = image generation OFF
+bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
 validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -63,9 +63,9 @@ metricViz         = false;    % true = visualisation ON, false = visualisation O
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
-optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+optimPrep         = true;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;
-optimisation      = false;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
 nbOptiRuns        = 5;        % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
@@ -118,7 +118,7 @@ disp('--- 2. KNN DATA SORTING ---')
 % Generate ranked Learning Dates for each Query Date
 if KNNsorting == true || validationPrep == true || optimPrep == true
     sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir);
-elseif KNNsorting == false && validationPrep == false && optimPrep == false
+elseif KNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
     sortedDates = sortedDates.sortedDates;
@@ -180,6 +180,7 @@ if optimisation == true
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')
     optimisedWeights = results.XAtMinObjective;
+    optimisedWeights = array2table(table2array(optimisedWeights) ./ sum(table2array(optimisedWeights)),'VariableNames', results.XAtMinObjective.Properties.VariableNames);
     save(fullfile(inputDir,'optimisedWeights.mat'), 'optimisedWeights', '-v7.3','-nocompression');
     
     disp('--- 4. OPTIMISATION DONE ---')

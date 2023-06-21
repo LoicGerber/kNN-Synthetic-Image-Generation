@@ -8,15 +8,16 @@ function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_Sho
 %
 %
 
-% disp(['Et_W' num2str(Et_W)])
-% disp(['Tavg_ShortW' num2str(Tavg_ShortW)])
-% disp(['Tmin_ShortW' num2str(Tmin_ShortW)])
-% disp(['Tmax_ShortW' num2str(Tmax_ShortW)])
-% disp(['Pre_ShortW' num2str(Pre_ShortW)])
-% disp(['Tavg_LongW' num2str(Tavg_LongW)])
-% disp(['Tmin_LongW' num2str(Tmin_LongW)])
-% disp(['Tmax_LongW' num2str(Tmax_LongW)])
-% disp(['Pre_LongW' num2str(Pre_LongW)])
+totWeights  = Et_W + Tavg_ShortW + Tmin_ShortW + Tmax_ShortW  +Pre_ShortW + Tavg_LongW + Tmin_LongW + Tmax_LongW + Pre_LongW;
+Et_W        = Et_W/totWeights;
+Tavg_ShortW = Tavg_ShortW/totWeights;
+Tmin_ShortW = Tmin_ShortW/totWeights;
+Tmax_ShortW = Tmax_ShortW/totWeights;
+Pre_ShortW  = Pre_ShortW/totWeights;
+Tavg_LongW  = Tavg_LongW/totWeights;
+Tmin_LongW  = Tmin_LongW/totWeights;
+Tmax_LongW  = Tmax_LongW/totWeights;
+Pre_LongW   = Pre_LongW/totWeights;
 
 %sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir);
 sortedDatesOptim = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir);

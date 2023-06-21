@@ -42,12 +42,10 @@ totLDates   = size(distances{1,2},1);
 targetDistance  = cell(totQDates, 1);
 addVarsDistance = cell(totQDates, 2);
 climateDistance = cell(totQDates, 2);
-stdDistance     = cell(totQDates, 1);
 
 sortedDates = cell(totQDates, 1);
 sortedData  = cell(totQDates, 1);
 sortedDist  = cell(totQDates, 1);
-sortedStd   = cell(totQDates, 1);
 
 for qd = 1:totQDates
     currentQDate = distances{qd,1};
@@ -80,29 +78,19 @@ for qd = 1:totQDates
         climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
         climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
         climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
-        
-        % Std climate distance
-        stdDistance{ld,1} = distances{qd,6}{ld,1};
-        stdDistance{ld,1}(1,:) = stdDistance{ld,1}(1,:) .* weightsShort;
-        stdDistance{ld,1}(2,:) = stdDistance{ld,1}(2,:) .* weightsLong;
-        stdDistance{ld,1} = sum(stdDistance{ld,1},1,'omitnan');
-        stdDistance{ld,1} = sum(stdDistance{ld,1},2,'omitnan')+addVarsDistance{ld,2};
     end
 
     % Learning dates distance: 1 date, 2 distance, 3 std
-    distancesAll    = [climateDistance stdDistance];
-    distance        = distancesAll(~cellfun('isempty',distancesAll(:,1)),:);
+    distance        = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
     distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
     distancesBest   = distancesSort(1:nbImages,1);
     distSorted      = distancesSort(1:nbImages,2);
-    stdSorted       = distancesSort(1:nbImages,3);
     sortedDates{qd} = currentQDate;
     sortedData{qd}  = cell2mat(distancesBest);
     sortedDist{qd}  = cell2mat(distSorted);
-    sortedStd{qd}   = cell2mat(stdSorted);
 end
 
-sortedDatesAll = [sortedDates sortedData sortedDist sortedStd];
+sortedDatesAll = [sortedDates sortedData sortedDist];
 sortedDates    = sortedDatesAll;
 
 end

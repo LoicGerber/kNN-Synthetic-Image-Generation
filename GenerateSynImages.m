@@ -295,13 +295,13 @@ for rowIndex = 1:size(sortedDates,1)
     end
 end
 
-if optimisation == false
-    fprintf('\n')
-end
-
 synImages.date = cell2mat(sortedDates(:,1));
 synImages.maps = single(imagesSynValidation);
-disp('Saving synValidation.mat file...')
-save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
+
+if optimisation == false
+    fprintf('\n')
+    disp('Saving synValidation.mat file...')
+    save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
+end
 
 end
