@@ -31,7 +31,7 @@ var               = "Et";                          % Variable to be generated, w
 vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
 QdateStart        = 20000601;                      % YYYYMMDD - Start of the Generation period
-QdateEnd          = 20000610;                      % YYYYMMDD - End of the Generation period
+QdateEnd          = 20000701;                      % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20001231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
@@ -43,7 +43,7 @@ longWindow        = 30;       % number of days to consider for the long climate 
 nbImages          = 10;       % K, number of days to consider for the generation of images
 
 % GenerateSynImages
-ensemble          = 10;       % when using bootstrap, number of ensembles created
+ensemble          = 100;       % when using bootstrap, number of ensembles created
 GenerationType    = 2;        % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
 OutputType        = 1;        % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
 coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
@@ -51,7 +51,7 @@ coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
 NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
-createGenWeights  = true;    % true = create generic weights, false = load optimised weights
+createGenWeights  = false;    % true = create generic weights, false = load optimised weights
 KNNsorting        = false;    % true = create sorted data,     false = load sorted data
 generateImage     = false;    % true = image generation ON,    false = image generation OFF
 bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
@@ -175,7 +175,7 @@ if optimisation == true
     %if parallelComputing == true
     %    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
     %else
-        results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
+    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
     %end
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')

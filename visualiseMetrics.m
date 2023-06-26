@@ -10,14 +10,14 @@ function visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateS
 
 if bootstrap == true
     dates = datetime(cell2mat(validationMetric(:,1)),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-%     ensembleData = validationMetric(:,2);
+    ensembleData = validationMetric(:,2);
     singleData = cell2mat(validationMetric(:,3));
     maxValues = zeros(size(validationMetric, 1), 1);
     minValues = zeros(size(validationMetric, 1), 1);
     for i = 1:size(validationMetric, 1)
-        values = validationMetric{i, 2};  % Extract values from the second column of the cell
-        maxValues(i) = max(values);  % Compute the maximum value
-        minValues(i) = min(values);  % Compute the minimum value
+        values = sort(validationMetric{i, 2});  % Extract values from the second column of the cell
+        maxValues(i) = values(end-5);  % Compute the maximum value
+        minValues(i) = values(5);  % Compute the minimum value
     end
     figure(1)
     hold on
@@ -25,12 +25,12 @@ if bootstrap == true
     inBetweenRegionY = [maxValues', fliplr(minValues')];
     patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
     plot(dates, singleData, 'k-', 'LineWidth', 2)
-%     for i = 1:numel(dates)
-%         ensemble = ensembleData{i};
-%                 for j = 1:numel(ensemble)
-%                     plot(dates(i), ensemble(j), 'ro'); % Plot the value against the date
-%                 end
-%     end
+    for i = 1:numel(dates)
+        ensemble = ensembleData{i};
+        for j = 1:numel(ensemble)
+            plot(dates(i), ensemble(j), 'k.'); % Plot the value against the date
+        end
+    end
     hold off
     xtickangle(45); % Rotate x-axis labels for better readability
     %yline(mean(validationMetric(:,2)),'-',['Mean: ' num2str(mean(validationMetric(:,2)))],'Color','r')
@@ -46,6 +46,8 @@ if bootstrap == true
     end
     subtitle(['Learning periode: ' char(datetime(LdateStart,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy')) ...
         ' - ' char(datetime(LdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'))])
+    str = {['Mean RMSE: ' num2str(mean(singleData))], ['Mean ensemble RMSE: ' num2str(mean(values))]};
+    text(15,.8,str);
     xlabel('Date')
     if metric == 1
         ylabel('RMSE')
