@@ -24,7 +24,7 @@ sortedDatesOptim = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_Sho
 OutputType  = 1;
 synImages = GenerateSynImages(var,learningDates,sortedDatesOptim,GeoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
 % Compute the validation metric using the updated code
-objective = validationMetrics(metric,optimisation,refValidation,synImages,outputDir);
+objective = validationMetrics(metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
 if metric == 1
     % Calculate the RMSE
     disp(['RMSE: ' num2str(objective)])

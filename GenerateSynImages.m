@@ -25,11 +25,15 @@ imgWidth  = size(learningData{1},2);
 selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 %resultImages   = cell(size(sortedDates, 1), 1);
 
+imagesSynValidation = single(nan(imgLength,imgWidth,size(sortedDates,1)));
+map = imagesSynValidation;
+
 if bootstrap == true
+    imagesSynValidation = cell(size(sortedDates,1),1);
     disp(['Bootstrap switch ON, using ' num2str(ensemble) ' ensembles'])
 end
 % Display progress
-if optimisation == false && validation == false
+if optimisation == false
     progress = 0;
     if OutputType == 1
         fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
@@ -38,11 +42,13 @@ if optimisation == false && validation == false
     end
 end
 
-imagesSynValidation = nan(imgLength,imgWidth,size(sortedDates,1));
-
 % Loop through each row in sortedDates
 for rowIndex = 1:size(sortedDates,1)
     if bootstrap == true
+        outputDirBootstrap = fullfile(outputDirImages, string(sortedDates(rowIndex,1)));
+        if ~exist(outputDirBootstrap,'dir')
+            mkdir(outputDirBootstrap)
+        end
         % Find the index of the current image in the Dates variable
         [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
         % Select the Landsat image from the Landsat variable and add it to selectedImages
@@ -83,16 +89,13 @@ for rowIndex = 1:size(sortedDates,1)
         else
             geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
         end
+        map(:,:,rowIndex) = resultImages;
         % bootstrap
         resultImages     = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
         %invDistance      = 1 ./ sortedDates{rowIndex,3};
         %bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
         %bootstrapWeights = invDistance/sum(invDistance);
         for bs = 1:ensemble
-            outputDirBootstrap = [outputDirImages ['bootstrapEnsemble_' num2str(bs)]];
-            if ~exist(outputDirBootstrap,'dir')
-                mkdir(outputDirBootstrap)
-            end
             %bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true,bootstrapWeights);
             bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true);
             % Find the index of the current image in the Dates variable
@@ -115,7 +118,7 @@ for rowIndex = 1:size(sortedDates,1)
                 error('Generation type not defined!')
             end
             % Write the resulting image to a GeoTIFF file
-            outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
+            outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '.tif';
             fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
             %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
             if isempty(GeoRef)
@@ -137,8 +140,9 @@ for rowIndex = 1:size(sortedDates,1)
             end
         end
         resultImagesMean = mean(resultImages(:,:,:),3);
+        imagesSynValidation{rowIndex}(:,:,:) = resultImages(:,:,:);
         % Write the resulting image to a GeoTIFF file
-        outputBaseName = string(sortedDates(rowIndex,1)) + '_bootstrapMean.tif';
+        outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
         fullDestinationFileName = fullfile(outputDirImages, outputBaseName);
         %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
         if isempty(GeoRef)
@@ -178,7 +182,7 @@ for rowIndex = 1:size(sortedDates,1)
         else
             error('Generation type not defined!')
         end
-        imagesSynValidation(:,:,rowIndex) = resultImages;
+        map(:,:,rowIndex) = resultImages;
         if optimisation == true || validation == true
             continue
         else
@@ -296,7 +300,9 @@ for rowIndex = 1:size(sortedDates,1)
 end
 
 synImages.date = cell2mat(sortedDates(:,1));
-synImages.maps = single(imagesSynValidation);
+synImages.maps = map;
+if bootstrap == true, synImages.bootstrap = imagesSynValidation; end
+
 
 if optimisation == false
     fprintf('\n')

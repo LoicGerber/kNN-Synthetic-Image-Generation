@@ -54,18 +54,18 @@ NetCDFtoInputs    = false;    % true = create inputs,          false = load inpu
 createGenWeights  = true;    % true = create generic weights, false = load optimised weights
 KNNsorting        = false;    % true = create sorted data,     false = load sorted data
 generateImage     = false;    % true = image generation ON,    false = image generation OFF
-bootstrap         = false;    % true = bootstrap ON,           false = bootstrap OFF
+bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
-validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validationPrep    = true;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validation        = true;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;    % true = visualisation ON, false = visualisation OFF
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
-optimPrep         = true;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+optimPrep         = false;    % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;
-optimisation      = true;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
+optimisation      = false;     % true = optimisation ON, false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
 nbOptiRuns        = 50;        % Number of runs for the Bayesian optimisation
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
@@ -147,8 +147,8 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,outputDir);
-    visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,outputDir);
+    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+    visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 end
@@ -172,11 +172,11 @@ if optimisation == true
         var, addVars, learningDates, sortedDates, refValidation, saveOptimPrep, nbImages, ...
         GeoRef, GenerationType, bootstrap, ensemble, metric, validation, optimisation, inputDir, outputDir);
     % Run the Bayesian optimization
-    if parallelComputing == true
-        results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
-    else
+    %if parallelComputing == true
+    %    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
+    %else
         results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
-    end
+    %end
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')
     optimisedWeights = results.XAtMinObjective;
