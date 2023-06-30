@@ -23,15 +23,15 @@ tStart = tic;
 
 % All directories
 rawDir    = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\voltaData\voltaClean\';   % Path to raw data
-inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\inputData\';         % Path to saved input data
-outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\test\output\';            % Path to results
+inputDir  = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\testMulTarVar\inputData\';         % Path to saved input data
+outputDir = 'C:\Users\loger\OneDrive - Université de Lausanne\Documents\PhD\knn_image_generation\syntheticImageGeneration\testMulTarVar\output\';            % Path to results
 
 % ConvertStructureToInputs
-var               = "Et";                          % Variable to be generated, with "example"
+var               = ["Et","test"];                 % Variables to be generated, with ["example1","example2"]
 vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
-QdateStart        = 20000601;                      % YYYYMMDD - Start of the Generation period
-QdateEnd          = 20000701;                      % YYYYMMDD - End of the Generation period
+QdateStart        = 20010601;                      % YYYYMMDD - Start of the Generation period
+QdateEnd          = 20010701;                      % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20001231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
@@ -43,22 +43,22 @@ longWindow        = 30;       % number of days to consider for the long climate 
 nbImages          = 10;       % K, number of days to consider for the generation of images
 
 % GenerateSynImages
-ensemble          = 100;       % when using bootstrap, number of ensembles created
+ensemble          = 10;       % when using bootstrap, number of ensembles created
 GenerationType    = 2;        % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
 OutputType        = 1;        % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
 coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
-createGenWeights  = false;    % true = create generic weights, false = load optimised weights
-KNNsorting        = false;    % true = create sorted data,     false = load sorted data
-generateImage     = false;    % true = image generation ON,    false = image generation OFF
+NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
+createGenWeights  = true;    % true = create generic weights, false = load optimised weights
+KNNsorting        = true;    % true = create sorted data,     false = load sorted data
+generateImage     = true;    % true = image generation ON,    false = image generation OFF
 bootstrap         = true;    % true = bootstrap ON,           false = bootstrap OFF
 
 % Validation switch
-validationPrep    = true;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
-validation        = true;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validationPrep    = false;    % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+validation        = false;    % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;    % true = visualisation ON, false = visualisation OFF
 metric            = 1;        % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
@@ -74,10 +74,10 @@ disp('--- 1. READING DATA ---')
 if NetCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Formatting input data for production/weights optimisation/validation run...')
     rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
-    GeoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
+    geoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
     climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
-    [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,GeoRef,validationPrep,optimPrep,outputTime,inputDir,outputDir);
+    [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
@@ -93,8 +93,8 @@ elseif NetCDFtoInputs == false && validationPrep == false
     additionalVars = load(fullfile(inputDir,'additionalVars.mat'));
     additionalVars = additionalVars.additionalVars;
     disp('Loading GeoRef.mat file...')
-    GeoRef         = load(fullfile(inputDir,'GeoRef.mat'));
-    GeoRef         = GeoRef.GeoRef;
+    geoRef         = load(fullfile(inputDir,'GeoRef.mat'));
+    geoRef         = geoRef.geoRef;
     if optimisation == true || validation == true
         disp('Loading refValidation.mat file...')
         refValidation = load(fullfile(inputDir,'refValidation.mat'));
@@ -134,7 +134,7 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
-    synImages = GenerateSynImages(var,learningDates,sortedDates,GeoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
+    synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
 elseif optimisation == true
     disp('Optimisation run, synthetic image generation skipped...')
 elseif generateImage == false && validation == false
@@ -147,8 +147,8 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,bootstrap,outputDir);
+    validationMetric = validationMetrics(var,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+    visualiseMetrics(var,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 end
@@ -170,7 +170,7 @@ if optimisation == true
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), x.(9), ...
         var, addVars, learningDates, sortedDates, refValidation, saveOptimPrep, nbImages, ...
-        GeoRef, GenerationType, bootstrap, ensemble, metric, validation, optimisation, inputDir, outputDir);
+        geoRef, GenerationType, bootstrap, ensemble, metric, validation, optimisation, inputDir, outputDir);
     % Run the Bayesian optimization
     %if parallelComputing == true
     %    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);

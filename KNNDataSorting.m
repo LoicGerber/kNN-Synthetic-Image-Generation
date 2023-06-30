@@ -23,41 +23,12 @@ end
 % file containing date and target and same for queryDates
 climateDates = table2array(climateData(:,'date'));
 climateMaps  = table2array(removevars(climateData,'date'));
-% % Get the column names
-% columnNames = climateData.Properties.VariableNames;
-% % Create a structure to store the 3D matrices
-% climateMaps = struct();
-% % Retrieve and store data from each column as a 3D matrix
-% for col = 2:numel(columnNames)
-%     [numRows, ~] = size(climateData(:,col));
-%     data = [];
-%     for i = 1:numRows
-%         % Concatenate matrices along the third dimension
-%         data = cat(3, data, cell2mat(climateData.(columnNames{col})(i)));
-%     end
-%     % Store the data in the structure with column name as the field name
-%     climateMaps.(columnNames{col}) = data;
-% end
 
 queryDatesDate = table2array(queryDates(:,1));
-queryDatesData = table2array(queryDates(:,2));
-% % Convert table to 3D matrix
-% [numRows, ~] = size(queryDates(:,2));
-% queryDatesData = [];
-% for i = 1:numRows
-%     % Concatenate matrices along the third dimension
-%     queryDatesData = cat(3, queryDatesData, cell2mat(queryDates{i, 2}));
-% end
+queryDatesData = table2array(queryDates(:,2:end));
 
 learningDatesDate = table2array(learningDates(:,1));
-learningDatesData = table2array(learningDates(:,2));
-% % Convert table to 3D matrix
-% [numRows, ~] = size(learningDates(:,2));
-% learningDatesData = [];
-% for i = 1:numRows
-%     % Concatenate matrices along the third dimension
-%     learningDatesData = cat(3, learningDatesData, cell2mat(learningDates{i, 2}));
-% end
+learningDatesData = table2array(learningDates(:,2:end));
 
 if optimPrep == false
     % Define learningDates as itself minus the query dates
@@ -342,28 +313,33 @@ else % serial computing
                     end
 
                     % Target variable comparison
-                    targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                        queryDatesData(qd), learningDatesData(ld), 'UniformOutput', false);
-                    targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
-                    if optimPrep == false
-                        targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                    if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                        targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
+                        targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
+                        if optimPrep == false
+                            targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                            targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
+                        end
+                    else
+                        targetDistance{ld} = 0;
                     end
 
                     % Additional variable comparison
                     % 1 distance
                     if ~isempty(addVars)
-                        addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                        addVarsDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                             queryAddVars, learningAddVars, 'UniformOutput', false);
-                        addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
+                        addVarsDistance{ld} = sum(cell2mat(addVarsDistance{ld}),1,'omitnan');
                         if optimPrep == false
                             if numel(addVars) == 1
-                                addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
+                                addVarsDistance{ld} = addVarsDistance{ld} .* cell2mat(weightsAddVars);
                             else
-                                addVarsDistance{ld,1} = cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars);
+                                addVarsDistance{ld} = cell2mat(addVarsDistance{ld}) .* cell2mat(weightsAddVars);
                             end
                         end
                     else
-                        addVarsDistance{ld,1} = 0;
+                        addVarsDistance{ld} = 0;
                     end
 
                     % Climate distance
@@ -378,7 +354,7 @@ else % serial computing
                         climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
                         climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
                         climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                        climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
+                        climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld}+addVarsDistance{ld};
                     end
                 else
                     % If not enough climate days available, skip until loop reaches longWindow
