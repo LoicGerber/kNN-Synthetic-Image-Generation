@@ -150,11 +150,16 @@ if parallelComputing == true
                     end
 
                     % Target variable comparison
-                    targetDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryDatesData(qd), learningDatesData(ld,1), 'UniformOutput', false);
-                    targetDistance{ld,1} = sum(cell2mat(targetDistance{ld,1}),1,'omitnan');
-                    if optimPrep == false
-                        targetDistance{ld,1} = targetDistance{ld,1}.*weightsTarget;
+                    if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                        targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
+                        targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
+                        if optimPrep == false
+                            targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                            targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
+                        end
+                    else
+                        targetDistance{ld} = 0;
                     end
 
                     % Additional variable comparison

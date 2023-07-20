@@ -9,6 +9,8 @@ function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outp
 %
 
 outputDirImages = [outputDir 'syntheticImages\'];
+var = lower(var);
+
 % Check if output directories exist, if not create them
 for i = 1:numel(var)
     disp(['Processing variable ' convertStringsToChars(var(i)) '...'])
@@ -190,9 +192,9 @@ for i = 1:numel(var)
                 error('Generation type not defined!')
             end
             map(:,:,rowIndex) = resultImages;
-            if optimisation == true || validation == true
-                continue
-            else
+            %if optimisation == true || validation == true
+            %    continue
+            %else
                 if OutputType == 1
                     % Write the resulting image to a GeoTIFF file
                     outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
@@ -232,15 +234,16 @@ for i = 1:numel(var)
                     dimid_lon  = netcdf.defDim(ncid,'lon',GeoRef.RasterSize(2));
                     dimid_time = netcdf.defDim(ncid,'time',1);
                     % Define variables
-                    %varid = netcdf.defVar(ncid,var,'double',[dimid_lat,dimid_lon]);
-                    varid  = netcdf.defVar(ncid,var,'double',[dimid_lon,dimid_lat]);
+                    %varid = netcdf.defVar(ncid,var(i),'double',[dimid_lat,dimid_lon]);
+                    varid  = netcdf.defVar(ncid,var(i),'double',[dimid_lon,dimid_lat]);
                     timeid = netcdf.defVar(ncid,'time','double',dimid_time);
                     latid  = netcdf.defVar(ncid,'lat','double',dimid_lat);
                     lonid  = netcdf.defVar(ncid,'lon','double',dimid_lon);
                     % Define attributes
-                    netcdf.putAtt(ncid,varid,'long_name',var);
+                    netcdf.putAtt(ncid,varid,'long_name',var(i));
                     netcdf.putAtt(ncid,timeid,'long_name','time');
-                    netcdf.putAtt(ncid,timeid,'units','days since 1970-01-01 00:00:00');
+                    netcdf.putAtt(ncid,timeid,'units','days since 1970-01-01');
+                    netcdf.putAtt(ncid,timeid,'calendar','proleptic_gregorian');
                     netcdf.putAtt(ncid,latid,'long_name','latitude');
                     netcdf.putAtt(ncid,latid,'units','degrees_north');
                     netcdf.putAtt(ncid,lonid,'long_name','longitude');
@@ -267,8 +270,8 @@ for i = 1:numel(var)
                     lat       = lat_start:lat_step:lat_end;
                     lon       = lon_start:lon_step:lon_end;
                     % Adjust the size of lat and lon vectors to match the image dimensions
-                    lat       = lat(1:lat_size);
-                    lon       = lon(1:lon_size);
+                    lat       = lat(1:lat_size)+(lat_step/2);
+                    lon       = lon(1:lon_size)+(lon_step/2);
                     % Assign latitude and longitude values to the corresponding variables
                     netcdf.putVar(ncid,latid,lat);
                     netcdf.putVar(ncid,lonid,lon);
@@ -279,7 +282,7 @@ for i = 1:numel(var)
                     dayStr   = dateStr(7:8);
                     dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
                     time = datenum(dateStrFormatted, 'yyyy-mm-dd');
-                    netcdf.putVar(ncid, timeid, time);
+                    netcdf.putVar(ncid, timeid, (time-719529)); % 719529 = 1970-01-01
                     % Define metadata attributes
                     ncwriteatt(fullDestinationFileName, '/', 'crs', crs_value);
                     ncwriteatt(fullDestinationFileName, '/', 'xllcorner', GeoRef.LongitudeLimits(1));
@@ -291,13 +294,13 @@ for i = 1:numel(var)
                     ncwriteatt(fullDestinationFileName, '/', 'date', string(sortedDates{rowIndex, 1}),'Datatype','string');
                     ncwriteatt(fullDestinationFileName, '/', 'nodata_value', -9999);
                     % Write data to variable
-                    ncwrite(fullDestinationFileName, var, single(resultImages)');
+                    ncwrite(fullDestinationFileName, var(i), single(resultImages)');
                     % Close the netCDF file
                     netcdf.close(ncid);
                 else
-                    error('Unknown output type! Choose 1 for GeoTiff or 2 for NetCDF...')
+                    error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')
                 end
-            end
+            %end
         end
         if optimisation == false
             % Display computation progress
@@ -316,7 +319,7 @@ for i = 1:numel(var)
     end
 end
 
-if optimisation == false
+if optimisation == false && validation == true
     fprintf('\n')
     disp('Saving synValidation.mat file...')
     save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');

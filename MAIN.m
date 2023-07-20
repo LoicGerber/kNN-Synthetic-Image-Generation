@@ -37,10 +37,12 @@ elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading GeoRef.mat file...')
     geoRef         = load(fullfile(inputDir,'GeoRef.mat'));
     geoRef         = geoRef.geoRef;
-    if optimisation == true || validation == true
+    if optimisation == true || validation == true || metricViz == true
         disp('Loading refValidation.mat file...')
         refValidation = load(fullfile(inputDir,'refValidation.mat'));
         refValidation = refValidation.refValidation;
+    else
+        refValidation = [];
     end
 end
 if createGenWeights == true || optimPrep == true || optimisation == true
@@ -77,9 +79,13 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
     synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
-elseif optimisation == true
+elseif optimisation == true && validation == false
     disp('Optimisation run, synthetic image generation skipped...')
     synImages = [];
+elseif metricViz == true
+    disp('Loading synValidation.mat file...')
+    synImages = load(fullfile(outputDir,'synValidation.mat'));
+    synImages = synImages.synImages;
 elseif generateImage == false && validation == false
     disp('Synthetic image generation skipped...')
     synImages = [];
