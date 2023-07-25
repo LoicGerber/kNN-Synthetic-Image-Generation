@@ -90,120 +90,127 @@ if parallelComputing == true
             rangeQmax = 1:1:maxRangeQ;
             rangeQ    = [rangeQmin rangeQmax];
         end
-        
+
         disp(['  Processing day ' num2str(qd) '/' num2str(totQDates) ' (' num2str(currentQDate) ')'])
 
         % Extract the longWindow climate for the current query date
         queryClimate = cell(longWindow, numel(vars));
         idx = find(climateDates == currentQDate);
-        for j = 1:numel(vars)
-            kj = 1;
-            for k = (longWindow-1):-1:0
-                queryClimate(kj,j) = climateMaps(idx-k,j);
-                kj = kj+1;
+        if idx > longWindow
+            for j = 1:numel(vars)
+                kj = 1;
+                for k = (longWindow-1):-1:0
+                    queryClimate(kj,j) = climateMaps(idx-k,j);
+                    kj = kj+1;
+                end
             end
-        end
 
-        % Extract the additional data for the current query date
-        if ~isempty(addVars)
-            queryAddVars = cell(1, numel(addVars));
-            idx = find(addVarsDates == currentQDate);
-            for j = 1:numel(addVars)
-                queryAddVars(1,j) = addVarsData(idx,j);
-            end
-        else
-            queryAddVars = [];
-        end
-
-        % Compute the distances between the query climate and the climate for each learning date
-        targetDistance  = cell(totLDates,1);
-        addVarsDistance = cell(totLDates,1);
-        climateDistance = cell(totLDates,2);
-        % Display progress - only for serial computing
-        %fprintf(1,'    Progress for current query date: %3.0f%%\n',progress);
-        for ld = 1:totLDates
-            learningClimate = cell(longWindow, numel(vars));
-            currentLDate    = learningDatesDate(ld);
-            dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-            idx             = find(climateDates == currentLDate);
-            %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
-            if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
-                if idx >= longWindow % skips learning dates that are in the longWindow
-                    % Learning dates climate
-                    for j = 1:numel(vars)
-                        kj = 1;
-                        for k = (longWindow-1):-1:0
-                            learningClimate(kj,j) = climateMaps(idx-k,j);
-                            kj = kj+1;
-                        end
-                    end
-
-                    % Extract the additional data for the current query date
-                    if ~isempty(addVars)
-                        learningAddVars = cell(1, numel(addVars));
-                        idx = find(addVarsDates == currentLDate);
-                        for j = 1:numel(addVars)
-                            learningAddVars(1,j) = addVarsData(idx,j);
-                        end
-                    else
-                        learningAddVars = [];
-                    end
-
-                    % Target variable comparison
-                    if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
-                        targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
-                        targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
-                        if optimPrep == false
-                            targetDistance{ld} = targetDistance{ld}.*weightsTarget;
-                            targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
-                        end
-                    else
-                        targetDistance{ld} = 0;
-                    end
-
-                    % Additional variable comparison
-                    % 1 distance
-                    if ~isempty(addVars)
-                        addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryAddVars, learningAddVars, 'UniformOutput', false);
-                        addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
-                        if optimPrep == false
-                            if numel(addVars) == 1
-                                addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
-                            else
-                                addVarsDistance{ld,1} = num2cell(cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars));
-                            end
-                        end
-                    else
-                        addVarsDistance{ld,1} = 0;
-                    end
-
-                    % Climate distance
-                    % 1 date, 2 distance
-                    climateDistAll = cell(ld,1);
-                    climateDistAll{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                        learningClimate, queryClimate, 'UniformOutput', false);
-                    climateDistance{ld,1} = currentLDate;
-                    climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
-                    climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
-                    % Assign weights to corresponding index
-                    if optimPrep == false
-                        climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
-                        climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
-                        climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                        climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
-                    end
-                else
-                    % If not enough climate days available, skip until loop reaches longWindow
-                    %warning(['Climate data available is shorter than longWindow, ' num2str(currentLDate) ' skipped.'])
-                    continue
+            % Extract the additional data for the current query date
+            if ~isempty(addVars)
+                queryAddVars = cell(1, numel(addVars));
+                idx = find(addVarsDates == currentQDate);
+                for j = 1:numel(addVars)
+                    queryAddVars(1,j) = addVarsData(idx,j);
                 end
             else
-                % If learning date not in query date range, skip it
-                %disp(['    Learning day ',num2str(currentLDate),' not in query date range, skipped'])
-                continue
+                queryAddVars = [];
             end
+
+            % Compute the distances between the query climate and the climate for each learning date
+            targetDistance  = cell(totLDates,1);
+            addVarsDistance = cell(totLDates,1);
+            climateDistance = cell(totLDates,2);
+            % Display progress - only for serial computing
+            %fprintf(1,'    Progress for current query date: %3.0f%%\n',progress);
+            for ld = 1:totLDates
+                learningClimate = cell(longWindow, numel(vars));
+                currentLDate    = learningDatesDate(ld);
+                dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
+                idx             = find(climateDates == currentLDate);
+                %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
+                if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
+                    if idx >= longWindow % skips learning dates that are in the longWindow
+                        % Learning dates climate
+                        for j = 1:numel(vars)
+                            kj = 1;
+                            for k = (longWindow-1):-1:0
+                                learningClimate(kj,j) = climateMaps(idx-k,j);
+                                kj = kj+1;
+                            end
+                        end
+
+                        % Extract the additional data for the current query date
+                        if ~isempty(addVars)
+                            learningAddVars = cell(1, numel(addVars));
+                            idx = find(addVarsDates == currentLDate);
+                            for j = 1:numel(addVars)
+                                learningAddVars(1,j) = addVarsData(idx,j);
+                            end
+                        else
+                            learningAddVars = [];
+                        end
+
+                        % Target variable comparison
+                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                            targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                                queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
+                            targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
+                            if optimPrep == false
+                                targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                                targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
+                            end
+                        else
+                            targetDistance{ld} = 0;
+                        end
+
+                        % Additional variable comparison
+                        % 1 distance
+                        if ~isempty(addVars)
+                            addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                                queryAddVars, learningAddVars, 'UniformOutput', false);
+                            addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
+                            if optimPrep == false
+                                if numel(addVars) == 1
+                                    addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
+                                else
+                                    addVarsDistance{ld,1} = num2cell(cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars));
+                                end
+                            end
+                        else
+                            addVarsDistance{ld,1} = 0;
+                        end
+
+                        % Climate distance
+                        % 1 date, 2 distance
+                        climateDistAll = cell(ld,1);
+                        climateDistAll{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            learningClimate, queryClimate, 'UniformOutput', false);
+                        climateDistance{ld,1} = currentLDate;
+                        climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
+                        climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
+                        % Assign weights to corresponding index
+                        if optimPrep == false
+                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
+                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld,1}+addVarsDistance{ld,1};
+                        end
+                    else
+                        % If not enough climate days available, skip until loop reaches longWindow
+                        %warning(['Climate data available is shorter than longWindow, ' num2str(currentLDate) ' skipped.'])
+                        continue
+                    end
+                else
+                    % If learning date not in query date range, skip it
+                    %disp(['    Learning day ',num2str(currentLDate),' not in query date range, skipped'])
+                    continue
+                end
+            end
+        else
+            fprintf('\n')
+            disp('    Not enough learning dates. Query date skipped...')
+            fprintf('\b')
+            continue
         end
 
         % Learning dates distance: 1 date, 2 distance
@@ -260,123 +267,130 @@ else % serial computing
         % Extract the longWindow climate for the current query date
         queryClimate = cell(longWindow, numel(vars));
         idx = find(climateDates == currentQDate);
-        for j = 1:numel(vars)
-            kj = 1;
-            for k = (longWindow-1):-1:0
-                queryClimate(kj,j) = climateMaps(idx-k,j);
-                %queryClimate(kj,j) = climateMaps.(varClimate)(:,:,idx-k);
-                kj = kj+1;
+        if idx > longWindow
+            for j = 1:numel(vars)
+                kj = 1;
+                for k = (longWindow-1):-1:0
+                    queryClimate(kj,j) = climateMaps(idx-k,j);
+                    %queryClimate(kj,j) = climateMaps.(varClimate)(:,:,idx-k);
+                    kj = kj+1;
+                end
             end
-        end
 
-        % Extract the additional data for the current query date
-        if ~isempty(addVars)
-            queryAddVars = cell(1, numel(addVars));
-            idx = find(addVarsDates == currentQDate);
-            for j = 1:numel(addVars)
-                queryAddVars(1,j) = addVarsData(idx,j);
-            end
-        else
-            queryAddVars = [];
-        end
-
-        % Compute the distances between the query climate and the climate for each learning date
-        targetDistance  = cell(totLDates,1);
-        addVarsDistance = cell(totLDates,1);
-        climateDistance = cell(totLDates,2);
-        climateDistAll  = cell(1,3);
-        % Display progress - only for serial computing
-        progress = 0;
-        fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
-        for ld = 1:totLDates
-            learningClimate = cell(longWindow, numel(vars));
-            currentLDate    = learningDatesDate(ld);
-            dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-            idx             = find(climateDates == currentLDate);
-            %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
-            if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
-                %disp(['    Processing learning day ', num2str(currentLDate)])
-                if idx >= longWindow % skips learning dates that are in the longWindow
-                    % Learning dates climate
-                    for j = 1:numel(vars)
-                        kj = 1;
-                        for k = (longWindow-1):-1:0
-                            learningClimate(kj,j) = climateMaps(idx-k,j);
-                            kj = kj+1;
-                        end
-                    end
-
-                    % Extract the additional data for the current query date
-                    if ~isempty(addVars)
-                        learningAddVars = cell(1, numel(addVars));
-                        idx = find(addVarsDates == currentLDate);
-                        for j = 1:numel(addVars)
-                            learningAddVars(1,j) = addVarsData(idx,j);
-                        end
-                    else
-                        learningAddVars = [];
-                    end
-
-                    % Target variable comparison
-                    if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
-                        targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
-                        targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
-                        if optimPrep == false
-                            targetDistance{ld} = targetDistance{ld}.*weightsTarget;
-                            targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
-                        end
-                    else
-                        targetDistance{ld} = 0;
-                    end
-
-                    % Additional variable comparison
-                    % 1 distance
-                    if ~isempty(addVars)
-                        addVarsDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            queryAddVars, learningAddVars, 'UniformOutput', false);
-                        addVarsDistance{ld} = sum(cell2mat(addVarsDistance{ld}),1,'omitnan');
-                        if optimPrep == false
-                            if numel(addVars) == 1
-                                addVarsDistance{ld} = addVarsDistance{ld} .* cell2mat(weightsAddVars);
-                            else
-                                addVarsDistance{ld} = cell2mat(addVarsDistance{ld}) .* cell2mat(weightsAddVars);
-                            end
-                        end
-                    else
-                        addVarsDistance{ld} = 0;
-                    end
-
-                    % Climate distance
-                    % 1 date, 2 distance
-                    climateDistAll{1,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                        learningClimate, queryClimate, 'UniformOutput', false);
-                    climateDistance{ld,1} = currentLDate;
-                    climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
-                    climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{1,1}(shortWindow+1:end,:)),1,'omitnan');
-                    % Assign weights to corresponding index
-                    if optimPrep == false
-                        climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
-                        climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
-                        climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                        climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld}+addVarsDistance{ld};
-                    end
-                else
-                    % If not enough climate days available, skip until loop reaches longWindow
-                    %warning(['Climate data available is shorter than longWindow, ' num2str(currentLDate) ' skipped.'])
-                    continue
+            % Extract the additional data for the current query date
+            if ~isempty(addVars)
+                queryAddVars = cell(1, numel(addVars));
+                idx = find(addVarsDates == currentQDate);
+                for j = 1:numel(addVars)
+                    queryAddVars(1,j) = addVarsData(idx,j);
                 end
             else
-                % If learning date not in query date range, skip it
+                queryAddVars = [];
+            end
+
+            % Compute the distances between the query climate and the climate for each learning date
+            targetDistance  = cell(totLDates,1);
+            addVarsDistance = cell(totLDates,1);
+            climateDistance = cell(totLDates,2);
+            climateDistAll  = cell(1,3);
+            % Display progress - only for serial computing
+            progress = 0;
+            fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
+            for ld = 1:totLDates
+                learningClimate = cell(longWindow, numel(vars));
+                currentLDate    = learningDatesDate(ld);
+                dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
+                idx             = find(climateDates == currentLDate);
+                %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
+                if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
+                    %disp(['    Processing learning day ', num2str(currentLDate)])
+                    if idx >= longWindow % skips learning dates that are in the longWindow
+                        % Learning dates climate
+                        for j = 1:numel(vars)
+                            kj = 1;
+                            for k = (longWindow-1):-1:0
+                                learningClimate(kj,j) = climateMaps(idx-k,j);
+                                kj = kj+1;
+                            end
+                        end
+
+                        % Extract the additional data for the current query date
+                        if ~isempty(addVars)
+                            learningAddVars = cell(1, numel(addVars));
+                            idx = find(addVarsDates == currentLDate);
+                            for j = 1:numel(addVars)
+                                learningAddVars(1,j) = addVarsData(idx,j);
+                            end
+                        else
+                            learningAddVars = [];
+                        end
+
+                        % Target variable comparison
+                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                            targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                                queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
+                            targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
+                            if optimPrep == false
+                                targetDistance{ld} = targetDistance{ld}.*weightsTarget;
+                                targetDistance{ld} = sum(cell2mat(targetDistance(ld)),2,'omitnan');
+                            end
+                        else
+                            targetDistance{ld} = 0;
+                        end
+
+                        % Additional variable comparison
+                        % 1 distance
+                        if ~isempty(addVars)
+                            addVarsDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                                queryAddVars, learningAddVars, 'UniformOutput', false);
+                            addVarsDistance{ld} = sum(cell2mat(addVarsDistance{ld}),1,'omitnan');
+                            if optimPrep == false
+                                if numel(addVars) == 1
+                                    addVarsDistance{ld} = addVarsDistance{ld} .* cell2mat(weightsAddVars);
+                                else
+                                    addVarsDistance{ld} = cell2mat(addVarsDistance{ld}) .* cell2mat(weightsAddVars);
+                                end
+                            end
+                        else
+                            addVarsDistance{ld} = 0;
+                        end
+
+                        % Climate distance
+                        % 1 date, 2 distance
+                        climateDistAll{1,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            learningClimate, queryClimate, 'UniformOutput', false);
+                        climateDistance{ld,1} = currentLDate;
+                        climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
+                        climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{1,1}(shortWindow+1:end,:)),1,'omitnan');
+                        % Assign weights to corresponding index
+                        if optimPrep == false
+                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
+                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+targetDistance{ld}+addVarsDistance{ld};
+                        end
+                    else
+                        % If not enough climate days available, skip until loop reaches longWindow
+                        %warning(['Climate data available is shorter than longWindow, ' num2str(currentLDate) ' skipped.'])
+                        continue
+                    end
+                else
+                    % If learning date not in query date range, skip it
+                    % Display computation progress - only for serial computing
+                    progress = (100*(ld/totLDates));
+            	    fprintf(1,'\b\b\b\b%3.0f%%',progress);
+                    %disp(['    Learning day ',num2str(currentLDate),' not in query date range, skipped'])
+                    continue
+                end
                 % Display computation progress - only for serial computing
                 progress = (100*(ld/totLDates));
         	    fprintf(1,'\b\b\b\b%3.0f%%',progress);
-                %disp(['    Learning day ',num2str(currentLDate),' not in query date range, skipped'])
-                continue
             end
-            % Display computation progress - only for serial computing
-            progress = (100*(ld/totLDates));
-    	    fprintf(1,'\b\b\b\b%3.0f%%',progress);
+        else
+            fprintf('\n')
+            disp('    Not enough learning dates. Query date skipped...')
+            fprintf('\b')
+            continue
         end
 
         % Learning dates distance: 1 date, 2 distance
@@ -402,7 +416,7 @@ else % serial computing
 
         % Display progression - for parallel computing
         %progress = (100*(l/totLDates));
-    	%fprintf(1,'\b\b\b\b%3.0f%%',progress);
+        %fprintf(1,'\b\b\b\b%3.0f%%',progress);
 
         %toc
     end
@@ -416,6 +430,8 @@ else % serial computing
     end
     fprintf('\n')
 end
+
+sortedDates = sortedDates(~cellfun('isempty',sortedDates(:,1)),:);
 
 if optimPrep == false
     disp('Saving KNNSorting.mat file...')

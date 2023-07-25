@@ -9,17 +9,17 @@ function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outp
 %
 
 outputDirImages = [outputDir 'syntheticImages\'];
-var = lower(var);
+var_low = lower(var);
 
 % Check if output directories exist, if not create them
-for i = 1:numel(var)
-    disp(['Processing variable ' convertStringsToChars(var(i)) '...'])
-    if exist(fullfile(outputDirImages,var(i)),'dir')
-        rmdir(fullfile(outputDirImages,var(i)),'s');
-        delete(fullfile(outputDirImages,var(i),'*'));
-        mkdir(fullfile(outputDirImages,var(i)))
+for i = 1:numel(var_low)
+    disp(['Processing variable ' convertStringsToChars(var_low(i)) '...'])
+    if exist(fullfile(outputDirImages,var_low(i)),'dir')
+        rmdir(fullfile(outputDirImages,var_low(i)),'s');
+        delete(fullfile(outputDirImages,var_low(i),'*'));
+        mkdir(fullfile(outputDirImages,var_low(i)))
     else
-        mkdir(fullfile(outputDirImages,var(i)))
+        mkdir(fullfile(outputDirImages,var_low(i)))
     end
     
     % Preallocate variables for efficiency
@@ -54,7 +54,7 @@ for i = 1:numel(var)
     % Loop through each row in sortedDates
     for rowIndex = 1:size(sortedDates,1)
         if bootstrap == true
-            outputDirBootstrap = fullfile(outputDirImages, var(i), string(sortedDates(rowIndex,1)));
+            outputDirBootstrap = fullfile(outputDirImages, var_low(i), string(sortedDates(rowIndex,1)));
             if ~exist(outputDirBootstrap,'dir')
                 mkdir(outputDirBootstrap)
             end
@@ -79,7 +79,7 @@ for i = 1:numel(var)
             end
             % Write the resulting image to a GeoTIFF file
             outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
-            fullDestinationFileName = fullfile(outputDirImages, var(i), outputBaseName);
+            fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
             %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
             if isempty(GeoRef)
                 %disp('    Georeferencing files missing! Unreferenced output...')
@@ -152,7 +152,7 @@ for i = 1:numel(var)
             imagesSynValidation{rowIndex}(:,:,:) = resultImages(:,:,:);
             % Write the resulting image to a GeoTIFF file
             outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
-            fullDestinationFileName = fullfile(outputDirImages, var(i), outputBaseName);
+            fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
             %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
             if isempty(GeoRef)
                 %disp('    Georeferencing files missing! Unreferenced output...')
@@ -198,7 +198,7 @@ for i = 1:numel(var)
                 if OutputType == 1
                     % Write the resulting image to a GeoTIFF file
                     outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
-                    fullDestinationFileName = fullfile(outputDirImages, var(i), outputBaseName);
+                    fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
                     %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
                     if isempty(GeoRef)
                         %disp('    Georeferencing files missing! Unreferenced output...')
@@ -226,7 +226,7 @@ for i = 1:numel(var)
                     crs_value = tokens{1};
                     % Store the resulting image in a geolocated netCDF file
                     outputBaseName = string(sortedDates(rowIndex,1)) + '.nc';
-                    fullDestinationFileName = fullfile(outputDirImages, var(i), outputBaseName);
+                    fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
                     %disp(['  Writing netCDF file ' num2str(rowIndex) '/' num2str(size(sortedDates,1))]);
                     % Create a new netCDF file and define dimensions
                     ncid       = netcdf.create(fullDestinationFileName,'NETCDF4');
@@ -235,12 +235,12 @@ for i = 1:numel(var)
                     dimid_time = netcdf.defDim(ncid,'time',1);
                     % Define variables
                     %varid = netcdf.defVar(ncid,var(i),'double',[dimid_lat,dimid_lon]);
-                    varid  = netcdf.defVar(ncid,var(i),'double',[dimid_lon,dimid_lat]);
+                    varid  = netcdf.defVar(ncid,var_low(i),'double',[dimid_lon,dimid_lat]);
                     timeid = netcdf.defVar(ncid,'time','double',dimid_time);
                     latid  = netcdf.defVar(ncid,'lat','double',dimid_lat);
                     lonid  = netcdf.defVar(ncid,'lon','double',dimid_lon);
                     % Define attributes
-                    netcdf.putAtt(ncid,varid,'long_name',var(i));
+                    netcdf.putAtt(ncid,varid,'long_name',var_low(i));
                     netcdf.putAtt(ncid,timeid,'long_name','time');
                     netcdf.putAtt(ncid,timeid,'units','days since 1970-01-01');
                     netcdf.putAtt(ncid,timeid,'calendar','proleptic_gregorian');
@@ -294,7 +294,7 @@ for i = 1:numel(var)
                     ncwriteatt(fullDestinationFileName, '/', 'date', string(sortedDates{rowIndex, 1}),'Datatype','string');
                     ncwriteatt(fullDestinationFileName, '/', 'nodata_value', -9999);
                     % Write data to variable
-                    ncwrite(fullDestinationFileName, var(i), single(resultImages)');
+                    ncwrite(fullDestinationFileName, var_low(i), single(resultImages)');
                     % Close the netCDF file
                     netcdf.close(ncid);
                 else
@@ -312,9 +312,9 @@ for i = 1:numel(var)
         synImages.date = cell2mat(sortedDates(:,1));
         fprintf('\n')
     end
-    synImages.(var(i)) = map;
+    synImages.(var_low(i)) = map;
     if bootstrap == true
-        varBS = strcat(var(i), "Bootstrap");
+        varBS = strcat(var_low(i), "Bootstrap");
         synImages.(varBS) = imagesSynValidation;
     end
 end
