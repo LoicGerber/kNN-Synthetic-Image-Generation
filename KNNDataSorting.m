@@ -151,7 +151,7 @@ if parallelComputing == true
                         end
 
                         % Target variable comparison
-                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,:))))) %&& ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
                             targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                 queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false);
                             targetDistance{ld} = sum(cell2mat(targetDistance{ld}),1,'omitnan');
