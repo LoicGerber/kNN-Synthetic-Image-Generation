@@ -29,7 +29,7 @@ vars              = ["Tavg","Tmin","Tmax","Pre"];  % Input variables considered 
 addVars           = [];                            % Additional input variables, with ["example1","example2"]
 QdateStart        = 19500101;                      % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19500202;                      % YYYYMMDD - End of the Generation period
-LdateStart        = 19800101;                      % YYYYMMDD - Start of the Learning period
+LdateStart        = 20200101;                      % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20201231;                      % YYYYMMDD - End of the Learning period
 outputTime        = 1;                             % Image generation timestep: 1 = DAILY, 2 = MONTHLY
 precision         = 1;                             % Precision needed, 1 = single, 2 = double
@@ -42,12 +42,12 @@ nbImages          = 10;       % K, number of days to consider for the generation
 % GenerateSynImages
 ensemble          = 10;       % when using bootstrap, number of ensembles created
 GenerationType    = 2;        % data generation type,  1 = BINARY,  2 = MEAN OF SELECTED IMAGES, 3 = MEDIAN OF SELECTED IMAGES
-OutputType        = 2;        % output data file type, 1 = GeoTIFF, 2 = individual NetCDF files
+OutputType        = 2;        % output data file type, 1 = GeoTIFF, 2 = NetCDF
 coordRefSysCode   = 4326;     % Coordinate reference system code, WGS84 = 4326, https://epsg.org/home.html
 
 % Functions switches
 parallelComputing = false;    % true = parallel computing ON,  false = parallel computing OFF
-NetCDFtoInputs    = false;    % true = create inputs,          false = load inputs
+NetCDFtoInputs    = true;    % true = create inputs,          false = load inputs
 createGenWeights  = true;    % true = create generic weights, false = load optimised weights
 KNNsorting        = true;    % true = create sorted data,     false = load sorted data
 generateImage     = true;    % true = image generation ON,    false = image generation OFF
