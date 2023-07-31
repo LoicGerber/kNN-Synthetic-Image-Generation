@@ -18,7 +18,7 @@ outputDir = 'path/to/outputs';          % Path to results, will be automatically
 % ConvertStructureToInputs
 var               = ["Et"];                         % Variables to be generated, with ["example1","example2"]
 vars              = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
-addVars           = [];                             % Additional input variables, with ["example1","example2"]
+addVars           = [];                             % Additional input variables, with ["example1","example2"], if empty use []
 QdateStart        = 19500101;                       % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
 LdateStart        = 20000101;                       % YYYYMMDD - Start of the Learning period

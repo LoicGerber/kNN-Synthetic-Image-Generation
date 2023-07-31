@@ -8,7 +8,7 @@ function sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,
 %
 %
 
-tic
+%tic
 
 % checks that at least one learning and query dates are present
 if any(size(learningDates)==0)
@@ -443,8 +443,6 @@ else
     end
 end
 
-disp('KNN sorting done! Exiting function...')
-
-toc
+%toc
 
 end

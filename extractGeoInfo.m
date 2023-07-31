@@ -44,7 +44,7 @@ for i = 1:numel(var)
     geoRef.(var(i)) = GeoRef;
 end
 
-disp(strcat('Saving geoRef data...'))
+disp(strcat('  Saving geoRef data...'))
 save(fullfile(inputDir,strcat('geoRef.mat')), 'geoRef');
 
 end

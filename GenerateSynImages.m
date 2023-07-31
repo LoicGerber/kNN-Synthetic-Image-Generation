@@ -13,7 +13,7 @@ var_low = lower(var);
 
 % Check if output directories exist, if not create them
 for i = 1:numel(var_low)
-    disp(['Processing variable ' convertStringsToChars(var_low(i)) '...'])
+    disp(strcat("Processing variable '",convertStringsToChars(var_low(i)),"'..."))
     if exist(fullfile(outputDirImages,var_low(i)),'dir')
         rmdir(fullfile(outputDirImages,var_low(i)),'s');
         delete(fullfile(outputDirImages,var_low(i),'*'));
@@ -39,15 +39,15 @@ for i = 1:numel(var_low)
 
     if bootstrap == true
         imagesSynValidation = cell(size(sortedDates,1),1);
-        disp(['Bootstrap switch ON, using ' num2str(ensemble) ' ensembles'])
+        disp(['  Bootstrap switch ON, using ' num2str(ensemble) ' ensembles'])
     end
     % Display progress
     if optimisation == false
         progress = 0;
         if OutputType == 1
-            fprintf(1,'Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+            fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
         else
-            fprintf(1,'Downloading synthetic images as NetCDF files: %3.0f%%\n',progress);
+            fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
         end
     end
 

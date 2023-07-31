@@ -86,7 +86,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         refValidation.(var(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
-    disp('Saving refValidation.mat file...')
+    disp('  Saving refValidation.mat file...')
     save(fullfile(inputDir,'refValidation.mat'), 'refValidation', '-v7.3','-nocompression');
     learningDates = learningDataValidation;
 end
@@ -166,7 +166,6 @@ catch
     end
 end
 queryDates = matchedTargetVarTable;
-fprintf('\n')
 disp('  Saving Query dates, may take a while depending on input size...')
 save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
 

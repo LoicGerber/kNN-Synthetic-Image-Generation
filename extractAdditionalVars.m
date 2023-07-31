@@ -30,7 +30,7 @@ else
     additionalVars = [];
 end
 
-disp('Saving additionalVars table...')
+disp('  Saving additionalVars table...')
 allVarsSave = fullfile(inputDir, 'additionalVars.mat');
 save(allVarsSave, 'additionalVars', '-v7.3','-nocompression');
 

@@ -16,10 +16,15 @@ disp('--- 1. READING DATA ---')
 if NetCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Formatting input data...')
     rawData        = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
+    disp('Extracting georeference informations...')
     geoRef         = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
+    disp('Extracting climate informations...')
     climateData    = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
+    disp('Extracting Learning dates...')
     learningDates  = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    disp('Extracting Query dates...')
     [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
+    disp('Extracting additional variables...')
     additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
@@ -46,7 +51,7 @@ elseif NetCDFtoInputs == false && validationPrep == false
     end
 end
 if createGenWeights == true || optimPrep == true || optimisation == true
-    disp('Creating generic Weights.mat file...')
+    disp('Creating generic weights...')
     Weights = createWeights(var,vars,addVars,inputDir);
 elseif createGenWeights == false
     disp('Loading optimisedWeights.mat file...')
