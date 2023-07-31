@@ -52,7 +52,7 @@ for i = 1:numel(var_low)
     end
 
     % Loop through each row in sortedDates
-    if OutputType == 2
+    if OutputType == 2 && bootstrap == false
         % Define the main netCDF file
         outputBaseName = strcat(var_low(i),'.nc'); % Change this to your desired output file name
         fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
@@ -294,7 +294,7 @@ for i = 1:numel(var_low)
             fprintf(1,'\b\b\b\b%3.0f%%',progress);
         end
     end
-    if OutputType == 2
+    if OutputType == 2 && bootstrap == false
         % Close the main netCDF file after the loop
         netcdf.close(ncid);
     end
