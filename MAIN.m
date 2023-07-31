@@ -14,13 +14,13 @@ tStart = tic;
 disp('--- 1. READING DATA ---')
 
 if NetCDFtoInputs == true || optimPrep == true || validationPrep == true
-    disp('Formatting input data for production/weights optimisation/validation run...')
-    rawData                    = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
-    geoRef                     = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
-    climateData                = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
-    learningDates              = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    disp('Formatting input data...')
+    rawData        = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir);
+    geoRef         = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir);
+    climateData    = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
+    learningDates  = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
     [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
-    additionalVars             = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
+    additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif NetCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
