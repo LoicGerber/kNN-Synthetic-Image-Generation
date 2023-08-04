@@ -302,7 +302,7 @@ for i = 1:numel(var_low)
         synImages.date = cell2mat(sortedDates(:,1));
         fprintf('\n')
     end
-    synImages.(var_low(i)) = map;
+    synImages.(var(i)) = map;
     if bootstrap == true
         varBS = strcat(var_low(i), "Bootstrap");
         synImages.(varBS) = imagesSynValidation;

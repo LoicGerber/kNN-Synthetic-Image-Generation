@@ -1,4 +1,4 @@
-function visualiseMetrics(var,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
+function visualiseMetrics(var,refValidation,synImages,validationMetric,metric,validationComp,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
 
 %
 %
@@ -208,7 +208,6 @@ for k = 1:numel(var)
         synData  = synImages.(var(k));
         synthetic = squeeze(mean(mean(synData, 1, 'omitnan'), 2, 'omitnan'));
         reference = squeeze(mean(mean(refData, 1, 'omitnan'), 2, 'omitnan'));
-        corrSynRef = corr(synthetic,reference);
         figure('WindowState', 'maximized', 'NumberTitle', 'off', 'Name', ['Figure ' num2str(k+3)]);
         date = datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
         plot(date, reference, 'r-', date, synthetic, 'k-');
@@ -216,7 +215,21 @@ for k = 1:numel(var)
         xlabel('Date')
         ylabel('Evaporation [mm/day]')
         title([convertStringsToChars(var(k)) ' - Reference vs Synthetic'])
-        subtitle(['Correlation: ' num2str(corrSynRef)])
+        if validationComp == 1
+            corrSynRef = corr(synthetic,reference);
+            subtitle(['Correlation: ' num2str(corrSynRef)])
+        elseif validationComp == 2
+            nseSynRef = 1-(sum((synthetic-reference).^2)/sum((synthetic-mean(synthetic)).^2));
+            subtitle(['NSE: ' num2str(nseSynRef)])
+        elseif validationComp == 3
+            r = corr(synthetic,reference);
+            alpha = std(synthetic)/std(reference);
+            beta  = mean(synthetic)/mean(reference);
+            kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+            subtitle(['KGE: ' num2str(kgeSynRef)])
+        else
+            error('Invalid validationComp parameter...')
+        end
         grid on
         box off
         %legend boxoff 
