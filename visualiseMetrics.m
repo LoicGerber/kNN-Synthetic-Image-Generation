@@ -30,6 +30,7 @@ for k = 1:numel(var)
         % Synthetic data
         var_bs = strcat(var(k),'Bootstrap');
         refData    = squeeze(mean(mean(refValidation.(var(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+        synData    = squeeze(mean(mean(synImages.(var(k)),1,'omitnan'),2,'omitnan'));
         maxValues  = zeros(size(validationMetric.(var(k)), 1), 1);
         meanValues = zeros(size(validationMetric.(var(k)), 1), 1);
         minValues  = zeros(size(validationMetric.(var(k)), 1), 1);
@@ -48,6 +49,7 @@ for k = 1:numel(var)
         inBetweenRegionY = [maxValues', fliplr(minValues')];
         patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
         plot(dates, meanValues, 'k--', 'LineWidth', 1)
+        plot(dates, synData, 'k:', 'LineWidth', 1)
         plot(dates, refData, 'k-', 'LineWidth', 1)
         hold off
         title([convertStringsToChars(var(k)) ' - MEAN'])
@@ -60,7 +62,7 @@ for k = 1:numel(var)
         end        
         xlabel('Date')
         ylabel(strcat("Mean ", var(k)))
-        legend('Synthetic data spread','Synthetic data mean','Reference data mean')
+        legend('Synthetic data spread','Synthetic data mean','Deterministic mean','Reference data mean')
         set(gcf, 'color', 'white');
         grid on
         saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(var(k)) '.png']))
