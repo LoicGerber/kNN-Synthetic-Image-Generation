@@ -481,7 +481,7 @@ for i = 1:numel(var_low)
     end
     synImages.(var(i)) = map;
     if bootstrap == true
-        varBS = strcat(var_low(i), "Bootstrap");
+        varBS = strcat(var(i), "Bootstrap");
         synImages.(varBS) = imagesSynAll;
     end
 end
