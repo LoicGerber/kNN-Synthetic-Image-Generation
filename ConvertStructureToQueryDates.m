@@ -50,10 +50,6 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         if ~exist(outputDir,'dir')
             mkdir(outputDir)
         end
-        if ~exist(fullfile(outputDir,'referenceImages',var(j)),'dir')
-            mkdir(fullfile(outputDir,'referenceImages',var(j)))
-        end
-        delete(fullfile(outputDir,'referenceImages',var(j),'*'));
     end
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
