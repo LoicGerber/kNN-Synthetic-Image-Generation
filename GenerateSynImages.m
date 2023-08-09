@@ -1,4 +1,4 @@
-function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType)
+function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,ensemble,outputType)
 
 %
 %
@@ -44,7 +44,7 @@ for i = 1:numel(var_low)
     % Display progress
     if optimisation == false
         progress = 0;
-        if OutputType == 1
+        if outputType == 1
             fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
         else
             fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
@@ -52,7 +52,7 @@ for i = 1:numel(var_low)
     end
 
     % netCDF file definition
-    if OutputType == 2 && bootstrap == false
+    if outputType == 2 && bootstrap == false
         % Define the main netCDF file
         outputBaseName = strcat(var_low(i),'.nc'); % Change this to your desired output file name
         fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
@@ -272,13 +272,13 @@ for i = 1:numel(var_low)
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
             % Calculate either the mode or the mean of the selected Landsat images
-            if GenerationType == 1
+            if generationType == 1
                 % Calculate the mode and save it to resultImages
                 resultImages = mode(selectedImages(:,:,:),3);
-            elseif GenerationType == 2
+            elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 resultImages = mean(selectedImages(:,:,:),3);
-            elseif GenerationType == 3
+            elseif generationType == 3
                 % Calculate the median and save it to resultImages
                 resultImages = median(selectedImages(:,:,:),3);
             else
@@ -306,7 +306,7 @@ for i = 1:numel(var_low)
             end
             map(:,:,rowIndex) = resultImages;
             % bootstrap
-            resultImages     = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
+            resultImagesBS     = NaN(imgLength, imgWidth, ensemble);
             %invDistance      = 1 ./ sortedDates{rowIndex,3};
             %bootstrapWeights = normalize(invDistance,'range',[0.1 1]); % normalise distance (3) / std (4) to [0.1 1]
             %bootstrapWeights = invDistance/sum(invDistance);
@@ -320,27 +320,26 @@ for i = 1:numel(var_low)
                     selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
                 end
                 % Calculate either the mode or the mean of the selected Landsat images
-                if GenerationType == 1
-                    % Calculate the mode and save it to resultImages
-                    resultImages(:,:,bs) = mode(selectedImages(:,:,:),3);
-                elseif GenerationType == 2
-                    % Calculate the mean and save it to resultImages
-                    resultImages(:,:,bs) = mean(selectedImages(:,:,:),3);
-                elseif GenerationType == 3
-                    % Calculate the median and save it to resultImages
-                    resultImages(:,:,bs) = median(selectedImages(:,:,:),3);
+                if generationType == 1
+                    % Calculate the mode and save it to resultImagesBS
+                    resultImagesBS(:,:,bs) = mode(selectedImages(:,:,:),3);
+                elseif generationType == 2
+                    % Calculate the mean and save it to resultImagesBS
+                    resultImagesBS(:,:,bs) = mean(selectedImages(:,:,:),3);
+                elseif generationType == 3
+                    % Calculate the median and save it to resultImagesBS
+                    resultImagesBS(:,:,bs) = median(selectedImages(:,:,:),3);
                 else
                     error('Generation type not defined!')
                 end
             end
             % Compute mean of each day to determine quantile
-            dayAvg = squeeze(mean(mean(resultImages,'omitnan'),'omitnan'));
-            dayAvg = [dayAvg (1:bs)'];
-            dayAvg = sortrows(dayAvg); % sorted low to high avg
-            %resultImagesMean = mean(resultImages(:,:,:),3);
+            dayAvg = squeeze(mean(mean(resultImagesBS,'omitnan'),'omitnan'));
+            dayAvg = sortrows([dayAvg (1:ensemble)']);
+            %resultImagesMean = mean(resultImagesBS(:,:,:),3);
             % Store all bs days sorted according to mean of each day
-            %imagesSynAll{rowIndex}(:,:,:) = resultImages(:,:,:);
-            imagesSynAll{rowIndex}(:,:,:) = resultImages(:,:,dayAvg(:,2));
+            %imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,:);
+            imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,dayAvg(:,2));
             for bs = 1:ensemble
                 % Write the resulting image to a GeoTIFF file
                 outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '.tif';
@@ -410,20 +409,20 @@ for i = 1:numel(var_low)
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
             % Calculate either the mode or the mean of the selected Landsat images
-            if GenerationType == 1
+            if generationType == 1
                 % Calculate the mode and save it to resultImages
                 resultImages = mode(selectedImages(:,:,:),3);
-            elseif GenerationType == 2
+            elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 resultImages = mean(selectedImages(:,:,:),3);
-            elseif GenerationType == 3
+            elseif generationType == 3
                 % Calculate the median and save it to resultImages
                 resultImages = median(selectedImages(:,:,:),3);
             else
                 error('Generation type not defined!')
             end
             map(:,:,rowIndex) = resultImages;
-            if OutputType == 1
+            if outputType == 1
                 % Write the resulting image to a GeoTIFF file
                 outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
                 fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
@@ -445,7 +444,7 @@ for i = 1:numel(var_low)
                 else
                     geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
                 end
-            elseif OutputType == 2
+            elseif outputType == 2
                 % Assign date
                 dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
                 yearStr  = dateStr(1:4);
@@ -467,7 +466,7 @@ for i = 1:numel(var_low)
             fprintf(1,'\b\b\b\b%3.0f%%',progress);
         end
     end
-    if OutputType == 2 && bootstrap == false
+    if outputType == 2 && bootstrap == false
         % Close the main netCDF file after the loop
         netcdf.close(ncid);
     elseif bootstrap == true
