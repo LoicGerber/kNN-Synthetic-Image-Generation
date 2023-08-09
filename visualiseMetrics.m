@@ -16,23 +16,64 @@ endQdate   = char(datetime(QdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyy
 for k = 1:numel(var)
     if bootstrap == true
         dates = datetime(cell2mat(validationMetric.(var(k))(:,1)),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-        ensembleData = validationMetric.(var(k))(:,2);
-        singleData = cell2mat(validationMetric.(var(k))(:,3));
-        maxValues = zeros(size(validationMetric.(var(k)), 1), 1);
-        meanValues = zeros(size(validationMetric.(var(k)), 1), 1);
-        minValues = zeros(size(validationMetric.(var(k)), 1), 1);
+        % Validation data
+        singleDataVal = cell2mat(validationMetric.(var(k))(:,3));
+        maxValuesVal  = zeros(size(validationMetric.(var(k)), 1), 1);
+        meanValuesVal = zeros(size(validationMetric.(var(k)), 1), 1);
+        minValuesVal  = zeros(size(validationMetric.(var(k)), 1), 1);
         for i = 1:size(validationMetric.(var(k)), 1)
-            values = sort(validationMetric.(var(k)){i, 2});  % Extract values from the second column of the cell
-            maxValues(i) = values(end);  % Compute the maximum value
-            meanValues(i) = mean(values);
-            minValues(i) = values(1);  % Compute the minimum value
+            valuesVal = sort(validationMetric.(var(k)){i, 2});  % Extract values from the second column of the cell
+            maxValuesVal(i)  = valuesVal(end);  % Compute the maximum value
+            meanValuesVal(i) = mean(valuesVal);
+            minValuesVal(i)  = valuesVal(1);  % Compute the minimum value
         end
-        figure('WindowState', 'maximized', 'NumberTitle', 'off', 'Name', ['Figure ' num2str(k)]);
+        % Synthetic data
+        var_bs = strcat(var(k),'Bootstrap');
+        refData    = squeeze(mean(mean(refValidation.(var(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+        maxValues  = zeros(size(validationMetric.(var(k)), 1), 1);
+        meanValues = zeros(size(validationMetric.(var(k)), 1), 1);
+        minValues  = zeros(size(validationMetric.(var(k)), 1), 1);
+        for i = 1:size(validationMetric.(var(k)), 1)
+            synValues     = sort(squeeze(mean(mean(synImages.(var_bs(k)){i},'omitnan'),'omitnan')));  % Extract mean of variable and sort
+            maxValues(i)  = synValues(end);  % Compute the maximum value
+            meanValues(i) = mean(synValues);
+            minValues(i)  = synValues(1);  % Compute the minimum value
+        end
+        
+        % -----------------------------------------------------------------------------------------------------
+
+        figure('WindowState', 'maximized');
         hold on
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValues', fliplr(minValues')];
         patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
-        plot(dates, singleData, 'k-', 'LineWidth', 1)
+        plot(dates, meanValues, 'k--', 'LineWidth', 1)
+        plot(dates, refData, 'k-', 'LineWidth', 1)
+        hold off
+        title([convertStringsToChars(var(k)) ' - MEAN'])
+        if strcmp(startLdate, startQdate)
+            subtitle(['Learning periode: ' endQdate '-' endLdate])
+        elseif strcmp(endQdate, endLdate)
+            subtitle(['Learning periode: ' startLdate '-' startQdate])
+        else
+            subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
+        end        
+        xlabel('Date')
+        ylabel(strcat("Mean ", var(k)))
+        legend('Synthetic data spread','Synthetic data mean','Reference data mean')
+        set(gcf, 'color', 'white');
+        grid on
+        saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(var(k)) '.png']))
+        
+        % -----------------------------------------------------------------------------------------------------------------------------
+
+        figure('WindowState', 'maximized');
+        hold on
+        inBetweenRegionX = [dates', fliplr(dates')];
+        inBetweenRegionY = [maxValuesVal', fliplr(minValuesVal')];
+        patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
+        plot(dates, meanValuesVal, 'k--', 'LineWidth', 1)
+        plot(dates, singleDataVal, 'k-', 'LineWidth', 1)
 %         for i = 1:numel(dates)
 %             ensemble = ensembleData{i};
 %             for j = 1:numel(ensemble)
@@ -59,7 +100,7 @@ for k = 1:numel(var)
         else
             subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
         end        
-        str = {['Mean RMSE: ' num2str(mean(singleData))], ['Mean ensemble RMSE: ' num2str(mean(meanValues))]};
+        str = {['Mean RMSE: ' num2str(mean(singleDataVal))], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal))]};
         text(15,.8,str);
         xlabel('Date')
         if metric == 1
@@ -71,11 +112,12 @@ for k = 1:numel(var)
         elseif metric == 4
             ylabel('SPOMF')
         end
+        legend('Stochastic ensembles','Stochastic mean','Deterministic')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['bsValidation_' convertStringsToChars(var(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(var(k)) '.png']))
     else
-        figure('WindowState', 'maximized', 'NumberTitle', 'off', 'Name', ['Figure ' num2str(k)]);
+        figure('WindowState', 'maximized');
         plot(datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
             validationMetric.(var(k))(:,2));
         yline(mean(validationMetric.(var(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(var(k))(:,2)))],'Color','r')
@@ -121,7 +163,7 @@ for k = 1:numel(var)
         synData  = synImages.(var(k));
 
         % Create an empty figure
-        figure('WindowState', 'maximized', 'NumberTitle', 'off', 'Name', ['Figure ' num2str(k+2)]);
+        figure('WindowState', 'maximized');
         % Loop over each file in the synthetic directory and find the corresponding
         % file in the reference directory
         for i = 1:size(synData,3)
@@ -208,7 +250,7 @@ for k = 1:numel(var)
         synData  = synImages.(var(k));
         synthetic = squeeze(mean(mean(synData, 1, 'omitnan'), 2, 'omitnan'));
         reference = squeeze(mean(mean(refData, 1, 'omitnan'), 2, 'omitnan'));
-        figure('WindowState', 'maximized', 'NumberTitle', 'off', 'Name', ['Figure ' num2str(k+3)]);
+        figure('WindowState', 'maximized');
         date = datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
         plot(date, reference, 'r-', date, synthetic, 'k-');
         legend('Reference','Synthetic','Location','southeast')
