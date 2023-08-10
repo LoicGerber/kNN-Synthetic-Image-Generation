@@ -53,13 +53,19 @@ for k = 1:numel(var)
         plot(dates, refData, 'k-', 'LineWidth', 1)
         hold off
         title([convertStringsToChars(var(k)) ' - MEAN'])
+        r = corr(synData,refData);
+        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        alpha = std(synData)/std(refData);
+        beta  = mean(synData)/mean(refData);
+        kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+        str = {['Corr: ' num2str(r,'%.3f')] ['NSE: ' num2str(nseSynRef,'%.3f')] ['KGE: ' num2str(kgeSynRef,'%.3f')]};
         if strcmp(startLdate, startQdate)
-            subtitle(['Learning periode: ' endQdate '-' endLdate])
+            subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
-            subtitle(['Learning periode: ' startLdate '-' startQdate])
+            subtitle([['Learning periode: ' startLdate '-' startQdate] str])
         else
-            subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
-        end        
+            subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+        end
         xlabel('Date')
         ylabel(strcat("Mean ", var(k)))
         legend('Synthetic data spread','Synthetic data mean','Deterministic mean','Reference data mean')
@@ -95,15 +101,14 @@ for k = 1:numel(var)
         elseif metric == 4
             title([convertStringsToChars(var(k)) ' - SPOMF'])
         end
+        str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.3f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.3f')]};
         if strcmp(startLdate, startQdate)
-            subtitle(['Learning periode: ' endQdate '-' endLdate])
+            subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
-            subtitle(['Learning periode: ' startLdate '-' startQdate])
+            subtitle([['Learning periode: ' startLdate '-' startQdate] str])
         else
-            subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
+            subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
         end        
-        str = {['Mean RMSE: ' num2str(mean(singleDataVal))], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal))]};
-        text(15,.8,str);
         xlabel('Date')
         if metric == 1
             ylabel('RMSE')
