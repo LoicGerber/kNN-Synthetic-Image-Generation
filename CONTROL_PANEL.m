@@ -44,12 +44,14 @@ createGenWeights  = true;       % true = create generic weights, false = load op
 kNNsorting        = true;       % true = create sorted data,     false = load sorted data
 generateImage     = true;       % true = image generation ON,    false = image generation OFF
 bootstrap         = false;      % true = bootstrap ON,           false = bootstrap OFF
+bsSaveAll         = false;      % true = saves all bootstrap ensembles, false = saves only min, deterministic and max bootstrap ensembles as netCDF files
 
 % Validation switch
 validationPrep    = false;      % true = validation preparation ON,    false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 validation        = false;      % true = validation ON,    false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;      % true = visualisation ON, false = visualisation OFF
 metric            = 1;          % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
+validationComp    = 2;          % 1 = Pearson Correlation, 2 = Nash-Sutcliffe Efficiency, 3 = Kling-Gupta Efficiency
 
 % Bayesian optimisation switch
 optimPrep         = false;      % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -58,9 +60,10 @@ optimisation      = false;      % true = optimisation ON, false = optimisation O
 nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation
 
 % Pass all arguments to MAIN function
-[geoRef,climateData,queryDates,learningDates,refValidation,additionalVars,Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
+[geoRef,climateData,queryDates,learningDates,refValidation,additionalVars,Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
+    MAIN(...
     rawDir,inputDir,outputDir,var,vars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
     shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,validationPrep,validation,metricViz, ...
-    metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
+    metricViz,metric,validationComp,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 

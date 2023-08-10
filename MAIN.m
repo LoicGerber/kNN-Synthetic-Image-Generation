@@ -1,8 +1,8 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars,Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
     rawDir,inputDir,outputDir,var,vars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
     shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,validationPrep,validation,metricViz, ...
-    metric,validationComp,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
+    metricViz,metric,validationComp,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
 close all
@@ -83,7 +83,7 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
-    synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,ensemble,outputType);
+    synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,ensemble,outputType);
 elseif optimisation == true && validation == false
     disp('Optimisation run, synthetic image generation skipped...')
     synImages = [];

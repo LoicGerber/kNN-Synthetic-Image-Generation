@@ -1,4 +1,4 @@
-function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,ensemble,outputType)
+function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,ensemble,outputType)
 
 %
 %
@@ -261,9 +261,11 @@ for i = 1:numel(var_low)
 
     for rowIndex = 1:size(sortedDates,1)
         if bootstrap == true
-            outputDirBootstrap = fullfile(outputDirImages, var_low(i), string(sortedDates(rowIndex,1)));
-            if ~exist(outputDirBootstrap,'dir')
-                mkdir(outputDirBootstrap)
+            if bsSaveAll == true
+                outputDirBootstrap = fullfile(outputDirImages, var_low(i), string(sortedDates(rowIndex,1)));
+                if ~exist(outputDirBootstrap,'dir')
+                    mkdir(outputDirBootstrap)
+                end
             end
             % Find the index of the current image in the Dates variable
             [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
@@ -284,25 +286,27 @@ for i = 1:numel(var_low)
             else
                 error('Generation type not defined!')
             end
-            % Write the resulting image to a GeoTIFF file
-            outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
-            fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
-            if isempty(GeoRef)
-                %disp('    Georeferencing files missing! Unreferenced output...')
-                t = Tiff(fullDestinationFileName, 'w');
-                tagstruct.ImageLength         = imgLength;
-                tagstruct.ImageWidth          = imgWidth;
-                tagstruct.Compression         = Tiff.Compression.None;
-                tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-                tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-                tagstruct.BitsPerSample       = 32;
-                tagstruct.SamplesPerPixel     = 1;
-                tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-                t.setTag(tagstruct);
-                t.write(single(resultImages));
-                t.close();
-            else
-                geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+            if bsSaveAll == true
+                % Write the resulting image to a GeoTIFF file
+                outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
+                fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
+                if isempty(GeoRef)
+                    %disp('    Georeferencing files missing! Unreferenced output...')
+                    t = Tiff(fullDestinationFileName, 'w');
+                    tagstruct.ImageLength         = imgLength;
+                    tagstruct.ImageWidth          = imgWidth;
+                    tagstruct.Compression         = Tiff.Compression.None;
+                    tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+                    tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+                    tagstruct.BitsPerSample       = 32;
+                    tagstruct.SamplesPerPixel     = 1;
+                    tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+                    t.setTag(tagstruct);
+                    t.write(single(resultImages));
+                    t.close();
+                else
+                    geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+                end
             end
             map(:,:,rowIndex) = resultImages;
             % bootstrap
@@ -340,30 +344,32 @@ for i = 1:numel(var_low)
             % Store all bs days sorted according to mean of each day
             %imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,:);
             imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,dayAvg(:,2));
-            for bs = 1:ensemble
-                % Write the resulting image to a GeoTIFF file
-                outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '.tif';
-                fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
-                %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
-                if isempty(GeoRef)
-                    %disp('    Georeferencing files missing! Unreferenced output...')
-                    t = Tiff(fullDestinationFileName, 'w');
-                    tagstruct.ImageLength         = imgLength;
-                    tagstruct.ImageWidth          = imgWidth;
-                    tagstruct.Compression         = Tiff.Compression.None;
-                    tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-                    tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-                    tagstruct.BitsPerSample       = 32;
-                    tagstruct.SamplesPerPixel     = 1;
-                    tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-                    t.setTag(tagstruct);
-                    t.write(single(imagesSynAll{rowIndex}(:,:,bs)));
-                    t.close();
-                else
-                    geotiffwrite(fullDestinationFileName,single(imagesSynAll{rowIndex}(:,:,bs)),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+            if bsSaveAll == true
+                for bs = 1:ensemble
+                    % Write the resulting image to a GeoTIFF file
+                    outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '.tif';
+                    fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
+                    %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
+                    if isempty(GeoRef)
+                        %disp('    Georeferencing files missing! Unreferenced output...')
+                        t = Tiff(fullDestinationFileName, 'w');
+                        tagstruct.ImageLength         = imgLength;
+                        tagstruct.ImageWidth          = imgWidth;
+                        tagstruct.Compression         = Tiff.Compression.None;
+                        tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+                        tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+                        tagstruct.BitsPerSample       = 32;
+                        tagstruct.SamplesPerPixel     = 1;
+                        tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+                        t.setTag(tagstruct);
+                        t.write(single(imagesSynAll{rowIndex}(:,:,bs)));
+                        t.close();
+                    else
+                        geotiffwrite(fullDestinationFileName,single(imagesSynAll{rowIndex}(:,:,bs)),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+                    end
                 end
             end
-
+            % Save min, deterministic and max in netCDF
             % Assign date
             dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
             yearStr  = dateStr(1:4);
@@ -486,7 +492,7 @@ for i = 1:numel(var_low)
 end
 
 if optimisation == false && validation == true
-    fprintf('\n')
+    %fprintf('\n')
     disp('Saving synValidation.mat file...')
     save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
 end
