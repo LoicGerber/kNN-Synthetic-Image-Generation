@@ -52,7 +52,6 @@ validationPrep    = false;      % true = validation preparation ON, false = vali
 validation        = false;      % true = validation ON,             false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;      % true = visualisation ON,          false = visualisation OFF
 metric            = 1;          % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
-validationComp    = 2;          % 1 = Pearson Correlation, 2 = Nash-Sutcliffe Efficiency, 3 = Kling-Gupta Efficiency
 
 % Bayesian optimisation switch
 optimPrep         = false;      % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -66,5 +65,5 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
     rawDir,inputDir,outputDir,optiWeightsDir,var,vars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
     shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
-    metricViz,metric,validationComp,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
+    metricViz,metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 

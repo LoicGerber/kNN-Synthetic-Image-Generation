@@ -269,20 +269,28 @@ for i = 1:numel(var_low)
             end
             % Find the index of the current image in the Dates variable
             [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
-            % Select the Landsat image from the Landsat variable and add it to selectedImages
+            % Select the K best image from the Learning dataset and add it to selectedImages
             for imageIndex = 1:length(sortedDates{rowIndex,2})
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
-            % Calculate either the mode or the mean of the selected Landsat images
+            selectedDist = 1./sortedDates{rowIndex,3};
+            % Normalize the selectedDist values
+            normalizedWeights = selectedDist / sum(selectedDist);
+            % Perform element-wise multiplication with the weights
+            weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
+            % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
-                resultImages = mode(selectedImages(:,:,:),3);
+                %resultImages = mode(selectedImages,3);
+                resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
-                resultImages = mean(selectedImages(:,:,:),3);
+                %resultImages = mean(selectedImages,3);
+                resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
-                resultImages = median(selectedImages(:,:,:),3);
+                %resultImages = median(selectedImages,3);
+                resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end
@@ -319,20 +327,29 @@ for i = 1:numel(var_low)
                 bootstrapDates = randsample(sortedDates{rowIndex,2},numel(sortedDates{rowIndex,2}),true);
                 % Find the index of the current image in the Dates variable
                 [~, dateIndex] = ismember(bootstrapDates,learningDatesDate);
-                % Select the Landsat image from the Landsat variable and add it to selectedImages
+                [~, distIndex] = ismember(bootstrapDates,sortedDates{rowIndex,2});
+                % Select the K best image from the Learning dataset and add it to selectedImages
                 for imageIndex = 1:length(sortedDates{rowIndex,2})
                     selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
                 end
-                % Calculate either the mode or the mean of the selected Landsat images
+                selectedDist = 1./sortedDates{rowIndex,3}(distIndex);
+                % Normalize the selectedDist values
+                normalizedWeights = selectedDist / sum(selectedDist);
+                % Perform element-wise multiplication with the weights
+                weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
+                % Calculate either the mode or the mean of the selected images
                 if generationType == 1
                     % Calculate the mode and save it to resultImagesBS
-                    resultImagesBS(:,:,bs) = mode(selectedImages(:,:,:),3);
+                    %resultImagesBS(:,:,bs) = mode(selectedImages,3);
+                    resultImagesBS(:,:,bs) = mode(weightedImages,3);
                 elseif generationType == 2
                     % Calculate the mean and save it to resultImagesBS
-                    resultImagesBS(:,:,bs) = mean(selectedImages(:,:,:),3);
+                    %resultImagesBS(:,:,bs) = mean(selectedImages,3);
+                    resultImagesBS(:,:,bs) = sum(weightedImages,3);
                 elseif generationType == 3
                     % Calculate the median and save it to resultImagesBS
-                    resultImagesBS(:,:,bs) = median(selectedImages(:,:,:),3);
+                    %resultImagesBS(:,:,bs) = median(selectedImages,3);
+                    resultImagesBS(:,:,bs) = median(weightedImages,3);
                 else
                     error('Generation type not defined!')
                 end
@@ -340,10 +357,10 @@ for i = 1:numel(var_low)
             % Compute mean of each day to determine quantile
             dayAvg = squeeze(mean(mean(resultImagesBS,'omitnan'),'omitnan'));
             dayAvg = sortrows([dayAvg (1:ensemble)']);
-            %resultImagesMean = mean(resultImagesBS(:,:,:),3);
+            %resultImagesMean = mean(resultImagesBS,3);
             % Store all bs days sorted according to mean of each day
-            %imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,:);
-            imagesSynAll{rowIndex}(:,:,:) = resultImagesBS(:,:,dayAvg(:,2));
+            %imagesSynAll{rowIndex} = resultImagesBS;
+            imagesSynAll{rowIndex} = resultImagesBS(:,:,dayAvg(:,2));
             if bsSaveAll == true
                 for bs = 1:ensemble
                     % Write the resulting image to a GeoTIFF file
@@ -410,20 +427,28 @@ for i = 1:numel(var_low)
         else
             % Find the index of the current image in the Dates variable
             [~, dateIndex] = ismember(sortedDates{rowIndex,2},learningDatesDate);
-            % Select the Landsat image from the Landsat variable and add it to selectedImages
+            % Select the K best image from the Learning dataset and add it to selectedImages
             for imageIndex = 1:length(sortedDates{rowIndex,2})
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
-            % Calculate either the mode or the mean of the selected Landsat images
+            selectedDist = 1./sortedDates{rowIndex,3};
+            % Normalize the selectedDist values
+            normalizedWeights = selectedDist / sum(selectedDist);
+            % Perform element-wise multiplication with the weights
+            weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
+            % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
-                resultImages = mode(selectedImages(:,:,:),3);
+                %resultImages = mode(selectedImages,3);
+                resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
-                resultImages = mean(selectedImages(:,:,:),3);
+                %resultImages = mean(selectedImages,3);
+                resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
-                resultImages = median(selectedImages(:,:,:),3);
+                %resultImages = median(selectedImages,3);
+                resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end

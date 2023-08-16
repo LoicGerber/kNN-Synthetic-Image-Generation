@@ -2,7 +2,7 @@ function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVa
     rawDir,inputDir,outputDir,optiWeightsDir,var,vars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
     shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
-    metricViz,metric,validationComp,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
+    metricViz,metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
 close all
@@ -103,7 +103,7 @@ if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
     validationMetric = validationMetrics(var,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(var,refValidation,synImages,validationMetric,metric,validationComp,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
+    visualiseMetrics(var,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else
