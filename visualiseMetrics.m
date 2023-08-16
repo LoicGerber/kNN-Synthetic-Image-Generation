@@ -1,4 +1,4 @@
-function visualiseMetrics(var,refValidation,synImages,validationMetric,metric,validationComp,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
+function visualiseMetrics(var,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
 
 %
 %
@@ -58,7 +58,7 @@ for k = 1:numel(var)
         alpha = std(synData)/std(refData);
         beta  = mean(synData)/mean(refData);
         kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-        str = {['Corr: ' num2str(r,'%.3f')] ['NSE: ' num2str(nseSynRef,'%.3f')] ['KGE: ' num2str(kgeSynRef,'%.3f')]};
+        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
         if strcmp(startLdate, startQdate)
             subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
@@ -101,7 +101,7 @@ for k = 1:numel(var)
         elseif metric == 4
             title([convertStringsToChars(var(k)) ' - SPOMF'])
         end
-        str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.3f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.3f')]};
+        str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
         if strcmp(startLdate, startQdate)
             subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
@@ -158,6 +158,30 @@ for k = 1:numel(var)
         set(gcf, 'color', 'white');
         grid on
         saveas(gcf,strcat(outputDir,['validation_' convertStringsToChars(var(k)) '.png']))
+
+        % --------------------------------------------------------------------
+
+        refData    = squeeze(mean(mean(refValidation.(var(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+        synData    = squeeze(mean(mean(synImages.(var(k)),1,'omitnan'),2,'omitnan'));
+        figure('WindowState', 'maximized');
+        date = datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
+        plot(date, refData, 'r-', date, synData, 'k-');
+        legend('Reference','Synthetic','Location','southeast')
+        xlabel('Date')
+        ylabel('Evaporation [mm/day]')
+        title([convertStringsToChars(var(k)) ' - Reference vs Synthetic'])
+        r = corr(synData,refData);
+        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        alpha = std(synData)/std(refData);
+        beta  = mean(synData)/mean(refData);
+        kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
+        subtitle(str)
+        grid on
+        box off
+        %legend boxoff 
+        set(gcf, 'color', 'white');
+        saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(var(k)) '.png']))
 
         % -------------------------------------------------------------------------
 
@@ -250,40 +274,6 @@ for k = 1:numel(var)
                 end
             end
         end
-
-        % --------------------------------------------------------------------
-
-        refData  = refValidation.(var(k));
-        synData  = synImages.(var(k));
-        synthetic = squeeze(mean(mean(synData, 1, 'omitnan'), 2, 'omitnan'));
-        reference = squeeze(mean(mean(refData, 1, 'omitnan'), 2, 'omitnan'));
-        figure('WindowState', 'maximized');
-        date = datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-        plot(date, reference, 'r-', date, synthetic, 'k-');
-        legend('Reference','Synthetic','Location','southeast')
-        xlabel('Date')
-        ylabel('Evaporation [mm/day]')
-        title([convertStringsToChars(var(k)) ' - Reference vs Synthetic'])
-        if validationComp == 1
-            corrSynRef = corr(synthetic,reference);
-            subtitle(['Correlation: ' num2str(corrSynRef)])
-        elseif validationComp == 2
-            nseSynRef = 1-(sum((synthetic-reference).^2)/sum((synthetic-mean(synthetic)).^2));
-            subtitle(['NSE: ' num2str(nseSynRef)])
-        elseif validationComp == 3
-            r = corr(synthetic,reference);
-            alpha = std(synthetic)/std(reference);
-            beta  = mean(synthetic)/mean(reference);
-            kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-            subtitle(['KGE: ' num2str(kgeSynRef)])
-        else
-            error('Invalid validationComp parameter...')
-        end
-        grid on
-        box off
-        %legend boxoff 
-        set(gcf, 'color', 'white');
-        saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(var(k)) '.png']))
     end
 end
 
