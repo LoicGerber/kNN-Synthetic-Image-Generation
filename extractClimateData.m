@@ -18,7 +18,25 @@ datesFields        = matchingFields(ismember(lower(matchingFields), lower(vars+'
 %climateData = cell(numel(output_data.(matchingDataFields(1))), num_vars);
 climateData = table();
 for i = 1:length(matchingDataFields)
-    climateData(:,i) = rawData.(matchingDataFields(i));
+    % Flatten the cell array into a single numeric array
+    numMatrices = numel(rawData.(matchingDataFields(i)));
+    flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
+    for j = 1:numMatrices
+        flattenedData(j, :) = rawData.(matchingDataFields(i)){j}(:); % Flatten each matrix and store in the matrix
+    end
+    % Find the minimum and maximum values of the entire numeric array
+    minValue = min(flattenedData(:));
+    maxValue = max(flattenedData(:));
+    % Normalize each matrix in the cell array
+    normalizedCellArray = cell(numMatrices, 1);
+    for j = 1:numMatrices
+        normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - minValue) / (maxValue - minValue);
+    end
+    % climateData is normalised
+    climateData(:,i) = normalizedCellArray;
+
+    % climateData is not normalised
+    %climateData(:,i) = rawData.(matchingDataFields(i));
 end
 climateData.Properties.VariableNames = matchingDataFields;
 climateData.("date") = rawData.(datesFields(1));
