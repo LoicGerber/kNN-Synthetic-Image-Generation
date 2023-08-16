@@ -184,7 +184,7 @@ if parallelComputing == true
                         % 1 date, 2 distance
                         climateDistAll = cell(ld,1);
                         climateDistAll{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            learningClimate, queryClimate, 'UniformOutput', false);
+                            learningClimate, queryClimate, 'UniformOutput', false); % mean absolute error
                         climateDistance{ld,1} = currentLDate;
                         climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
                         climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
@@ -357,8 +357,14 @@ else % serial computing
 
                         % Climate distance
                         % 1 date, 2 distance
+%                         manhattan = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
+%                             learningClimate, queryClimate, 'UniformOutput', false); % Manhattan norm
+%                         euclidean = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
+%                             learningClimate, queryClimate, 'UniformOutput', false); % Euclidean norm
+%                         mae       = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+%                             learningClimate, queryClimate, 'UniformOutput', false); % mean absolute error
                         climateDistAll{1,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                            learningClimate, queryClimate, 'UniformOutput', false);
+                            learningClimate, queryClimate, 'UniformOutput', false); % mean absolute error
                         climateDistance{ld,1} = currentLDate;
                         climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
                         climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{1,1}(shortWindow+1:end,:)),1,'omitnan');
