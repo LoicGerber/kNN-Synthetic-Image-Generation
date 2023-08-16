@@ -121,7 +121,7 @@ for j = 1:numel(var)
     if optimisation == false
         validationMetric.(var(j)) = validationResult;
     else
-        validOptim = validOptim + mean(cell2mat(validationResult(:,2)));
+        validOptim = validOptim + mean(validationResult(:,2));
     end
 end
 

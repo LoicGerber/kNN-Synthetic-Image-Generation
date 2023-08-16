@@ -1,4 +1,6 @@
-function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,var,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,GeoRef,GenerationType,bootstrap,ensemble,metric,validation,optimisation,inputDir,outputDir)
+function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW, ...
+    var,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,geoRef,generationType,bootstrap,ensemble,metric,validation, ...
+    optimisation,inputDir,outputDir)
 
 %
 %
@@ -7,6 +9,17 @@ function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_Sho
 %
 %
 %
+
+totWeights  = 1;
+Et_W        = 1;
+Tavg_ShortW = 1;
+Tmin_ShortW = 1;
+Tmax_ShortW = 1;
+Pre_ShortW  = 1;
+Tavg_LongW  = 1;
+Tmin_LongW  = 1;
+Tmax_LongW  = 1;
+Pre_LongW   = 1;
 
 totWeights  = Et_W + Tavg_ShortW + Tmin_ShortW + Tmax_ShortW  +Pre_ShortW + Tavg_LongW + Tmin_LongW + Tmax_LongW + Pre_LongW;
 Et_W        = Et_W/totWeights;
@@ -21,10 +34,9 @@ Pre_LongW   = Pre_LongW/totWeights;
 
 %sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir);
 sortedDatesOptim = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir);
-OutputType  = 1;
-synImages = GenerateSynImages(var,learningDates,sortedDatesOptim,GeoRef,outputDir,GenerationType,validation,optimisation,bootstrap,ensemble,OutputType);
+synImages = GenerateSynImages(var,learningDates,sortedDatesOptim,geoRef,outputDir,generationType,validation,optimisation,bootstrap,false,ensemble,2);
 % Compute the validation metric using the updated code
-objective = validationMetrics(metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+objective = validationMetrics(var,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
 if metric == 1
     % Calculate the RMSE
     disp(['RMSE: ' num2str(objective)])
