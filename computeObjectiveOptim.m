@@ -10,17 +10,6 @@ function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_Sho
 %
 %
 
-totWeights  = 1;
-Et_W        = 1;
-Tavg_ShortW = 1;
-Tmin_ShortW = 1;
-Tmax_ShortW = 1;
-Pre_ShortW  = 1;
-Tavg_LongW  = 1;
-Tmin_LongW  = 1;
-Tmax_LongW  = 1;
-Pre_LongW   = 1;
-
 totWeights  = Et_W + Tavg_ShortW + Tmin_ShortW + Tmax_ShortW  +Pre_ShortW + Tavg_LongW + Tmin_LongW + Tmax_LongW + Pre_LongW;
 Et_W        = Et_W/totWeights;
 Tavg_ShortW = Tavg_ShortW/totWeights;
