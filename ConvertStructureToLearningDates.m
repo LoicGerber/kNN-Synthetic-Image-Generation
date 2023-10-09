@@ -1,4 +1,4 @@
-function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir)
+function learningDates = ConvertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir)
 
 %
 %
@@ -9,10 +9,10 @@ function learningDates = ConvertStructureToLearningDates(var,LdateStart,LdateEnd
 %
 
 commonDates = [];
-for i = 1:numel(var)
+for i = 1:numel(targetVar)
     % Learning dates - variable to be generated
-    disp("  Processing '" + var(i) + "' for learningDates...")
-    learningDates = rawData.(lower(var(i))+'Index');
+    disp("  Processing '" + targetVar(i) + "' for learningDates...")
+    learningDates = rawData.(lower(targetVar(i))+'Index');
     % Extract the common dates
     if isempty(commonDates)
         % For the first variable, set the common dates as all available learning dates
@@ -24,11 +24,11 @@ for i = 1:numel(var)
 end
 learningDates = commonDates;
 targetVarDataAll = {};
-for i = 1:numel(var)
-    data = rawData.(lower(var(i))+'Index');
+for i = 1:numel(targetVar)
+    data = rawData.(lower(targetVar(i))+'Index');
     [r,~] = find(data>=commonDates(1) & data<=commonDates(end));
     % Load data set
-    targetVarData = rawData.(lower(var(i)));
+    targetVarData = rawData.(lower(targetVar(i)));
     targetVarDataAll = [targetVarDataAll targetVarData(r)];
 end
 % Keep only the target variable data corresponding to the common dates
@@ -53,10 +53,10 @@ targetVarDataAll = targetVarDataAll(indexLearningDates,:);
 learningDates = learningDates(indexLearningDates); % KEEP ONLY DATES MATCHING CLIMATE DATA
 targetVarDataAll = targetVarDataAll(indexLearningDates,:);
 
-if numel(var) == 1
-    learningDates_table = table(learningDates,targetVarDataAll,'VariableNames',['date',var]);
-elseif numel(var) == 2
-    learningDates_table = table(learningDates,targetVarDataAll(:,1),targetVarDataAll(:,2),'VariableNames',['date',var(1),var(2)]);
+if numel(targetVar) == 1
+    learningDates_table = table(learningDates,targetVarDataAll,'VariableNames',['date',targetVar]);
+elseif numel(targetVar) == 2
+    learningDates_table = table(learningDates,targetVarDataAll(:,1),targetVarDataAll(:,2),'VariableNames',['date',targetVar(1),targetVar(2)]);
 else
     error('Change ConvertStructureToLearningDates to allow more variable names')
 end

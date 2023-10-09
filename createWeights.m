@@ -1,4 +1,4 @@
-function Weights = createWeights(var,vars,addVars,inputDir)
+function Weights = createWeights(targetVar,climateVars,addVars,inputDir)
 
 %
 %
@@ -8,9 +8,9 @@ function Weights = createWeights(var,vars,addVars,inputDir)
 %
 %
 
-climShort = strcat(vars,'_ShortW');
-climLong  = strcat(vars,'_LongW');
-targetW   = strcat(var,'_W');
+climShort = strcat(climateVars,'_ShortW');
+climLong  = strcat(climateVars,'_LongW');
+targetW   = strcat(targetVar,'_W');
 if ~isempty(addVars)
     addVarsW  = strcat(addVars,'_W');
 else

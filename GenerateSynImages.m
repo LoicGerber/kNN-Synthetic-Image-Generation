@@ -1,4 +1,4 @@
-function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,ensemble,outputType)
+function [synImages,availablePixels] = GenerateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,ensemble,outputType)
 
 %
 %
@@ -9,7 +9,7 @@ function synImages = GenerateSynImages(var,learningDates,sortedDates,geoRef,outp
 %
 
 outputDirImages = [outputDir 'syntheticImages\'];
-var_low = lower(var);
+var_low = lower(targetVar);
 
 % Check if output directories exist, if not create them
 for i = 1:numel(var_low)
@@ -29,10 +29,12 @@ for i = 1:numel(var_low)
     imgLength = size(learningData{1},1);
     imgWidth  = size(learningData{1},2);
 
-    GeoRef = geoRef.(var(i));
+    GeoRef = geoRef.(targetVar(i));
 
     selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
     %resultImages   = cell(size(sortedDates, 1), 1);
+    availablePix   = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
+    varianceBS     = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
 
     imagesSynAll = single(nan(imgLength,imgWidth,size(sortedDates,1)));
     map = imagesSynAll;
@@ -281,19 +283,21 @@ for i = 1:numel(var_low)
             % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
-                %resultImages = mode(selectedImages,3);
-                resultImages = mode(weightedImages,3);
+                resultImages = mode(selectedImages,3);
+                %resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 %resultImages = mean(selectedImages,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
-                %resultImages = median(selectedImages,3);
-                resultImages = median(weightedImages,3);
+                resultImages = median(selectedImages,3);
+                %resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end
+            % Calculate the count of non-NaN values
+            availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
             if bsSaveAll == true
                 % Write the resulting image to a GeoTIFF file
                 outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
@@ -340,20 +344,24 @@ for i = 1:numel(var_low)
                 % Calculate either the mode or the mean of the selected images
                 if generationType == 1
                     % Calculate the mode and save it to resultImagesBS
-                    %resultImagesBS(:,:,bs) = mode(selectedImages,3);
-                    resultImagesBS(:,:,bs) = mode(weightedImages,3);
+                    resultImagesBS(:,:,bs) = mode(selectedImages,3);
+                    %resultImagesBS(:,:,bs) = mode(weightedImages,3);
                 elseif generationType == 2
                     % Calculate the mean and save it to resultImagesBS
                     %resultImagesBS(:,:,bs) = mean(selectedImages,3);
                     resultImagesBS(:,:,bs) = sum(weightedImages,3);
                 elseif generationType == 3
                     % Calculate the median and save it to resultImagesBS
-                    %resultImagesBS(:,:,bs) = median(selectedImages,3);
-                    resultImagesBS(:,:,bs) = median(weightedImages,3);
+                    resultImagesBS(:,:,bs) = median(selectedImages,3);
+                    %resultImagesBS(:,:,bs) = median(weightedImages,3);
                 else
                     error('Generation type not defined!')
                 end
             end
+            % Calculate the count of non-NaN values
+            availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
+            % Compute variance per pixel
+            varianceBS(:,:,rowIndex) = var(weightedImages, 0, 3);
             % Compute mean of each day to determine quantile
             dayAvg = squeeze(mean(mean(resultImagesBS,'omitnan'),'omitnan'));
             dayAvg = sortrows([dayAvg (1:ensemble)']);
@@ -439,20 +447,22 @@ for i = 1:numel(var_low)
             % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
-                %resultImages = mode(selectedImages,3);
-                resultImages = mode(weightedImages,3);
+                resultImages = mode(selectedImages,3);
+                %resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 %resultImages = mean(selectedImages,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
-                %resultImages = median(selectedImages,3);
-                resultImages = median(weightedImages,3);
+                resultImages = median(selectedImages,3);
+                %resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end
             map(:,:,rowIndex) = resultImages;
+            % Calculate the count of non-NaN values
+            availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
             if outputType == 1
                 % Write the resulting image to a GeoTIFF file
                 outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
@@ -507,12 +517,16 @@ for i = 1:numel(var_low)
     end
     if i == 1
         synImages.date = cell2mat(sortedDates(:,1));
+        availablePixels.date = cell2mat(sortedDates(:,1));
         fprintf('\n')
     end
-    synImages.(var(i)) = map;
+    synImages.(targetVar(i)) = map;
+    availablePixels.(targetVar(i)) = availablePix;
     if bootstrap == true
-        varBS = strcat(var(i), "Bootstrap");
+        varBS = strcat(targetVar(i), "Bootstrap");
+        BSvar = strcat(varBS, "Variance");
         synImages.(varBS) = imagesSynAll;
+        synImages.(BSvar) = varianceBS;
     end
 end
 
@@ -520,6 +534,8 @@ if optimisation == false && validation == true
     %fprintf('\n')
     disp('Saving synValidation.mat file...')
     save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
+    disp('Saving availablePixels.mat file...')
+    save(fullfile(outputDir,'availablePixels.mat'),'availablePixels', '-v7.3','-nocompression');
 end
 
 end

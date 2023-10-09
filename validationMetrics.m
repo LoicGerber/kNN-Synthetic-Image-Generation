@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(var,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
 
 %
 %
@@ -12,24 +12,24 @@ synValidation = synImages;
 
 validOptim = 0;
 
-for j = 1:numel(var)
-    refImages = refValidation.(var(j));
+for j = 1:numel(targetVar)
+    refImages = refValidation.(targetVar(j));
     refDates  = refValidation.date;
     synDates  = synValidation.date;
 
     if bootstrap == false
         % Initialize an array to store the RMSE values
         validationResult = zeros(size(refImages,3), 2);
-        synImagesAll = synValidation.(var(j));
+        synImagesAll = synValidation.(targetVar(j));
         if size(refImages,3) ~= size(synImagesAll,3)
             error('Numbers of reference and synthetic images do not match');
         end
     else
         % Initialize an array to store the RMSE values
         validationResult = cell(size(refImages,3), 3);
-        varBS = strcat(var(j), "Bootstrap");
+        varBS = strcat(targetVar(j), "Bootstrap");
         synImagesAll = synValidation.(varBS);
-        maps = synValidation.(var(j));
+        maps = synValidation.(targetVar(j));
         if size(refImages,3) ~= size(synImagesAll,1)
             error('Numbers of reference and synthetic images do not match');
         end
@@ -119,7 +119,7 @@ for j = 1:numel(var)
         end
     end
     if optimisation == false
-        validationMetric.(var(j)) = validationResult;
+        validationMetric.(targetVar(j)) = validationResult;
     else
         validOptim = validOptim + mean(validationResult(:,2));
     end

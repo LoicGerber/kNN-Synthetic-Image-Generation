@@ -1,4 +1,4 @@
-function geoRef = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir)
+function geoRef = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inputDir)
 
 %
 %
@@ -10,8 +10,8 @@ function geoRef = extractGeoInfo(var,coordRefSysCode,rawDir,inputDir)
 
 % Create R matrix containing InputVar product informations
 % Open the netCDF file
-for i = 1:numel(var)
-    ncid = netcdf.open(fullfile(rawDir,var(i)+'.nc'),'NOWRITE');
+for i = 1:numel(targetVar)
+    ncid = netcdf.open(fullfile(rawDir,targetVar(i)+'.nc'),'NOWRITE');
     % Get the latitude and longitude variables
     try
         latVarID = netcdf.inqVarID(ncid,'lat');
@@ -41,7 +41,7 @@ for i = 1:numel(var)
         GeoRef.CellExtentInLongitude = double((maxLon-minLon)/(numel(lon)-1));
     end
     GeoRef.GeographicCRS = geocrs(coordRefSysCode);
-    geoRef.(var(i)) = GeoRef;
+    geoRef.(targetVar(i)) = GeoRef;
 end
 
 disp(strcat('  Saving geoRef data...'))

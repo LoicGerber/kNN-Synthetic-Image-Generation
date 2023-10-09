@@ -1,4 +1,4 @@
-function sortedDates = KNNDataSorting(var,vars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir)
+function sortedDates = KNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir)
 
 %
 %
@@ -55,7 +55,7 @@ else
 end
 
 % Assign different weights
-idxTarget     = contains(Weights.Properties.VariableNames,var);
+idxTarget     = contains(Weights.Properties.VariableNames,targetVar);
 weightsTarget = table2array(Weights(:,idxTarget));
 idxShort      = contains(Weights.Properties.VariableNames,'Short');
 weightsShort  = table2cell(Weights(:,idxShort));
@@ -94,10 +94,10 @@ if parallelComputing == true
         disp(['  Processing day ' num2str(qd) '/' num2str(totQDates) ' (' num2str(currentQDate) ')'])
 
         % Extract the longWindow climate for the current query date
-        queryClimate = cell(longWindow, numel(vars));
+        queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            for j = 1:numel(vars)
+            for j = 1:numel(climateVars)
                 kj = 1;
                 for k = (longWindow-1):-1:0
                     queryClimate(kj,j) = climateMaps(idx-k,j);
@@ -123,7 +123,7 @@ if parallelComputing == true
             % Display progress - only for serial computing
             %fprintf(1,'    Progress for current query date: %3.0f%%\n',progress);
             for ld = 1:totLDates
-                learningClimate = cell(longWindow, numel(vars));
+                learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
                 idx             = find(climateDates == currentLDate);
@@ -131,7 +131,7 @@ if parallelComputing == true
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        for j = 1:numel(vars)
+                        for j = 1:numel(climateVars)
                             kj = 1;
                             for k = (longWindow-1):-1:0
                                 learningClimate(kj,j) = climateMaps(idx-k,j);
@@ -265,10 +265,10 @@ else % serial computing
         fprintf(['\n  Processing day ' num2str(qd) '/' num2str(totQDates) ' (' num2str(currentQDate) ')'])
 
         % Extract the longWindow climate for the current query date
-        queryClimate = cell(longWindow, numel(vars));
+        queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            for j = 1:numel(vars)
+            for j = 1:numel(climateVars)
                 kj = 1;
                 for k = (longWindow-1):-1:0
                     queryClimate(kj,j) = climateMaps(idx-k,j);
@@ -297,7 +297,7 @@ else % serial computing
             progress = 0;
             fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
             for ld = 1:totLDates
-                learningClimate = cell(longWindow, numel(vars));
+                learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
                 idx             = find(climateDates == currentLDate);
@@ -306,7 +306,7 @@ else % serial computing
                     %disp(['    Processing learning day ', num2str(currentLDate)])
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        for j = 1:numel(vars)
+                        for j = 1:numel(climateVars)
                             kj = 1;
                             for k = (longWindow-1):-1:0
                                 learningClimate(kj,j) = climateMaps(idx-k,j);

@@ -17,8 +17,8 @@ outputDir         = 'path/to/outputs';                          % Path to result
 optiWeightsDir    = 'path/to/optimised/weights/matrix.mat';     % Path to optimised weights matrix .mat file (if available, otherwise '')
 
 % ConvertStructureToInputs
-var               = ["Et"];                         % Variables to be generated, with ["example1","example2"]
-vars              = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
+targetVar         = ["Et"];                         % Variables to be generated, with ["example1","example2"]
+climateVars       = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = [];                             % Additional input variables, with ["example1","example2"], if empty use []
 QdateStart        = 19500101;                       % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
@@ -29,7 +29,7 @@ precision         = 1;                              % Precision, 1 = single, 2 =
 
 % KNNDataGeneration
 shortWindow       = 5;          % Number of days to consider for the short climate window
-longWindow        = 30;         % Number of days to consider for the long climate window
+longWindow        = 30;         % Number of days to consider for the long climate window (total days, including shortWindow)
 nbImages          = 10;         % K, number of days to consider for the generation of images
 
 % GenerateSynImages
@@ -60,9 +60,10 @@ optimisation      = false;      % true = optimisation ON,             false = op
 nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation algorithm
 
 % Pass all arguments to MAIN function
-[geoRef,climateData,queryDates,learningDates,refValidation,additionalVars,Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
+[geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
+    Weights,sortedDates,synImages,availablePixels,validationMetric,optimisedWeights] = ...
     MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,var,vars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
     shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
     metricViz,metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);

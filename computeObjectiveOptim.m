@@ -1,5 +1,5 @@
 function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW, ...
-    var,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,geoRef,generationType,bootstrap,ensemble,metric,validation, ...
+    targetVar,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,geoRef,generationType,bootstrap,ensemble,metric,validation, ...
     optimisation,inputDir,outputDir)
 
 %
@@ -23,9 +23,9 @@ Pre_LongW   = Pre_LongW/totWeights;
 
 %sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir);
 sortedDatesOptim = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir);
-synImages = GenerateSynImages(var,learningDates,sortedDatesOptim,geoRef,outputDir,generationType,validation,optimisation,bootstrap,false,ensemble,2);
+synImages = GenerateSynImages(targetVar,learningDates,sortedDatesOptim,geoRef,outputDir,generationType,validation,optimisation,bootstrap,false,ensemble,2);
 % Compute the validation metric using the updated code
-objective = validationMetrics(var,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+objective = validationMetrics(targetVar,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
 if metric == 1
     % Calculate the RMSE
     disp(['RMSE: ' num2str(objective)])

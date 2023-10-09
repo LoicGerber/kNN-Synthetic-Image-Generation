@@ -1,4 +1,4 @@
-function rawData = ConvertNetCDFtoStructure(var,vars,addVars,precision,rawDir,inputDir)
+function rawData = ConvertNetCDFtoStructure(targetVar,climateVars,addVars,precision,rawDir,inputDir)
 
 %
 %
@@ -18,7 +18,7 @@ if ~exist(inputDir, 'dir')
     mkdir(inputDir)
 end
 
-varsAll = [var vars addVars];
+varsAll = [targetVar climateVars addVars];
 
 % Get a list of all NetCDF files in the input directory
 files = dir(fullfile(rawDir, '*.nc'));

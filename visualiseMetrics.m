@@ -1,4 +1,4 @@
-function visualiseMetrics(var,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
+function visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
 
 %
 %
@@ -13,28 +13,28 @@ startQdate = char(datetime(QdateStart,'ConvertFrom','yyyyMMdd','Format','dd/MM/y
 endLdate   = char(datetime(LdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'));
 endQdate   = char(datetime(QdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy')+days(1));
 
-for k = 1:numel(var)
+for k = 1:numel(targetVar)
     if bootstrap == true
-        dates = datetime(cell2mat(validationMetric.(var(k))(:,1)),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
+        dates = datetime(cell2mat(validationMetric.(targetVar(k))(:,1)),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
         % Validation data
-        singleDataVal = cell2mat(validationMetric.(var(k))(:,3));
-        maxValuesVal  = zeros(size(validationMetric.(var(k)), 1), 1);
-        meanValuesVal = zeros(size(validationMetric.(var(k)), 1), 1);
-        minValuesVal  = zeros(size(validationMetric.(var(k)), 1), 1);
-        for i = 1:size(validationMetric.(var(k)), 1)
-            valuesVal = sort(validationMetric.(var(k)){i, 2});  % Extract values from the second column of the cell
+        singleDataVal = cell2mat(validationMetric.(targetVar(k))(:,3));
+        maxValuesVal  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        meanValuesVal = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        minValuesVal  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        for i = 1:size(validationMetric.(targetVar(k)), 1)
+            valuesVal = sort(validationMetric.(targetVar(k)){i, 2});  % Extract values from the second column of the cell
             maxValuesVal(i)  = valuesVal(end);  % Compute the maximum value
             meanValuesVal(i) = mean(valuesVal);
             minValuesVal(i)  = valuesVal(1);  % Compute the minimum value
         end
         % Synthetic data
-        var_bs = strcat(var(k),'Bootstrap');
-        refData    = squeeze(mean(mean(refValidation.(var(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
-        synData    = squeeze(mean(mean(synImages.(var(k)),1,'omitnan'),2,'omitnan'));
-        maxValues  = zeros(size(validationMetric.(var(k)), 1), 1);
-        meanValues = zeros(size(validationMetric.(var(k)), 1), 1);
-        minValues  = zeros(size(validationMetric.(var(k)), 1), 1);
-        for i = 1:size(validationMetric.(var(k)), 1)
+        var_bs = strcat(targetVar(k),'Bootstrap');
+        refData    = squeeze(mean(mean(refValidation.(targetVar(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+        synData    = squeeze(mean(mean(synImages.(targetVar(k)),1,'omitnan'),2,'omitnan'));
+        maxValues  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        meanValues = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        minValues  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
+        for i = 1:size(validationMetric.(targetVar(k)), 1)
             synValues     = sort(squeeze(mean(mean(synImages.(var_bs(k)){i},'omitnan'),'omitnan')));  % Extract mean of variable and sort
             maxValues(i)  = synValues(end);  % Compute the maximum value
             meanValues(i) = mean(synValues);
@@ -52,7 +52,7 @@ for k = 1:numel(var)
         plot(dates, synData, 'k:', 'LineWidth', 1)
         plot(dates, refData, 'k-', 'LineWidth', 1)
         hold off
-        title([convertStringsToChars(var(k)) ' - MEAN'])
+        title([convertStringsToChars(targetVar(k)) ' - MEAN'])
         r = corr(synData,refData);
         nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
@@ -67,11 +67,11 @@ for k = 1:numel(var)
             subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
         end
         xlabel('Date')
-        ylabel(strcat("Mean ", var(k)))
+        ylabel(strcat("Mean ", targetVar(k)))
         legend('Synthetic data spread','Synthetic data mean','Deterministic mean','Reference data mean')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(var(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
         
         % -----------------------------------------------------------------------------------------------------------------------------
 
@@ -93,13 +93,13 @@ for k = 1:numel(var)
         %yline(mean(validationMetric.(var(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(var(k))(:,2)))],'Color','r')
         %ylim([0 1.4])
         if metric == 1
-            title([convertStringsToChars(var(k)) ' - RMSE'])
+            title([convertStringsToChars(targetVar(k)) ' - RMSE'])
         elseif metric == 2
-            title([convertStringsToChars(var(k)) ' - SPEM'])
+            title([convertStringsToChars(targetVar(k)) ' - SPEM'])
         elseif metric == 3
-            title([convertStringsToChars(var(k)) ' - SPAEF'])
+            title([convertStringsToChars(targetVar(k)) ' - SPAEF'])
         elseif metric == 4
-            title([convertStringsToChars(var(k)) ' - SPOMF'])
+            title([convertStringsToChars(targetVar(k)) ' - SPOMF'])
         end
         str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
         if strcmp(startLdate, startQdate)
@@ -122,21 +122,21 @@ for k = 1:numel(var)
         legend('Stochastic ensembles','Stochastic mean','Deterministic')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(var(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
     else
         figure('WindowState', 'maximized');
-        plot(datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
-            validationMetric.(var(k))(:,2));
-        yline(mean(validationMetric.(var(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(var(k))(:,2)))],'Color','r')
+        plot(datetime(validationMetric.(targetVar(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
+            validationMetric.(targetVar(k))(:,2));
+        yline(mean(validationMetric.(targetVar(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2)))],'Color','r')
         %ylim([0 1.4])
         if metric == 1
-            title([convertStringsToChars(var(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(var(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
         elseif metric == 2
-            title([convertStringsToChars(var(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(var(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
         elseif metric == 3
-            title([convertStringsToChars(var(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(var(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
         elseif metric == 4
-            title([convertStringsToChars(var(k)) ' - SPOMF (mean: ' num2str(mean(validationMetric.(var(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - SPOMF (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
         end
         if strcmp(startLdate, startQdate)
             subtitle(['Learning periode: ' endQdate '-' endLdate])
@@ -157,19 +157,19 @@ for k = 1:numel(var)
         end
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['validation_' convertStringsToChars(var(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.png']))
 
         % --------------------------------------------------------------------
 
-        refData    = squeeze(mean(mean(refValidation.(var(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
-        synData    = squeeze(mean(mean(synImages.(var(k)),1,'omitnan'),2,'omitnan'));
+        refData    = squeeze(mean(mean(refValidation.(targetVar(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+        synData    = squeeze(mean(mean(synImages.(targetVar(k)),1,'omitnan'),2,'omitnan'));
         figure('WindowState', 'maximized');
-        date = datetime(validationMetric.(var(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
+        date = datetime(validationMetric.(targetVar(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
         plot(date, refData, 'r-', date, synData, 'k-');
         legend('Reference','Synthetic','Location','southeast')
         xlabel('Date')
         ylabel('Evaporation [mm/day]')
-        title([convertStringsToChars(var(k)) ' - Reference vs Synthetic'])
+        title([convertStringsToChars(targetVar(k)) ' - Reference vs Synthetic'])
         r = corr(synData,refData);
         nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
@@ -181,17 +181,17 @@ for k = 1:numel(var)
         box off
         %legend boxoff 
         set(gcf, 'color', 'white');
-        saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(var(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '.png']))
 
         % -------------------------------------------------------------------------
 
         % Set the output GIF file name
-        gifVal = fullfile(outputDir,['validation_' convertStringsToChars(var(k)) '.gif']);
+        gifVal = fullfile(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
         refDates = refValidation.date;
-        refData  = refValidation.(var(k));
+        refData  = refValidation.(targetVar(k));
         synDates = synImages.date;
-        synData  = synImages.(var(k));
+        synData  = synImages.(targetVar(k));
 
         % Create an empty figure
         figure('WindowState', 'maximized');
@@ -209,7 +209,7 @@ for k = 1:numel(var)
                 reference = refData(:,:,referenceIndex);
                 reference(reference==-999) = NaN;
 
-                sgtitle(var(k))
+                sgtitle(targetVar(k))
 
                 % Create a figure with two subplots
                 subplot(1,3,1);
@@ -250,16 +250,16 @@ for k = 1:numel(var)
                 % Set the title of the figure to the name of the images
                 if metric == 1
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
-                        ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(var(k))(i,2),'%1.5f') '}']})
+                        ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metric == 2
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
-                        ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(var(k))(i,2),'%1.5f') '}']})
+                        ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metric == 3
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
-                        ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(var(k))(i,2),'%1.5f') '}']})
+                        ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metric == 4
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
-                        ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(var(k))(i,2),'%1.5f') '}']})
+                        ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 end
 
                 % Save the current frame as a GIF

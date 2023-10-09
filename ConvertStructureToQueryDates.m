@@ -1,4 +1,4 @@
-function [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(var,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -46,7 +46,7 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
     refValidation = [];
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     % Query dates are all dates in query window, replacing dates in Learning dates
-    for j = 1:numel(var)
+    for j = 1:numel(targetVar)
         if ~exist(outputDir,'dir')
             mkdir(outputDir)
         end
@@ -72,14 +72,14 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     learningDataValidation  = learningDates(~ismem,:);
     learningDatesValidation = learningDatesDate(ismem);
     referenceValidation = {};
-    for j = 1:numel(var)
-        referenceValidation = [referenceValidation table2cell(learningDates(ismem,var(j)))];
+    for j = 1:numel(targetVar)
+        referenceValidation = [referenceValidation table2cell(learningDates(ismem,targetVar(j)))];
         imagesRefValidation = nan(size(referenceValidation{1,j},1),size(referenceValidation{1,j},2),size(learningDatesValidation,1));
         % Create matrix of reference dates
         for i = 1:size(learningDatesValidation,1)
             imagesRefValidation(:,:,i) = referenceValidation{i,j};
         end
-        refValidation.(var(j)) = single(imagesRefValidation);
+        refValidation.(targetVar(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
     disp('  Saving refValidation.mat file...')
@@ -106,16 +106,16 @@ if validationPrep == false && optimPrep == false % validation OFF
     end
     % Assign closest targetVar map to each Query date
     try
-        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(var)+1], 'VariableTypes',{'double', 'cell'});
+        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
     catch
         try
-            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(var)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
         catch
             error('Adapt ConvertStructureToQueryDates function to allow more variables')
         end
     end
-    for j = 1:numel(var)
-        targetVarData = learningDates.(var(j));
+    for j = 1:numel(targetVar)
+        targetVarData = learningDates.(targetVar(j));
         % Loop through the matched dates
         for i = 1:size(matchedTargetVarDates, 1)
             % Get the date to match
@@ -133,16 +133,16 @@ if validationPrep == false && optimPrep == false % validation OFF
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
     try
-        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(var)+1], 'VariableTypes',{'double', 'cell'});
+        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
     catch
         try
-            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(var)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
         catch
             error('Adapt ConvertStructureToQueryDates function to allow more variables')
         end
     end
-    for j = 1:numel(var)
-        targetVarData = learningDates.(var(j));
+    for j = 1:numel(targetVar)
+        targetVarData = learningDates.(targetVar(j));
         % Loop through the matched dates
         for i = 1:size(matchedTargetVarDates, 1)
             % fill the table with NaNs the size of the variable to be generated
@@ -153,10 +153,10 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
 end
 % Rename the columns
 try
-    matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(var)};
+    matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar)};
 catch
     try
-        matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(var(1)),convertStringsToChars(var(2))};
+        matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar(1)),convertStringsToChars(targetVar(2))};
     catch
         error('Adapt ConvertStructureToQueryDates function to allow more variables')
     end
