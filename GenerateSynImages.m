@@ -1,4 +1,4 @@
-function [synImages,availablePixels] = GenerateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,ensemble,outputType)
+function synImages = GenerateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType)
 
 %
 %
@@ -517,13 +517,13 @@ for i = 1:numel(var_low)
     end
     if i == 1
         synImages.date = cell2mat(sortedDates(:,1));
-        availablePixels.date = cell2mat(sortedDates(:,1));
         fprintf('\n')
     end
     synImages.(targetVar(i)) = map;
-    availablePixels.(targetVar(i)) = availablePix;
+    varPix = strcat(targetVar(i), "_AvailablePixels");
+    synImages.(varPix) = (availablePix./nbImages).*100;
     if bootstrap == true
-        varBS = strcat(targetVar(i), "Bootstrap");
+        varBS = strcat(targetVar(i), "_Bootstrap");
         BSvar = strcat(varBS, "Variance");
         synImages.(varBS) = imagesSynAll;
         synImages.(BSvar) = varianceBS;
@@ -534,8 +534,6 @@ if optimisation == false && validation == true
     %fprintf('\n')
     disp('Saving synValidation.mat file...')
     save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');
-    disp('Saving availablePixels.mat file...')
-    save(fullfile(outputDir,'availablePixels.mat'),'availablePixels', '-v7.3','-nocompression');
 end
 
 end
