@@ -1,4 +1,4 @@
-function visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
+function visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
 
 %
 %
@@ -28,18 +28,20 @@ for k = 1:numel(targetVar)
             minValuesVal(i)  = valuesVal(1);  % Compute the minimum value
         end
         % Synthetic data
-        var_bs = strcat(targetVar(k),'Bootstrap');
+        varBs = strcat(targetVar(k),'_Bootstrap');
+        varBD = strcat(targetVar(k),'_BestDistance');
         refData    = squeeze(mean(mean(refValidation.(targetVar(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
         synData    = squeeze(mean(mean(synImages.(targetVar(k)),1,'omitnan'),2,'omitnan'));
         maxValues  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
         meanValues = zeros(size(validationMetric.(targetVar(k)), 1), 1);
         minValues  = zeros(size(validationMetric.(targetVar(k)), 1), 1);
         for i = 1:size(validationMetric.(targetVar(k)), 1)
-            synValues     = sort(squeeze(mean(mean(synImages.(var_bs(k)){i},'omitnan'),'omitnan')));  % Extract mean of variable and sort
+            synValues     = sort(squeeze(mean(mean(synImages.(varBs(k)){i},'omitnan'),'omitnan')));  % Extract mean of variable and sort
             maxValues(i)  = synValues(end);  % Compute the maximum value
             meanValues(i) = mean(synValues);
             minValues(i)  = synValues(1);  % Compute the minimum value
         end
+        bestDist   = synImages.(varBD);
         
         % -----------------------------------------------------------------------------------------------------
 
@@ -47,7 +49,7 @@ for k = 1:numel(targetVar)
         hold on
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValues', fliplr(minValues')];
-        patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
+        patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.25)
         plot(dates, meanValues, 'k--', 'LineWidth', 1)
         plot(dates, synData, 'k:', 'LineWidth', 1)
         plot(dates, refData, 'k-', 'LineWidth', 1)
@@ -79,9 +81,20 @@ for k = 1:numel(targetVar)
         hold on
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValuesVal', fliplr(minValuesVal')];
-        patch(inBetweenRegionX, inBetweenRegionY, 'r', 'LineStyle', 'none', 'FaceAlpha', 0.5)
+        patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.25)
         plot(dates, meanValuesVal, 'k--', 'LineWidth', 1)
         plot(dates, singleDataVal, 'k-', 'LineWidth', 1)
+        yyaxis right
+        plot(dates, bestDist, 'r', 'LineWidth', 1)
+        if metricKNN == 1
+            ylabel('RMSE')
+        elseif metricKNN == 2
+            ylabel('MAE')
+        elseif metricKNN == 3
+            ylabel('Manhattan distance')
+        elseif metricKNN == 4
+            ylabel('Euclidean distance')
+        end
 %         for i = 1:numel(dates)
 %             ensemble = ensembleData{i};
 %             for j = 1:numel(ensemble)
@@ -92,13 +105,14 @@ for k = 1:numel(targetVar)
         %xtickangle(45); % Rotate x-axis labels for better readability
         %yline(mean(validationMetric.(var(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(var(k))(:,2)))],'Color','r')
         %ylim([0 1.4])
-        if metric == 1
+        yyaxis left
+        if metricV == 1
             title([convertStringsToChars(targetVar(k)) ' - RMSE'])
-        elseif metric == 2
+        elseif metricV == 2
             title([convertStringsToChars(targetVar(k)) ' - SPEM'])
-        elseif metric == 3
+        elseif metricV == 3
             title([convertStringsToChars(targetVar(k)) ' - SPAEF'])
-        elseif metric == 4
+        elseif metricV == 4
             title([convertStringsToChars(targetVar(k)) ' - SPOMF'])
         end
         str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
@@ -110,16 +124,19 @@ for k = 1:numel(targetVar)
             subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
         end        
         xlabel('Date')
-        if metric == 1
+        if metricV == 1
             ylabel('RMSE')
-        elseif metric == 2
+        elseif metricV == 2
             ylabel('SPEM')
-        elseif metric == 3
+        elseif metricV == 3
             ylabel('SPAEF')
-        elseif metric == 4
+        elseif metricV == 4
             ylabel('SPOMF')
         end
-        legend('Stochastic ensembles','Stochastic mean','Deterministic')
+        ax = gca;
+        ax.YAxis(1).Color = 'k';
+        ax.YAxis(2).Color = 'r';
+        legend('Stochastic ensembles','Stochastic mean','Deterministic','Best distance')
         set(gcf, 'color', 'white');
         grid on
         saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
@@ -129,13 +146,13 @@ for k = 1:numel(targetVar)
             validationMetric.(targetVar(k))(:,2));
         yline(mean(validationMetric.(targetVar(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2)))],'Color','r')
         %ylim([0 1.4])
-        if metric == 1
+        if metricV == 1
             title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
-        elseif metric == 2
+        elseif metricV == 2
             title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
-        elseif metric == 3
+        elseif metricV == 3
             title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
-        elseif metric == 4
+        elseif metricV == 4
             title([convertStringsToChars(targetVar(k)) ' - SPOMF (mean: ' num2str(mean(validationMetric.(targetVar(k))(:,2))) ')'])
         end
         if strcmp(startLdate, startQdate)
@@ -146,13 +163,13 @@ for k = 1:numel(targetVar)
             subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
         end        
         xlabel('Date')
-        if metric == 1
+        if metricV == 1
             ylabel('RMSE')
-        elseif metric == 2
+        elseif metricV == 2
             ylabel('SPEM')
-        elseif metric == 3
+        elseif metricV == 3
             ylabel('SPAEF')
-        elseif metric == 4
+        elseif metricV == 4
             ylabel('SPOMF')
         end
         set(gcf, 'color', 'white');
@@ -248,16 +265,16 @@ for k = 1:numel(targetVar)
                 set(get(h_err,'label'),'string','Evaporation [mm/day]');
 
                 % Set the title of the figure to the name of the images
-                if metric == 1
+                if metricV == 1
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                         ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
-                elseif metric == 2
+                elseif metricV == 2
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
-                elseif metric == 3
+                elseif metricV == 3
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
-                elseif metric == 4
+                elseif metricV == 4
                     sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 end

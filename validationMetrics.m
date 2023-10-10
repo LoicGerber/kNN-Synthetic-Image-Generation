@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(targetVar,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
 
 %
 %
@@ -27,7 +27,7 @@ for j = 1:numel(targetVar)
     else
         % Initialize an array to store the RMSE values
         validationResult = cell(size(refImages,3), 3);
-        varBS = strcat(targetVar(j), "Bootstrap");
+        varBS = strcat(targetVar(j), "_Bootstrap");
         synImagesAll = synValidation.(varBS);
         maps = synValidation.(targetVar(j));
         if size(refImages,3) ~= size(synImagesAll,1)
@@ -55,16 +55,16 @@ for j = 1:numel(targetVar)
                 error('Dates do not match')
             end
             validationResult(i,1) = currentDate;
-            if metric == 1
+            if metricV == 1
                 % Calculate the RMSE
                 validationResult(i,2) = sqrt(immse(synImage,refImage));
-            elseif metric == 2
+            elseif metricV == 2
                 % Calculate the SPEM
                 validationResult(i,2) = spem(synImage,refImage);
-            elseif metric == 3
+            elseif metricV == 3
                 % Calculate the SPAEF
                 validationResult(i,2) = spaef(synImage,refImage);
-            elseif metric == 4
+            elseif metricV == 4
                 % Calculate the SPOMF absolute error
                 validationResult(i,2) = spae_metric(synImage,refImage);
             else
@@ -82,16 +82,16 @@ for j = 1:numel(targetVar)
             for k = 1:ensemble
                 synImage = single(synImagesAll{i}(:,:,k));
                 synImage(isnan(synImage)) = -999;
-                if metric == 1
+                if metricV == 1
                     % Calculate the RMSE
                     validationResult{i,2}(k) = sqrt(immse(synImage,refImage));
-                elseif metric == 2
+                elseif metricV == 2
                     % Calculate the SPEM
                     validationResult{i,2}(k) = spem(synImage,refImage);
-                elseif metric == 3
+                elseif metricV == 3
                     % Calculate the SPAEF
                     validationResult{i,2}(k) = spaef(synImage,refImage);
-                elseif metric == 4
+                elseif metricV == 4
                     % Calculate the SPOMF absolute error
                     validationResult{i,2}(k) = spae_metric(synImage,refImage);
                 else
@@ -101,16 +101,16 @@ for j = 1:numel(targetVar)
             % KNN result
             synImage = single(maps(:,:,i));
             synImage(isnan(synImage)) = -999;
-            if metric == 1
+            if metricV == 1
                 % Calculate the RMSE
                 validationResult{i,3} = sqrt(immse(synImage,refImage));
-            elseif metric == 2
+            elseif metricV == 2
                 % Calculate the SPEM
                 validationResult{i,3} = spem(synImage,refImage);
-            elseif metric == 3
+            elseif metricV == 3
                 % Calculate the SPAEF
                 validationResult{i,3} = spaef(synImage,refImage);
-            elseif metric == 4
+            elseif metricV == 4
                 % Calculate the SPOMF absolute error
                 validationResult{i,3} = spae_metric(synImage,refImage);
             else

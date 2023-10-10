@@ -520,6 +520,13 @@ for i = 1:numel(var_low)
         fprintf('\n')
     end
     synImages.(targetVar(i)) = map;
+    varDist = strcat(targetVar(i), "_BestDistance");
+    minDist = nan(size(sortedDates,1),1);
+    for c = 1:size(sortedDates, 1)
+        values = sortedDates{c,3};
+        minDist(c) = min(values);
+    end
+    synImages.(varDist) = minDist;
     varPix = strcat(targetVar(i), "_AvailablePixels");
     synImages.(varPix) = (availablePix./nbImages).*100;
     if bootstrap == true

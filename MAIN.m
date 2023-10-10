@@ -1,9 +1,9 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
     rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
-    shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
+    shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
-    metricViz,metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
+    metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
 close all
@@ -67,7 +67,7 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if kNNsorting == true || validationPrep == true || optimPrep == true
-    sortedDates = KNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    sortedDates = KNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
 elseif kNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
@@ -103,8 +103,8 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(targetVar,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metric,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
+    validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+    visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else
@@ -128,7 +128,7 @@ if optimisation == true
     % Set up the Bayesian optimization
     fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), x.(9), ...
         targetVar, addVars, learningDates, sortedDates, refValidation, saveOptimPrep, nbImages, ...
-        geoRef, generationType, bootstrap, ensemble, metric, validation, optimisation, inputDir, outputDir);
+        geoRef, generationType, bootstrap, ensemble, metricV, validation, optimisation, inputDir, outputDir);
     % Run the Bayesian optimization
     %if parallelComputing == true
     %    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);

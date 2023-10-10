@@ -1,5 +1,5 @@
 function objective = computeObjectiveOptim(Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW, ...
-    targetVar,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,geoRef,generationType,bootstrap,ensemble,metric,validation, ...
+    targetVar,addVars,learningDates,sortedDates,refValidation,saveOptimPrep,nbImages,geoRef,generationType,bootstrap,ensemble,metricV,validation, ...
     optimisation,inputDir,outputDir)
 
 %
@@ -25,17 +25,17 @@ Pre_LongW   = Pre_LongW/totWeights;
 sortedDatesOptim = KNNSortingOptim(sortedDates,addVars,Et_W,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,nbImages,saveOptimPrep,inputDir);
 synImages = GenerateSynImages(targetVar,learningDates,sortedDatesOptim,geoRef,outputDir,generationType,validation,optimisation,bootstrap,false,ensemble,2);
 % Compute the validation metric using the updated code
-objective = validationMetrics(targetVar,metric,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-if metric == 1
+objective = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+if metricV == 1
     % Calculate the RMSE
     disp(['RMSE: ' num2str(objective)])
-elseif metric == 2
+elseif metricV == 2
     % Calculate the SPEM
     disp(['SPEM: ' num2str(objective)])
-elseif metric == 3
+elseif metricV == 3
     % Calculate the SPAEF
     disp(['SPAEF: ' num2str(objective)])
-elseif metric == 4
+elseif metricV == 4
     % Calculate the SPOMF absolute error
     disp(['SPOMF: ' num2str(objective)])
 end

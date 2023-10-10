@@ -31,6 +31,7 @@ precision         = 1;                              % Precision, 1 = single, 2 =
 shortWindow       = 5;          % Number of days to consider for the short climate window
 longWindow        = 30;         % Number of days to consider for the long climate window (total days, including shortWindow)
 nbImages          = 10;         % K, number of days to consider for the generation of images
+metricKNN         = 1;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance
 
 % GenerateSynImages
 ensemble          = 10;         % When using bootstrap, number of ensembles created
@@ -51,7 +52,7 @@ bsSaveAll         = false;      % true = saves all bootstrap ensembles, false = 
 validationPrep    = false;      % true = validation preparation ON, false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 validation        = false;      % true = validation ON,             false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;      % true = visualisation ON,          false = visualisation OFF
-metric            = 1;          % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
+metricV           = 1;          % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
 % Bayesian optimisation switch
 optimPrep         = false;      % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -64,7 +65,7 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
     MAIN(...
     rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
-    shortWindow,longWindow,nbImages,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
+    shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
-    metricViz,metric,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
+    metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 
