@@ -31,13 +31,13 @@ for i = 1:numel(var_low)
 
     GeoRef = geoRef.(targetVar(i));
 
-    selectedImages = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
+    selectedImages = single(NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1)));
     %resultImages   = cell(size(sortedDates, 1), 1);
-    availablePix   = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
-    varianceBS     = NaN(imgLength, imgWidth, size(sortedDates{1,2}, 1));
-
-    imagesSynAll = single(nan(imgLength,imgWidth,size(sortedDates,1)));
-    map = imagesSynAll;
+    imagesSynAll = single(NaN(imgLength,imgWidth,size(sortedDates,1)));
+    map          = imagesSynAll;
+    varMap       = imagesSynAll;
+    availablePix = imagesSynAll;
+    varianceBS   = imagesSynAll;
 
     if bootstrap == true
         imagesSynAll = cell(size(sortedDates,1),1);
@@ -275,11 +275,6 @@ for i = 1:numel(var_low)
             for imageIndex = 1:length(sortedDates{rowIndex,2})
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
-            selectedDist = 1./sortedDates{rowIndex,3};
-            % Normalize the selectedDist values
-            normalizedWeights = selectedDist / sum(selectedDist);
-            % Perform element-wise multiplication with the weights
-            weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
             % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
@@ -288,6 +283,12 @@ for i = 1:numel(var_low)
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 %resultImages = mean(selectedImages,3);
+                selectedDist = 1./sortedDates{rowIndex,3};
+                % Normalize the selectedDist values
+                normalizedWeights = selectedDist / sum(selectedDist);
+                % Perform element-wise multiplication with the weights
+                weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
+                varMap(:,:,rowIndex) = var(selectedImages,normalizedWeights,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
@@ -357,11 +358,12 @@ for i = 1:numel(var_low)
                 else
                     error('Generation type not defined!')
                 end
+                
             end
             % Calculate the count of non-NaN values
-            availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
+            availablePix(:,:,rowIndex) = sum(~isnan(selectedImages), 3);
             % Compute variance per pixel
-            varianceBS(:,:,rowIndex) = var(weightedImages, 0, 3);
+            varianceBS(:,:,rowIndex) = var(resultImagesBS, 0, 3);
             % Compute mean of each day to determine quantile
             dayAvg = squeeze(mean(mean(resultImagesBS,'omitnan'),'omitnan'));
             dayAvg = sortrows([dayAvg (1:ensemble)']);
@@ -439,11 +441,6 @@ for i = 1:numel(var_low)
             for imageIndex = 1:length(sortedDates{rowIndex,2})
                 selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
             end
-            selectedDist = 1./sortedDates{rowIndex,3};
-            % Normalize the selectedDist values
-            normalizedWeights = selectedDist / sum(selectedDist);
-            % Perform element-wise multiplication with the weights
-            weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
             % Calculate either the mode or the mean of the selected images
             if generationType == 1
                 % Calculate the mode and save it to resultImages
@@ -452,6 +449,12 @@ for i = 1:numel(var_low)
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
                 %resultImages = mean(selectedImages,3);
+                selectedDist = 1./sortedDates{rowIndex,3};
+                % Normalize the selectedDist values
+                normalizedWeights = selectedDist / sum(selectedDist);
+                % Perform element-wise multiplication with the weights
+                weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, length(sortedDates{rowIndex,2})));
+                varMap(:,:,rowIndex) = var(selectedImages,normalizedWeights,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
                 % Calculate the median and save it to resultImages
@@ -521,7 +524,7 @@ for i = 1:numel(var_low)
     end
     synImages.(targetVar(i)) = map;
     varDist = strcat(targetVar(i), "_BestDistance");
-    minDist = nan(size(sortedDates,1),1);
+    minDist = single(nan(size(sortedDates,1),1));
     for c = 1:size(sortedDates, 1)
         values = sortedDates{c,3};
         minDist(c) = min(values);
@@ -529,6 +532,8 @@ for i = 1:numel(var_low)
     synImages.(varDist) = minDist;
     varPix = strcat(targetVar(i), "_AvailablePixels");
     synImages.(varPix) = (availablePix./nbImages).*100;
+    varName = strcat(targetVar(i), "_Variance");
+    synImages.(varName) = varMap;
     if bootstrap == true
         varBS = strcat(targetVar(i), "_Bootstrap");
         BSvar = strcat(varBS, "Variance");
