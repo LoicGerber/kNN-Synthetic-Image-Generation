@@ -50,9 +50,9 @@ for k = 1:numel(targetVar)
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValues', fliplr(minValues')];
         patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.25)
-        plot(dates, meanValues, 'k--', 'LineWidth', 1)
-        plot(dates, synData, 'k:', 'LineWidth', 1)
-        plot(dates, refData, 'k-', 'LineWidth', 1)
+        plot(dates, meanValues, 'k-', 'LineWidth', 1)
+        plot(dates, synData, 'k--', 'LineWidth', 1)
+        plot(dates, refData, 'r-', 'LineWidth', 1)
         hold off
         title([convertStringsToChars(targetVar(k)) ' - MEAN'])
         r = corr(synData,refData);
@@ -235,6 +235,7 @@ for k = 1:numel(targetVar)
                 set(img1, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
                 caxis([0 6])
+                axis equal
                 title('Synthetic');
                 %colorbar(gca,'southoutside')
 
@@ -244,6 +245,7 @@ for k = 1:numel(targetVar)
                 set(img2, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
                 caxis([0 6])
+                axis equal
                 title('Reference');
                 h = colorbar(gca,'southoutside');
 
@@ -255,6 +257,7 @@ for k = 1:numel(targetVar)
                 colormap(gca, coolwarm(256));
                 caxis([-2 2])
                 title('Error');
+                axis equal
                 h_err = colorbar(gca,'southoutside');
 
                 % Add a colorbar to the reference image subplot

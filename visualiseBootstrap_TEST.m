@@ -15,3 +15,26 @@ for i = 1:num_slices
     title(datestr(datetime(synImages.date(i), 'ConvertFrom', 'yyyymmdd'),'dd.mm.yyyy'));
     hold off
 end
+
+meanVar = mean(Et_3D,3,'omitnan');
+sumVar = sum(Et_3D,3,'omitnan');
+
+colormap jet
+
+figure
+figMean = imagesc(meanVar);
+set(figMean, 'AlphaData', ~isnan(meanVar))
+title('Mean variance')
+set(gcf, 'color', 'white');
+colorbar
+axis equal
+axis off
+
+figure
+figSum = imagesc(sumVar);
+set(figSum, 'AlphaData', ~(sumVar==0))
+title('Variance sum')
+set(gcf, 'color', 'white');
+colorbar
+axis equal
+axis off
