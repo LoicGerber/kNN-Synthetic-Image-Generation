@@ -80,7 +80,7 @@ for j = 1:numel(targetVar)
             validationResult{i,1} = currentDate;
             % Bootstrap ensembles
             for k = 1:ensemble
-                synImage = single(synImagesAll{i}(:,:,k));
+                synImage = synImagesAll{i}(:,:,k);
                 synImage(isnan(synImage)) = -999;
                 if metricV == 1
                     % Calculate the RMSE
@@ -99,7 +99,7 @@ for j = 1:numel(targetVar)
                 end
             end
             % KNN result
-            synImage = single(maps(:,:,i));
+            synImage = maps(:,:,i);
             synImage(isnan(synImage)) = -999;
             if metricV == 1
                 % Calculate the RMSE
