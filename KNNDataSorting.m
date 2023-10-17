@@ -225,7 +225,11 @@ if parallelComputing == true
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
-                        climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
+                        if shortWindow > 0
+                            climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
+                        else
+                            climateDistance{ld,2}(1,:) = single(zeros(1,size(climateDistAll{ld,1},2)));
+                        end
                         climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
                         % Assign weights to corresponding index
                         if optimPrep == false
@@ -447,7 +451,11 @@ else % serial computing
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
-                        climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
+                        if shortWindow > 0
+                            climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{1,1}(1:shortWindow,:)),1,'omitnan');
+                        else
+                            climateDistance{ld,2}(1,:) = single(zeros(1,size(climateDistAll{1,1},2)));
+                        end
                         climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{1,1}(shortWindow+1:end,:)),1,'omitnan');
                         % Assign weights to corresponding index
                         if optimPrep == false
