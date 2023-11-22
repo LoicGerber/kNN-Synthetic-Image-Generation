@@ -80,7 +80,7 @@ for j = 1:numel(targetVar)
             validationResult{i,1} = currentDate;
             % Bootstrap ensembles
             for k = 1:ensemble
-                synImage = synImagesAll{i}(:,:,k);
+                synImage = single(synImagesAll{i}(:,:,k));
                 synImage(isnan(synImage)) = -999;
                 if metricV == 1
                     % Calculate the RMSE

@@ -50,8 +50,8 @@ for k = 1:numel(targetVar)
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValues', fliplr(minValues')];
         patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.25)
-        plot(dates, meanValues, 'k-', 'LineWidth', 1)
-        plot(dates, synData, 'k--', 'LineWidth', 1)
+        %plot(dates, meanValues, 'k--', 'LineWidth', 1)
+        plot(dates, synData, 'k-', 'LineWidth', 1)
         plot(dates, refData, 'r-', 'LineWidth', 1)
         hold off
         title([convertStringsToChars(targetVar(k)) ' - MEAN'])
@@ -70,7 +70,8 @@ for k = 1:numel(targetVar)
         end
         xlabel('Date')
         ylabel(strcat("Mean ", targetVar(k)))
-        legend('Synthetic data spread','Synthetic data mean','Deterministic mean','Reference data mean')
+        %legend('Synthetic data spread','Synthetic data mean','Deterministic mean','Reference data mean')
+        legend('Synthetic data spread','Deterministic mean','Reference data mean')
         set(gcf, 'color', 'white');
         grid on
         saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
@@ -82,7 +83,7 @@ for k = 1:numel(targetVar)
         inBetweenRegionX = [dates', fliplr(dates')];
         inBetweenRegionY = [maxValuesVal', fliplr(minValuesVal')];
         patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.25)
-        plot(dates, meanValuesVal, 'k--', 'LineWidth', 1)
+        %plot(dates, meanValuesVal, 'k--', 'LineWidth', 1)
         plot(dates, singleDataVal, 'k-', 'LineWidth', 1)
         yyaxis right
         plot(dates, bestDist, 'r', 'LineWidth', 1)
@@ -115,7 +116,8 @@ for k = 1:numel(targetVar)
         elseif metricV == 4
             title([convertStringsToChars(targetVar(k)) ' - SPOMF'])
         end
-        str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
+        %str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
+        str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['RMSE - MAE correlation: ' num2str(corr(singleDataVal,bestDist),'%.5f')]};
         if strcmp(startLdate, startQdate)
             subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
@@ -136,7 +138,9 @@ for k = 1:numel(targetVar)
         ax = gca;
         ax.YAxis(1).Color = 'k';
         ax.YAxis(2).Color = 'r';
-        legend('Stochastic ensembles','Stochastic mean','Deterministic','Best distance')
+        linkprop(ax.YAxis, 'Limits');
+        %legend('Stochastic ensembles','Stochastic mean','Deterministic','Best distance')
+        legend('Stochastic ensembles','Deterministic','Best distance')
         set(gcf, 'color', 'white');
         grid on
         saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
@@ -186,7 +190,7 @@ for k = 1:numel(targetVar)
         legend('Reference','Synthetic','Location','southeast')
         xlabel('Date')
         ylabel('Evaporation [mm/day]')
-        title([convertStringsToChars(targetVar(k)) ' - Reference vs Synthetic'])
+        title(['Mean ' convertStringsToChars(targetVar(k))])
         r = corr(synData,refData);
         nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
@@ -200,6 +204,30 @@ for k = 1:numel(targetVar)
         set(gcf, 'color', 'white');
         saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '.png']))
 
+        % --------------------------------------------------------------------
+
+        refData    = squeeze(var(refValidation.(targetVar(k)),0,[1 2],'omitnan'));
+        synData    = squeeze(var(synImages.(targetVar(k)),0,[1 2],'omitnan'));
+        figure('WindowState', 'maximized');
+        date = datetime(validationMetric.(targetVar(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
+        plot(date, refData, 'r-', date, synData, 'k-');
+        legend('Reference','Synthetic','Location','northeast')
+        xlabel('Date')
+        ylabel('Evaporation [mm/day]')
+        title([convertStringsToChars(targetVar(k)) ' variance'])
+        r = corr(synData,refData);
+        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        alpha = std(synData)/std(refData);
+        beta  = mean(synData)/mean(refData);
+        kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
+        subtitle(str)
+        grid on
+        box off
+        %legend boxoff 
+        set(gcf, 'color', 'white');
+        saveas(gcf,strcat(outputDir,['variance_' convertStringsToChars(targetVar(k)) '.png']))
+
         % -------------------------------------------------------------------------
 
         % Set the output GIF file name
@@ -208,7 +236,11 @@ for k = 1:numel(targetVar)
         refDates = refValidation.date;
         refData  = refValidation.(targetVar(k));
         synDates = synImages.date;
+        dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
         synData  = synImages.(targetVar(k));
+        bdName   = [convertStringsToChars(targetVar(k)) '_BestDistance'];
+        bestDist = synImages.(bdName);
+        currentBest = nan(size(synDates));
 
         % Create an empty figure
         figure('WindowState', 'maximized');
@@ -228,8 +260,8 @@ for k = 1:numel(targetVar)
 
                 sgtitle(targetVar(k))
 
-                % Create a figure with two subplots
-                subplot(1,3,1);
+                % Create a figure with three subplots
+                subplot(3,3,[1,4]);
                 img1 = imshow(synthetic);
                 colormap(gca, jet(256));
                 set(img1, 'AlphaData', ~isnan(synthetic))
@@ -239,7 +271,7 @@ for k = 1:numel(targetVar)
                 title('Synthetic');
                 %colorbar(gca,'southoutside')
 
-                subplot(1,3,2);
+                subplot(3,3,[2,5]);
                 img2 = imshow(reference);
                 colormap(gca, jet(256));
                 set(img2, 'AlphaData', ~isnan(synthetic))
@@ -251,7 +283,7 @@ for k = 1:numel(targetVar)
 
                 % ERROR MAP
                 error  = synthetic - reference;
-                subplot(1,3,3)
+                subplot(3,3,[3,6])
                 errMap = imshow(error);
                 set(errMap, 'AlphaData', ~isnan(synthetic))
                 colormap(gca, coolwarm(256));
@@ -262,23 +294,37 @@ for k = 1:numel(targetVar)
 
                 % Add a colorbar to the reference image subplot
                 %h = colorbar('southoutside');
-                set(h, 'Position', [0.15 0.1 0.5 0.04]);
+                set(h, 'Position', [0.13 0.4 0.5 0.03]);
                 set(get(h,'label'),'string','Evaporation [mm/day]');
-                set(h_err, 'Position', [0.7 0.1 0.25 0.04])
+                set(h_err, 'Position', [0.7 0.4 0.205 0.03])
                 set(get(h_err,'label'),'string','Evaporation [mm/day]');
+
+                % Best candidate MAE
+                subplot(3,3,[7,8,9])
+                currentBest(1:i) = bestDist(1:i);
+                plot(dates,currentBest);
+                hold on
+                plot(dates(i),bestDist(i),"Marker","o","Color",'red')
+                hold off
+                xlim([min(dates) max(dates)])
+                ylim([0.05 0.35])
+                title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
+                ylabel('MAE')
+                xlabel('Date')
+                grid on
 
                 % Set the title of the figure to the name of the images
                 if metricV == 1
-                    sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                    sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                         ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metricV == 2
-                    sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                    sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metricV == 3
-                    sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                    sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 elseif metricV == 4
-                    sgtitle({['{\bf\fontsize{14}' num2str(synDates(i)) '}'], ...
+                    sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                         ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(targetVar(k))(i,2),'%1.5f') '}']})
                 end
 

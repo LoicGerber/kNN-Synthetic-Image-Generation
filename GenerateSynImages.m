@@ -56,7 +56,7 @@ for i = 1:numel(var_low)
     % netCDF file definition
     if outputType == 2 && bootstrap == false
         % Define the main netCDF file
-        outputBaseName = strcat(var_low(i),'.nc'); % Change this to your desired output file name
+        outputBaseName = strcat(var_low(i),'.nc');
         fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -68,14 +68,15 @@ for i = 1:numel(var_low)
         ncid = netcdf.create(fullDestinationFileName, 'NETCDF4');
         dimid_lat = netcdf.defDim(ncid, 'lat', GeoRef.RasterSize(1));
         dimid_lon = netcdf.defDim(ncid, 'lon', GeoRef.RasterSize(2));
-        dimid_time = netcdf.defDim(ncid, 'time', netcdf.getConstant('NC_UNLIMITED')); % Define the 'time' dimension as unlimited
+        dimid_time = netcdf.defDim(ncid, 'time', netcdf.getConstant('NC_UNLIMITED'));
         % Define variables
-        varid = netcdf.defVar(ncid, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]); % Include the 'time' dimension here
+        varid = netcdf.defVar(ncid, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
         timeid = netcdf.defVar(ncid, 'time', 'double', dimid_time);
         latid = netcdf.defVar(ncid, 'lat', 'double', dimid_lat);
         lonid = netcdf.defVar(ncid, 'lon', 'double', dimid_lon);
-        % Define attributes (similar to your existing code)
+        % Define attributes
         netcdf.putAtt(ncid, varid, 'long_name', var_low(i));
+        netcdf.putAtt(ncid, varid, '_FillValue', -999);
         netcdf.putAtt(ncid, timeid, 'long_name', 'time');
         netcdf.putAtt(ncid, timeid, 'units', 'days since 1970-01-01');
         netcdf.putAtt(ncid, timeid, 'calendar', 'proleptic_gregorian');
@@ -108,7 +109,7 @@ for i = 1:numel(var_low)
     elseif bootstrap == true
         % ---- MININMAL ----
         % Define the main netCDF file
-        outputBaseNameMin = strcat(var_low(i),'_min.nc'); % Change this to your desired output file name
+        outputBaseNameMin = strcat(var_low(i),'_min.nc');
         fullDestinationFileNameMin = fullfile(outputDirImages, var_low(i), outputBaseNameMin);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -120,14 +121,15 @@ for i = 1:numel(var_low)
         ncid_min = netcdf.create(fullDestinationFileNameMin, 'NETCDF4');
         dimid_lat = netcdf.defDim(ncid_min, 'lat', GeoRef.RasterSize(1));
         dimid_lon = netcdf.defDim(ncid_min, 'lon', GeoRef.RasterSize(2));
-        dimid_time = netcdf.defDim(ncid_min, 'time', netcdf.getConstant('NC_UNLIMITED')); % Define the 'time' dimension as unlimited
+        dimid_time = netcdf.defDim(ncid_min, 'time', netcdf.getConstant('NC_UNLIMITED'));
         % Define variables
-        varid = netcdf.defVar(ncid_min, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]); % Include the 'time' dimension here
+        varid = netcdf.defVar(ncid_min, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
         timeid = netcdf.defVar(ncid_min, 'time', 'double', dimid_time);
         latid = netcdf.defVar(ncid_min, 'lat', 'double', dimid_lat);
         lonid = netcdf.defVar(ncid_min, 'lon', 'double', dimid_lon);
-        % Define attributes (similar to your existing code)
+        % Define attributes
         netcdf.putAtt(ncid_min, varid, 'long_name', var_low(i));
+        netcdf.putAtt(ncid_min, varid, '_FillValue', -999);
         netcdf.putAtt(ncid_min, timeid, 'long_name', 'time');
         netcdf.putAtt(ncid_min, timeid, 'units', 'days since 1970-01-01');
         netcdf.putAtt(ncid_min, timeid, 'calendar', 'proleptic_gregorian');
@@ -159,7 +161,7 @@ for i = 1:numel(var_low)
         netcdf.putVar(ncid_min,lonid,lon);
         % ---- DETERMINISTIC ----
         % Define the main netCDF file
-        outputBaseNameDet = strcat(var_low(i),'_det.nc'); % Change this to your desired output file name
+        outputBaseNameDet = strcat(var_low(i),'_det.nc');
         fullDestinationFileNameDet = fullfile(outputDirImages, var_low(i), outputBaseNameDet);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -171,14 +173,15 @@ for i = 1:numel(var_low)
         ncid_det = netcdf.create(fullDestinationFileNameDet, 'NETCDF4');
         dimid_lat = netcdf.defDim(ncid_det, 'lat', GeoRef.RasterSize(1));
         dimid_lon = netcdf.defDim(ncid_det, 'lon', GeoRef.RasterSize(2));
-        dimid_time = netcdf.defDim(ncid_det, 'time', netcdf.getConstant('NC_UNLIMITED')); % Define the 'time' dimension as unlimited
+        dimid_time = netcdf.defDim(ncid_det, 'time', netcdf.getConstant('NC_UNLIMITED'));
         % Define variables
-        varid = netcdf.defVar(ncid_det, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]); % Include the 'time' dimension here
+        varid = netcdf.defVar(ncid_det, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
         timeid = netcdf.defVar(ncid_det, 'time', 'double', dimid_time);
         latid = netcdf.defVar(ncid_det, 'lat', 'double', dimid_lat);
         lonid = netcdf.defVar(ncid_det, 'lon', 'double', dimid_lon);
         % Define attributes (similar to your existing code)
         netcdf.putAtt(ncid_det, varid, 'long_name', var_low(i));
+        netcdf.putAtt(ncid_det, varid, '_FillValue', -999);
         netcdf.putAtt(ncid_det, timeid, 'long_name', 'time');
         netcdf.putAtt(ncid_det, timeid, 'units', 'days since 1970-01-01');
         netcdf.putAtt(ncid_det, timeid, 'calendar', 'proleptic_gregorian');
@@ -210,7 +213,7 @@ for i = 1:numel(var_low)
         netcdf.putVar(ncid_det,lonid,lon);
         % ---- MAXINMAL ----
         % Define the main netCDF file
-        outputBaseNameMax = strcat(var_low(i),'_max.nc'); % Change this to your desired output file name
+        outputBaseNameMax = strcat(var_low(i),'_max.nc');
         fullDestinationFileNameMax = fullfile(outputDirImages, var_low(i), outputBaseNameMax);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -222,14 +225,15 @@ for i = 1:numel(var_low)
         ncid_max = netcdf.create(fullDestinationFileNameMax, 'NETCDF4');
         dimid_lat = netcdf.defDim(ncid_max, 'lat', GeoRef.RasterSize(1));
         dimid_lon = netcdf.defDim(ncid_max, 'lon', GeoRef.RasterSize(2));
-        dimid_time = netcdf.defDim(ncid_max, 'time', netcdf.getConstant('NC_UNLIMITED')); % Define the 'time' dimension as unlimited
+        dimid_time = netcdf.defDim(ncid_max, 'time', netcdf.getConstant('NC_UNLIMITED'));
         % Define variables
-        varid = netcdf.defVar(ncid_max, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]); % Include the 'time' dimension here
+        varid = netcdf.defVar(ncid_max, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
         timeid = netcdf.defVar(ncid_max, 'time', 'double', dimid_time);
         latid = netcdf.defVar(ncid_max, 'lat', 'double', dimid_lat);
         lonid = netcdf.defVar(ncid_max, 'lon', 'double', dimid_lon);
         % Define attributes (similar to your existing code)
         netcdf.putAtt(ncid_max, varid, 'long_name', var_low(i));
+        netcdf.putAtt(ncid_max, varid, '_FillValue', -999);
         netcdf.putAtt(ncid_max, timeid, 'long_name', 'time');
         netcdf.putAtt(ncid_max, timeid, 'units', 'days since 1970-01-01');
         netcdf.putAtt(ncid_max, timeid, 'calendar', 'proleptic_gregorian');
@@ -322,6 +326,7 @@ for i = 1:numel(var_low)
                 end
             end
             map(:,:,rowIndex) = resultImages;
+            resultImages(isnan(resultImages)) = -999;
             % bootstrap
             resultImagesBS     = NaN(imgLength, imgWidth, ensemble);
             %invDistance      = 1 ./ sortedDates{rowIndex,3};
@@ -358,7 +363,6 @@ for i = 1:numel(var_low)
                 else
                     error('Generation type not defined!')
                 end
-                
             end
             % Calculate the count of non-NaN values
             availablePix(:,:,rowIndex) = sum(~isnan(selectedImages), 3);
@@ -371,6 +375,10 @@ for i = 1:numel(var_low)
             % Store all bs days sorted according to mean of each day
             %imagesSynAll{rowIndex} = resultImagesBS;
             imagesSynAll{rowIndex} = resultImagesBS(:,:,dayAvg(:,2));
+            bsMin = single(imagesSynAll{rowIndex}(:,:,1));
+            bsMax = single(imagesSynAll{rowIndex}(:,:,end));
+            bsMin(isnan(bsMin)) = -999;
+            bsMax(isnan(bsMax)) = -999;
             if bsSaveAll == true
                 for bs = 1:ensemble
                     % Write the resulting image to a GeoTIFF file
@@ -409,9 +417,9 @@ for i = 1:numel(var_low)
             netcdf.putVar(ncid_det, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
             netcdf.putVar(ncid_max, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
             % Write data to the variable (hydrological map) for the current date
-            ncwrite(fullDestinationFileNameMin, var_low(i), single(imagesSynAll{rowIndex}(:,:,1))', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
-            ncwrite(fullDestinationFileNameDet, var_low(i), map(:,:,rowIndex)', [1, 1, rowIndex]);
-            ncwrite(fullDestinationFileNameMax, var_low(i), single(imagesSynAll{rowIndex}(:,:,end))', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+            ncwrite(fullDestinationFileNameMin, var_low(i), bsMin', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+            ncwrite(fullDestinationFileNameDet, var_low(i), resultImages', [1, 1, rowIndex]);
+            ncwrite(fullDestinationFileNameMax, var_low(i), bsMax', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
 
             % Write the resulting image to a GeoTIFF file
             %outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
@@ -499,6 +507,7 @@ for i = 1:numel(var_low)
                 time = datenum(dateStrFormatted, 'yyyy-mm-dd');
                 netcdf.putVar(ncid, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
                 % Write data to the variable (hydrological map) for the current date
+                resultImages(isnan(resultImages)) = -999;
                 ncwrite(fullDestinationFileName, var_low(i), single(resultImages)', [1, 1, rowIndex]);
             else
                 error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')
