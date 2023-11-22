@@ -140,5 +140,6 @@ This script performs the kNN computations and sorts the learning dates based on 
 - `validationMetrics.m`: Used exclusively in the validation run, this function computes the selected metric for assessing the quality and accuracy of the generated synthetic images.
 - `visualiseMetrics.m`: Exclusive to the validation run, this script provides visualizations of the metric results, aiding in the evaluation of the algorithm's performance.
 
-## Author
+## Authors
 Loïc Gerber (loic.gerber.2@unil.ch) - PhD Student, University of Lausanne, Switzerland
+Fatemeh Zakeri (fatemeh.zakeri@unil.ch) - PhD Student, University of Lausanne, Switzerland
