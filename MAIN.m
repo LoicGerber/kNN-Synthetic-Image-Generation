@@ -1,6 +1,6 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
     shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
@@ -16,15 +16,15 @@ disp('--- 1. READING DATA ---')
 
 if netCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Formatting input data...')
-    rawData        = ConvertNetCDFtoStructure(targetVar,climateVars,addVars,precision,rawDir,inputDir);
+    rawData        = convertNetCDFtoStructure(targetVar,climateVars,addVars,rawDir,inputDir);
     disp('Extracting georeference informations...')
     geoRef         = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inputDir);
     disp('Extracting climate informations...')
     climateData    = extractClimateData(climateVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     disp('Extracting Learning dates...')
-    learningDates  = ConvertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
     disp('Extracting Query dates...')
-    [queryDates,learningDates,refValidation] = ConvertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
+    [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     disp('Extracting additional variables...')
     additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif netCDFtoInputs == false && validationPrep == false
@@ -67,7 +67,7 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if kNNsorting == true || validationPrep == true || optimPrep == true
-    sortedDates = KNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,shortWindow,longWindow,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
 elseif kNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
@@ -84,7 +84,7 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
-    synImages = GenerateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+    synImages = generateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
 elseif optimisation == true && validation == false
     disp('Optimisation run, synthetic image generation skipped...')
     synImages = [];

@@ -1,4 +1,4 @@
-function rawData = ConvertNetCDFtoStructure(targetVar,climateVars,addVars,precision,rawDir,inputDir)
+function rawData = convertNetCDFtoStructure(targetVar,climateVars,addVars,rawDir,inputDir)
 
 %
 %
@@ -63,13 +63,7 @@ for i = 1:length(files)
             day_start = time_datenum(j);
             day_end   = day_start + 1;
             time_idx  = find(time_datenum >= day_start & time_datenum < day_end);
-            if precision == 1
-                data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'single');
-            elseif precision == 2
-                data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'double');
-            else
-                error('precision can either be single (1) or double (2)')
-            end
+            data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'single');
             dates{j}  = datestr(day_start,'yyyymmdd');
         end
 
