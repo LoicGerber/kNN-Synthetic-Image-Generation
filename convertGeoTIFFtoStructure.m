@@ -1,4 +1,17 @@
 function rawData = convertGeoTIFFtoStructure(targetVar,climateVars,addVars,rawDir,inputDir)
+    
+    %
+    %
+    %
+    % REDO DOCUMENTATION
+    %
+    %
+    %
+    
+    % Convert GeoTIFF data to structure
+    % Input directory containing GeoTIFF files
+    % files must be named with the variable. Example: precipitation data must
+    % be called pre_%DATE%.tiff
 
     % Check if output directories exist, if not create them
     if ~exist(inputDir, 'dir')
@@ -18,23 +31,26 @@ function rawData = convertGeoTIFFtoStructure(targetVar,climateVars,addVars,rawDi
 
     for i = 1:length(files)
         % Open the GeoTIFF file
-        tiffFile = fullfile(inputDir, files(i).name);
-        [~, varname, ~] = fileparts(tiffFile);
+        tiffFile = fullfile(rawDir, 'data', files(i).name);
+        [~, filename, ~] = fileparts(tiffFile);
+        
+        % Split the filename into variable and date
+        parts = split(filename, '_');
+        varname = parts{1};
+        dateStr = parts{2};
+
         if ismember(lower(string(varname)), lower(varsAll))
             varnameID = strcat(varname, 'Index');
             disp(strcat("  Processing '", varname, "' data..."))
 
-            % Read GeoTIFF information
-            info = geotiffinfo(tiffFile);
-
             % Read the variable data
-            data = geotiffread(tiffFile);
+            [data, R] = readgeoraster(tiffFile);
 
-            % Get the dates (assuming file names are in yyyymmdd format)
-            dates = str2double(regexp(files(i).name, '\d{8}', 'match'));
+            % Convert date string to numeric format
+            dates = str2double(dateStr);
 
             % Create the output structure
-            rawData.(varname)   = data;
+            rawData.(varname)   = struct('data', data, 'R', R);
             rawData.(varnameID) = dates;
         else
             disp(strcat("  '", varname, "' not in variables of interest, file not processed..."))
