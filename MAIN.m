@@ -11,6 +11,12 @@ poolobj = gcp('nocreate');
 delete(poolobj);
 tStart = tic;
 
+if LdateStart > LdateEnd
+    error('Learning date start > learning date end')
+elseif QdateStart > QdateEnd
+    error('Query date start > Query date end')
+end
+
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 disp('--- 1. READING DATA ---')
 
