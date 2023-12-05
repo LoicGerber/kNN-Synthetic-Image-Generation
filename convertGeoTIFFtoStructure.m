@@ -21,13 +21,16 @@ function rawData = convertGeoTIFFtoStructure(targetVar,climateVars,addVars,rawDi
     varsAll = [targetVar climateVars addVars];
 
     % Extract contents of the zip folder
-    unzip(dir(fullfile(rawDir, 'data.zip')));
+    unzip(fullfile(rawDir, 'data.zip'),rawDir);
 
     % Get a list of all GeoTIFF files in the input directory
     files = dir(fullfile(rawDir, 'data', '*.tif'));
 
     rawData  = struct();
     rawData  = structfun(@(x) [], rawData,  'UniformOutput', false);
+    
+    data  = cell(length(files),1);
+    dates = nan(length(files),1);
 
     for i = 1:length(files)
         % Open the GeoTIFF file
@@ -44,18 +47,18 @@ function rawData = convertGeoTIFFtoStructure(targetVar,climateVars,addVars,rawDi
             disp(strcat("  Processing '", varname, "' data..."))
 
             % Read the variable data
-            [data, R] = readgeoraster(tiffFile);
+            data{i,1} = single(readgeoraster(tiffFile));
 
             % Convert date string to numeric format
-            dates = str2double(dateStr);
-
-            % Create the output structure
-            rawData.(varname)   = struct('data', data, 'R', R);
-            rawData.(varnameID) = dates;
+            dates(i,1) = str2double(dateStr);
         else
-            disp(strcat("  '", varname, "' not in variables of interest, file not processed..."))
+           disp(strcat("  '", varname, "' not in variables of interest, file not processed..."))
         end
     end
+
+    % Create the output structure
+    rawData.(varname)   = data;
+    rawData.(varnameID) = dates;
 
     % disp('Saving allVariables.mat file...')
     % allVarsSave = fullfile(inputDir, 'allVariables.mat');
