@@ -283,10 +283,8 @@ for i = 1:numel(var_low)
             if generationType == 1
                 % Calculate the mode and save it to resultImages
                 resultImages = mode(selectedImages,3);
-                %resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
-                %resultImages = mean(selectedImages,3);
                 selectedDist = 1./sortedDates{rowIndex,3};
                 % Normalize the selectedDist values
                 normalizedWeights = selectedDist / sum(selectedDist);
@@ -295,9 +293,11 @@ for i = 1:numel(var_low)
                 varMap(:,:,rowIndex) = var(selectedImages,normalizedWeights,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
+                % Calculate the mean and save it to resultImages
+                resultImages = mean(selectedImages,3);
+            elseif generationType == 4
                 % Calculate the median and save it to resultImages
                 resultImages = median(selectedImages,3);
-                %resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end
@@ -351,15 +351,15 @@ for i = 1:numel(var_low)
                 if generationType == 1
                     % Calculate the mode and save it to resultImagesBS
                     resultImagesBS(:,:,bs) = mode(selectedImages,3);
-                    %resultImagesBS(:,:,bs) = mode(weightedImages,3);
                 elseif generationType == 2
                     % Calculate the mean and save it to resultImagesBS
-                    %resultImagesBS(:,:,bs) = mean(selectedImages,3);
                     resultImagesBS(:,:,bs) = sum(weightedImages,3);
                 elseif generationType == 3
+                    % Calculate the mean and save it to resultImagesBS
+                    resultImagesBS(:,:,bs) = mean(selectedImages,3);
+                elseif generationType == 4
                     % Calculate the median and save it to resultImagesBS
                     resultImagesBS(:,:,bs) = median(selectedImages,3);
-                    %resultImagesBS(:,:,bs) = median(weightedImages,3);
                 else
                     error('Generation type not defined!')
                 end
@@ -453,10 +453,8 @@ for i = 1:numel(var_low)
             if generationType == 1
                 % Calculate the mode and save it to resultImages
                 resultImages = mode(selectedImages,3);
-                %resultImages = mode(weightedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
-                %resultImages = mean(selectedImages,3);
                 selectedDist = 1./sortedDates{rowIndex,3};
                 % Normalize the selectedDist values
                 normalizedWeights = selectedDist / sum(selectedDist);
@@ -465,9 +463,11 @@ for i = 1:numel(var_low)
                 varMap(:,:,rowIndex) = var(selectedImages,normalizedWeights,3);
                 resultImages = sum(weightedImages,3);
             elseif generationType == 3
+                % Calculate the mean and save it to resultImages
+                resultImages = mean(selectedImages,3);
+            elseif generationType == 4
                 % Calculate the median and save it to resultImages
                 resultImages = median(selectedImages,3);
-                %resultImages = median(weightedImages,3);
             else
                 error('Generation type not defined!')
             end
