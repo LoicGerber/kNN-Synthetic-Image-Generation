@@ -23,6 +23,11 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        if min(datesAll)>QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll)<QdateEnd
+            error('Climate data last date < Query period end')
+        end
         queryDates = datesAll(r);
         queryDates = setdiff(queryDates, learningDatesDate);
         if isempty(queryDates)
@@ -30,6 +35,11 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
         end
     elseif outputTime == 2 % monthly
         [r,~]      = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        if min(datesAll)>QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll)<QdateEnd
+            error('Climate data last date < Query period end')
+        end
         queryDates = datesAll(r);
         % Convert dailyDates to a matrix of year, month, and day components
         dateVec    = datevec(datetime(datesAll,'ConvertFrom','yyyyMMdd'));
@@ -54,9 +64,19 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        if min(datesAll)>QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll)<QdateEnd
+            error('Climate data last date < Query period end')
+        end
         queryDates = datesAll(r);
     elseif outputTime == 2 % monthly
         [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        if min(datesAll)>QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll)<QdateEnd
+            error('Climate data last date < Query period end')
+        end
         queryDates = datesAll(r);
         % Convert dailyDates to a matrix of year, month, and day components
         dateVec    = datevec(datetime(queryDates,'ConvertFrom','yyyyMMdd'));

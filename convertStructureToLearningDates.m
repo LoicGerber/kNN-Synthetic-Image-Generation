@@ -38,6 +38,11 @@ if optimPrep == true && (LdateStart ~= QdateStart)
     [rQ,~] = find(learningDates>=QdateStart & learningDates<=QdateEnd);
     r = unique([r; rQ]);
 end
+if min(learningDates)>LdateStart
+    error('Target data first date > Learning period start')
+elseif max(learningDates)<LdateEnd
+    error('Target data last date < Learning period end')
+end
 learningDates = learningDates(r);
 targetVarData = targetVarDataAll(r);
     

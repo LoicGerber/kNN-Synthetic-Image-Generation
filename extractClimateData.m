@@ -44,8 +44,19 @@ climateData = movevars(climateData,'date','Before',1);
 
 [rLD,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(LdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
     & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(LdateEnd,'ConvertFrom','yyyymmdd'));
+if min(datetime(climateData.date,'ConvertFrom','yyyymmdd'))>datetime(LdateStart,'ConvertFrom','yyyymmdd')
+    error('Climate data first date > Learning period start')
+elseif max(datetime(climateData.date,'ConvertFrom','yyyymmdd'))<datetime(LdateEnd,'ConvertFrom','yyyymmdd')
+    error('Climate data last date < Learning period end')
+end
+
 [rQD,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(QdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
     & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(QdateEnd,'ConvertFrom','yyyymmdd'));
+if min(datetime(climateData.date,'ConvertFrom','yyyymmdd'))>datetime(QdateStart,'ConvertFrom','yyyymmdd')
+    error('Climate data first date > Query period start')
+elseif max(datetime(climateData.date,'ConvertFrom','yyyymmdd'))<datetime(QdateEnd,'ConvertFrom','yyyymmdd')
+    error('Climate data last date < Query period end')
+end
 r = unique([rLD; rQD]);
 
 climateData = climateData(r,:);
