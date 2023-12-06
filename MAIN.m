@@ -22,7 +22,7 @@ disp('--- 1. READING DATA ---')
 
 if netCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Formatting input data...')
-    rawData        = convertNetCDFtoStructure(targetVar,climateVars,addVars,rawDir,inputDir);
+    rawData        = convertRawDataToStructure(targetVar,climateVars,addVars,rawDir,inputDir);
     disp('Extracting georeference informations...')
     geoRef         = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inputDir);
     disp('Extracting climate informations...')
