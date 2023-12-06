@@ -32,7 +32,7 @@ if netCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Extracting Query dates...')
     [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     disp('Extracting additional variables...')
-    additionalVars = extractAdditionalVars(addVars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
+    additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir);
 elseif netCDFtoInputs == false && validationPrep == false
     disp('Loading QueryDates.mat file...')
     queryDates     = load(fullfile(inputDir,'queryDates.mat'));
