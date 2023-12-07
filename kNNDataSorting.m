@@ -97,21 +97,17 @@ if parallelComputing == true
         queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            for j = 1:numel(climateVars)
-                kj = 1;
-                for k = (longWindow-1):-1:0
-                    queryClimate(kj,j) = climateMaps(idx-k,j);
-                    kj = kj+1;
-                end
+            kj = 1;
+            for k = (longWindow-1):-1:0
+                queryClimate(kj,:) = climateMaps(idx-k,:);
+                kj = kj+1;
             end
 
             % Extract the additional data for the current query date
             if ~isempty(addVars)
                 queryAddVars = cell(1, numel(addVars));
                 idx = find(addVarsDates == currentQDate);
-                for j = 1:numel(addVars)
-                    queryAddVars(1,j) = addVarsData(idx,j);
-                end
+                queryAddVars(1,:) = addVarsData(idx,:);
             else
                 queryAddVars = [];
             end
@@ -131,27 +127,23 @@ if parallelComputing == true
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        for j = 1:numel(climateVars)
-                            kj = 1;
-                            for k = (longWindow-1):-1:0
-                                learningClimate(kj,j) = climateMaps(idx-k,j);
-                                kj = kj+1;
-                            end
+                        kj = 1;
+                        for k = (longWindow-1):-1:0
+                            learningClimate(kj,:) = climateMaps(idx-k,:);
+                            kj = kj+1;
                         end
 
                         % Extract the additional data for the current query date
                         if ~isempty(addVars)
                             learningAddVars = cell(1, numel(addVars));
                             idx = find(addVarsDates == currentLDate);
-                            for j = 1:numel(addVars)
-                                learningAddVars(1,j) = addVarsData(idx,j);
-                            end
+                            learningAddVars(1,:) = addVarsData(idx,:);
                         else
                             learningAddVars = [];
                         end
 
                         % Target variable comparison
-                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,:))))) %&& ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                        if ~isempty(cell2mat(queryDatesData(qd,:))) %&& ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
                             if metricKNN == 1 % RMSE
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE
@@ -178,7 +170,7 @@ if parallelComputing == true
 
                         % Additional variable comparison
                         % 1 distance
-                        if ~isempty(addVars)
+                        if ~isempty(addVars) && ~isempty(cell2mat(addVarsData(qd,:)))
                             if metricKNN == 1 % RMSE
                                 addVarsDistance{ld,1} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryAddVars, learningAddVars, 'UniformOutput', false); % RMSE
@@ -311,22 +303,18 @@ else % serial computing
         queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            for j = 1:numel(climateVars)
-                kj = 1;
-                for k = (longWindow-1):-1:0
-                    queryClimate(kj,j) = climateMaps(idx-k,j);
-                    %queryClimate(kj,j) = climateMaps.(varClimate)(:,:,idx-k);
-                    kj = kj+1;
-                end
+            kj = 1;
+            for k = (longWindow-1):-1:0
+                queryClimate(kj,:) = climateMaps(idx-k,:);
+                %queryClimate(kj,j) = climateMaps.(varClimate)(:,:,idx-k);
+                kj = kj+1;
             end
 
             % Extract the additional data for the current query date
             if ~isempty(addVars)
                 queryAddVars = cell(1, numel(addVars));
                 idx = find(addVarsDates == currentQDate);
-                for j = 1:numel(addVars)
-                    queryAddVars(1,j) = addVarsData(idx,j);
-                end
+                queryAddVars(1,:) = addVarsData(idx,:);
             else
                 queryAddVars = [];
             end
@@ -349,27 +337,23 @@ else % serial computing
                     %disp(['    Processing learning day ', num2str(currentLDate)])
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        for j = 1:numel(climateVars)
-                            kj = 1;
-                            for k = (longWindow-1):-1:0
-                                learningClimate(kj,j) = climateMaps(idx-k,j);
-                                kj = kj+1;
-                            end
+                        kj = 1;
+                        for k = (longWindow-1):-1:0
+                            learningClimate(kj,:) = climateMaps(idx-k,:);
+                            kj = kj+1;
                         end
 
                         % Extract the additional data for the current query date
                         if ~isempty(addVars)
                             learningAddVars = cell(1, numel(addVars));
                             idx = find(addVarsDates == currentLDate);
-                            for j = 1:numel(addVars)
-                                learningAddVars(1,j) = addVarsData(idx,j);
-                            end
+                            learningAddVars(1,:) = addVarsData(idx,:);
                         else
                             learningAddVars = [];
                         end
 
                         % Target variable comparison
-                        if ~isnan(sum(sum(cell2mat(queryDatesData(qd,1))))) && ~isnan(sum(sum(cell2mat(queryDatesData(qd,2)))))
+                        if ~isempty(cell2mat(queryDatesData(qd,:))) %~isnan(sum(sum(cell2mat(queryDatesData(qd,:)))))
                             if metricKNN == 1 % RMSE
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE
@@ -396,7 +380,7 @@ else % serial computing
 
                         % Additional variable comparison
                         % 1 distance
-                        if ~isempty(addVars)
+                        if ~isempty(addVars) && ~isempty(cell2mat(addVarsData(qd,:)))
                             if metricKNN == 1 % RMSE
                                 addVarsDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryAddVars, learningAddVars, 'UniformOutput', false); % RMSE

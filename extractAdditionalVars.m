@@ -28,7 +28,7 @@ if ~isempty(addVars)
         additionalVars.(matchingDataFields(i)) = cell(length(datesAddVars),1);
         datesIdx = ismember(datesAddVars,rawData.(datesFields(i)));
         additionalVars.(matchingDataFields(i))(datesIdx) = rawData.(matchingDataFields(i));
-        additionalVars.(matchingDataFields(i))(~datesIdx) = {single(nan(size(rawData.(matchingDataFields(i)){1,1})))};
+        %additionalVars.(matchingDataFields(i))(~datesIdx) = {single(nan(size(rawData.(matchingDataFields(i)){1,1})))};
     end
 
     % Take all available climate dates
@@ -64,7 +64,7 @@ if ~isempty(addVars)
         try
             matchedAddVarTable = table('Size',[size(matchedAddVarDates,1),numel(matchingDataFields)+1], 'VariableTypes',{'double', 'cell', 'cell'});
         catch
-            error('Adapt ConvertStructureToQueryDates function to allow more variables')
+            error('Adapt extractAdditionalVars function to allow more variables')
         end
     end
     for j = 1:numel(matchingDataFields)
@@ -84,12 +84,12 @@ if ~isempty(addVars)
     end
     % Rename the columns
     try
-        matchedAddVarTable.Properties.VariableNames = {'Date', convertStringsToChars(matchingDataFields)};
+        matchedAddVarTable.Properties.VariableNames = {'date', convertStringsToChars(matchingDataFields)};
     catch
         try
-            matchedAddVarTable.Properties.VariableNames = {'Date', convertStringsToChars(matchingDataFields(1)),convertStringsToChars(matchingDataFields(2))};
+            matchedAddVarTable.Properties.VariableNames = {'date', convertStringsToChars(matchingDataFields(1)),convertStringsToChars(matchingDataFields(2))};
         catch
-            error('Adapt ConvertStructureToQueryDates function to allow more variables')
+            error('Adapt extractAdditionalVars function to allow more variables')
         end
     end
     additionalVars = matchedAddVarTable;
