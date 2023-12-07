@@ -19,13 +19,13 @@ optiWeightsDir    = 'path/to/optimised/weights/matrix.mat';     % Path to optimi
 % ConvertStructureToInputs
 targetVar         = ["Et"];                         % Variables to be generated, with ["example1","example2"]
 climateVars       = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
-addVars           = [];                             % Additional input variables, with ["example1","example2"], if empty use []
+addVars           = ["sm","twsa"];                  % Additional input variables, with ["example1","example2"], if empty use []
+maxThreshold      = 30;                             % Days, max threshold for closest additional variables attribution
 QdateStart        = 19500101;                       % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
 LdateStart        = 19800101;                       % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20201231;                       % YYYYMMDD - End of the Learning period
 outputTime        = 1;                              % Image generation timestep: 1 = DAILY, 2 = MONTHLY
-precision         = 1;                              % Precision, 1 = single, 2 = double
 
 % KNNDataGeneration
 shortWindow       = 5;          % Number of days to consider for the short climate window
@@ -45,16 +45,18 @@ netCDFtoInputs    = true;       % true = create inputs,                 false = 
 createGenWeights  = true;       % true = create generic weights,        false = load optimised weights
 kNNsorting        = true;       % true = create sorted data,            false = load sorted data
 generateImage     = true;       % true = image generation ON,           false = image generation OFF
+
+% Bootstrap switches (NOT INFLUENCED BY VALIDATION SWITCHES)
 bootstrap         = false;      % true = bootstrap ON,                  false = bootstrap OFF
 bsSaveAll         = false;      % true = saves all bootstrap ensembles, false = saves only min, deterministic and max bootstrap ensembles as netCDF files
 
-% Validation switch
+% Validation switches
 validationPrep    = false;      % true = validation preparation ON, false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 validation        = false;      % true = validation ON,             false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;      % true = visualisation ON,          false = visualisation OFF
 metricV           = 1;          % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = Symmetric Phase-only Matched Filter-based Absolute Error Function (SPOMF)
 
-% Bayesian optimisation switch
+% Bayesian optimisation switches
 optimPrep         = false;      % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;      % true = save optimisation inputs ON, false = save optimisation inputs OFF
 optimisation      = false;      % true = optimisation ON,             false = optimisation OFF (!!! run AFTER optimisation preparation !!!)
@@ -64,8 +66,8 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
 [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
     MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,precision, ...
-    shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
+    maxThreshold,shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 
