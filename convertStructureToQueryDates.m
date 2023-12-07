@@ -1,4 +1,4 @@
-function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,longWindow,validationPrep,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -113,7 +113,7 @@ if validationPrep == false && optimPrep == false % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
-        if nearest > longWindow %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
+        if nearest > maxThreshold %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
             nearestIdx(i) = nan;
         end
     end
@@ -141,12 +141,11 @@ if validationPrep == false && optimPrep == false % validation OFF
             % Get the date to match
             matchDate = matchedTargetVarDates(i, 2);
             % If a match was found, add the date and data to the output table
+            if j == 1, matchedTargetVarTable{i, 1}   = queryDates(i); end
             if ~isnan(matchDate)
-                if j == 1, matchedTargetVarTable{i, 1}   = queryDates(i); end
                 matchedTargetVarTable{i, j+1} = targetVarData(nearestIdx(i));
-            else
-                if j == 1, matchedTargetVarTable{i, 1}   = queryDates(i); end
-                matchedTargetVarTable{i, j+1} = {nan(size(targetVarData{1,1}))};
+            %else
+                %matchedTargetVarTable{i, j+1} = {nan(size(targetVarData{1,1}))};
             end
         end
     end

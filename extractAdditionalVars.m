@@ -1,4 +1,4 @@
-function additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,inputDir)
+function additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,maxThreshold,inputDir)
 
 %
 %
@@ -46,7 +46,7 @@ if ~isempty(addVars)
     for i = 1:numel(allDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(additionalVars.date,'ConvertFrom','yyyymmdd') - datetime(allDates(i),'ConvertFrom','yyyymmdd')));
-        if nearest > longWindow %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
+        if nearest > maxThreshold %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
             nearestIdx(i) = nan;
         end
     end
@@ -74,11 +74,11 @@ if ~isempty(addVars)
             % Get the date to match
             matchDate = matchedAddVarDates(i, 2);
             % If a match was found, add the date and data to the output table
-            if j == 1, matchedAddVarTable{i, 1}   = allDates(i); end
+            if j == 1, matchedAddVarTable{i, 1} = allDates(i); end
             if ~isnan(matchDate)
                 matchedAddVarTable{i, j+1} = addVarData(nearestIdx(i));
-            else
-                matchedAddVarTable{i, j+1} = {nan(size(addVarData{1,1}))};
+            %else
+                %matchedAddVarTable{i, j+1} = {nan(size(addVarData{1,1}))};
             end
         end
     end
