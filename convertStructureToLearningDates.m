@@ -8,11 +8,12 @@ function learningDates = convertStructureToLearningDates(targetVar,LdateStart,Ld
 %
 %
 
+targetVarL = lower(targetVar);
 commonDates = [];
-for i = 1:numel(targetVar)
+for i = 1:numel(targetVarL)
     % Learning dates - variable to be generated
-    disp("  Processing '" + targetVar(i) + "' for learningDates...")
-    learningDates = rawData.(lower(targetVar(i))+'Index');
+    disp("  Processing '" + targetVarL(i) + "' for learningDates...")
+    learningDates = rawData.(lower(targetVarL(i))+'Index');
     % Extract the common dates
     if isempty(commonDates)
         % For the first variable, set the common dates as all available learning dates
@@ -24,18 +25,18 @@ for i = 1:numel(targetVar)
 end
 learningDates = commonDates;
 targetVarDataAll = {};
-for i = 1:numel(targetVar)
-    data = rawData.(lower(targetVar(i))+'Index');
+for i = 1:numel(targetVarL)
+    data = rawData.(lower(targetVarL(i))+'Index');
     [r,~] = find(data>=commonDates(1) & data<=commonDates(end));
     % Load data set
-    targetVarData = rawData.(lower(targetVar(i)));
+    targetVarData = rawData.(lower(targetVarL(i)));
     targetVarDataAll = [targetVarDataAll targetVarData(r)];
 end
 % Keep only the target variable data corresponding to the common dates
-[r,~] = find(learningDates>=LdateStart & learningDates<=LdateEnd);
+r = find(learningDates>=LdateStart & learningDates<=LdateEnd);
 if optimPrep == true && (LdateStart ~= QdateStart)
     % if in preparation for optimisation, include Query dates in Learning dates
-    [rQ,~] = find(learningDates>=QdateStart & learningDates<=QdateEnd);
+    rQ = find(learningDates>=QdateStart & learningDates<=QdateEnd);
     r = unique([r; rQ]);
 end
 if min(learningDates)>LdateStart
@@ -57,15 +58,15 @@ targetVarDataAll = targetVarDataAll(indexLearningDates,:);
 [~, ~, indexLearningDates] = intersect(climateData.date, learningDates);
 learningDates = learningDates(indexLearningDates); % KEEP ONLY DATES MATCHING CLIMATE DATA
 targetVarDataAll = targetVarDataAll(indexLearningDates,:);
-
-if numel(targetVar) == 1
-    learningDates_table = table(learningDates,targetVarDataAll,'VariableNames',['date',targetVar]);
-elseif numel(targetVar) == 2
-    learningDates_table = table(learningDates,targetVarDataAll(:,1),targetVarDataAll(:,2),'VariableNames',['date',targetVar(1),targetVar(2)]);
-else
-    error('Change ConvertStructureToLearningDates to allow more variable names')
-end
-learningDates = learningDates_table;
+learningDatesTable = table(learningDates,targetVarDataAll,'VariableNames',["date" targetVarL']);
+% if numel(targetVar) == 1
+%     learningDates_table = table(learningDates,targetVarDataAll,'VariableNames',['date',targetVar]);
+% elseif numel(targetVar) == 2
+%     learningDates_table = table(learningDates,targetVarDataAll(:,1),targetVarDataAll(:,2),'VariableNames',['date',targetVar(1),targetVar(2)]);
+% else
+%     error('Change ConvertStructureToLearningDates to allow more variable names')
+% end
+learningDates = learningDatesTable;
 disp('  Saving Learning dates, may take a while depending on input size...')
 save(fullfile(inputDir,'learningDates.mat'), 'learningDates', '-v7.3','-nocompression');
 

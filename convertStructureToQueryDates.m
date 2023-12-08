@@ -11,6 +11,7 @@ function [queryDates,learningDates,refValidation] = convertStructureToQueryDates
 % Query dates - variable to be generated
 disp('  Processing queryDates for all target variables...')
 
+targetVarL = lower(targetVar);
 datesAll = climateData.date;
 learningDatesDate = learningDates.date;
 
@@ -22,7 +23,7 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
     % Query dates are all dates in query window, without dates in Learning dates
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
-        [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        r = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         if min(datesAll)>QdateStart
             error('Climate data first date > Query period start')
         elseif max(datesAll)<QdateEnd
@@ -34,7 +35,7 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
             error('Query dates match with learning dates, nothing to generate')
         end
     elseif outputTime == 2 % monthly
-        [r,~]      = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        r = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         if min(datesAll)>QdateStart
             error('Climate data first date > Query period start')
         elseif max(datesAll)<QdateEnd
@@ -56,14 +57,14 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
     refValidation = [];
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     % Query dates are all dates in query window, replacing dates in Learning dates
-    for j = 1:numel(targetVar)
+    for j = 1:numel(targetVarL)
         if ~exist(outputDir,'dir')
             mkdir(outputDir)
         end
     end
     if outputTime == 1 % daily
         % Select the dates that are not in learningDates
-        [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        r = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         if min(datesAll)>QdateStart
             error('Climate data first date > Query period start')
         elseif max(datesAll)<QdateEnd
@@ -71,7 +72,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         end
         queryDates = datesAll(r);
     elseif outputTime == 2 % monthly
-        [r,~] = find(datesAll>=QdateStart & datesAll<=QdateEnd);
+        r = find(datesAll>=QdateStart & datesAll<=QdateEnd);
         if min(datesAll)>QdateStart
             error('Climate data first date > Query period start')
         elseif max(datesAll)<QdateEnd
@@ -92,14 +93,14 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     learningDataValidation  = learningDates(~ismem,:);
     learningDatesValidation = learningDatesDate(ismem);
     referenceValidation = {};
-    for j = 1:numel(targetVar)
-        referenceValidation = [referenceValidation table2cell(learningDates(ismem,targetVar(j)))];
+    for j = 1:numel(targetVarL)
+        referenceValidation = [referenceValidation table2cell(learningDates(ismem,targetVarL(j)))];
         imagesRefValidation = nan(size(referenceValidation{1,j},1),size(referenceValidation{1,j},2),size(learningDatesValidation,1));
         % Create matrix of reference dates
         for i = 1:size(learningDatesValidation,1)
             imagesRefValidation(:,:,i) = referenceValidation{i,j};
         end
-        refValidation.(targetVar(j)) = single(imagesRefValidation);
+        refValidation.(targetVarL(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
     disp('  Saving refValidation.mat file...')
@@ -113,7 +114,7 @@ if validationPrep == false && optimPrep == false % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
-        if nearest > maxThreshold %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
+        if days(nearest) > maxThreshold %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
             nearestIdx(i) = nan;
         end
     end
@@ -125,17 +126,17 @@ if validationPrep == false && optimPrep == false % validation OFF
         end
     end
     % Assign closest targetVar map to each Query date
-    try
-        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
-    catch
-        try
-            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
-        catch
-            error('Adapt ConvertStructureToQueryDates function to allow more variables')
-        end
-    end
-    for j = 1:numel(targetVar)
-        targetVarData = learningDates.(targetVar(j));
+%     try
+%         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
+%     catch
+%         try
+%             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+%         catch
+%             error('Adapt ConvertStructureToQueryDates function to allow more variables')
+%         end
+%     end
+    for j = 1:numel(targetVarL)
+        targetVarData = learningDates.(targetVarL(j));
         % Loop through the matched dates
         for i = 1:size(matchedTargetVarDates, 1)
             % Get the date to match
@@ -144,42 +145,44 @@ if validationPrep == false && optimPrep == false % validation OFF
             if j == 1, matchedTargetVarTable{i, 1}   = queryDates(i); end
             if ~isnan(matchDate)
                 matchedTargetVarTable{i, j+1} = targetVarData(nearestIdx(i));
-            %else
-                %matchedTargetVarTable{i, j+1} = {nan(size(targetVarData{1,1}))};
+            else
+                matchedTargetVarTable{i, j+1} = {nan};
             end
         end
     end
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
-    try
-        matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
-    catch
-        try
-            matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
-        catch
-            error('Adapt ConvertStructureToQueryDates function to allow more variables')
-        end
-    end
-    for j = 1:numel(targetVar)
-        targetVarData = learningDates.(targetVar(j));
+%     try
+%         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
+%     catch
+%         try
+%             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+%         catch
+%             error('Adapt ConvertStructureToQueryDates function to allow more variables')
+%         end
+%     end
+    for j = 1:numel(targetVarL)
+        targetVarData = learningDates.(targetVarL(j));
         % Loop through the matched dates
         for i = 1:size(matchedTargetVarDates, 1)
             % fill the table with NaNs the size of the variable to be generated
-            if j == 1, matchedTargetVarTable{i, j}   = queryDates(i); end
-            matchedTargetVarTable{i, j+1} = {nan(size(targetVarData{1,1}))};
+            if j == 1, matchedTargetVarTable{i, j} = queryDates(i); end
+            matchedTargetVarTable{i, j+1} = {nan};
+            %matchedTargetVarTable{i, j+1} = {nan(size(targetVarData{1,1}))};
         end
     end
 end
 % Rename the columns
-try
-    matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar)};
-catch
-    try
-        matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar(1)),convertStringsToChars(targetVar(2))};
-    catch
-        error('Adapt ConvertStructureToQueryDates function to allow more variables')
-    end
-end
+% try
+%     matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar)};
+% catch
+%     try
+%         matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar(1)),convertStringsToChars(targetVar(2))};
+%     catch
+%         error('Adapt ConvertStructureToQueryDates function to allow more variables')
+%     end
+% end
+matchedTargetVarTable = cell2table(matchedTargetVarTable,"VariableNames",["date" targetVarL']);
 queryDates = matchedTargetVarTable;
 disp('  Saving Query dates, may take a while depending on input size...')
 save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
