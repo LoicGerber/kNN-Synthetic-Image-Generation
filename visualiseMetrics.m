@@ -205,6 +205,36 @@ for k = 1:numel(targetVar)
         saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '.png']))
 
         % --------------------------------------------------------------------
+        
+        refData = squeeze(mean(mean(refValidation.(targetVar(k)), 1, 'omitnan'), 2, 'omitnan'));
+        synData = squeeze(mean(mean(synImages.(targetVar(k)), 1, 'omitnan'), 2, 'omitnan'));
+
+        % Detrend the data
+        refDataDetrended = detrend(refData,4);
+        synDataDetrended = detrend(synData,4);
+
+        figure('WindowState', 'maximized');
+        date = datetime(validationMetric.(targetVar(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
+        plot(date, refDataDetrended, 'r-', date, synDataDetrended, 'k-');
+        legend('Reference', 'Synthetic', 'Location', 'southeast')
+        xlabel('Date')
+        ylabel('Detrended Evaporation [mm/day]')
+        title(['Detrended Mean ' convertStringsToChars(targetVar(k))])
+
+        r = corr(synDataDetrended, refDataDetrended);
+        alpha = std(synDataDetrended) / std(refDataDetrended);
+        beta = mean(synDataDetrended) / mean(refDataDetrended);
+        kgeSynRef = 1 - (sqrt((r - 1)^2 + (alpha - 1)^2 + (beta - 1)^2));
+
+        str = {['KGE: ' num2str(kgeSynRef, '%.5f')]...
+            ['r: ' num2str(r, '%.5f') ', \alpha: ' num2str(alpha, '%.5f') ', \beta: ' num2str(beta, '%.5f')]};
+        subtitle(str)
+        grid on
+        box off
+        set(gcf, 'color', 'white');
+        saveas(gcf, strcat(outputDir, ['correlation_' convertStringsToChars(targetVar(k)) '_detrended.png']));
+
+        % --------------------------------------------------------------------
 
         refData    = squeeze(var(refValidation.(targetVar(k)),0,[1 2],'omitnan'));
         synData    = squeeze(var(synImages.(targetVar(k)),0,[1 2],'omitnan'));
@@ -213,7 +243,7 @@ for k = 1:numel(targetVar)
         plot(date, refData, 'r-', date, synData, 'k-');
         legend('Reference','Synthetic','Location','northeast')
         xlabel('Date')
-        ylabel('Evaporation [mm/day]')
+        ylabel('Evaporation [mm/day]^2')
         title([convertStringsToChars(targetVar(k)) ' variance'])
         r = corr(synData,refData);
         %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
