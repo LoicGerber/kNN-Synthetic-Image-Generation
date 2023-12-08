@@ -100,7 +100,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         for i = 1:size(learningDatesValidation,1)
             imagesRefValidation(:,:,i) = referenceValidation{i,j};
         end
-        refValidation.(targetVarL(j)) = single(imagesRefValidation);
+        refValidation.(targetVar(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
     disp('  Saving refValidation.mat file...')

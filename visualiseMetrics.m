@@ -56,11 +56,11 @@ for k = 1:numel(targetVar)
         hold off
         title([convertStringsToChars(targetVar(k)) ' - MEAN'])
         r = corr(synData,refData);
-        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
         beta  = mean(synData)/mean(refData);
         kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
+        str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
         if strcmp(startLdate, startQdate)
             subtitle([['Learning periode: ' endQdate '-' endLdate] str])
         elseif strcmp(endQdate, endLdate)
@@ -192,11 +192,11 @@ for k = 1:numel(targetVar)
         ylabel('Evaporation [mm/day]')
         title(['Mean ' convertStringsToChars(targetVar(k))])
         r = corr(synData,refData);
-        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
         beta  = mean(synData)/mean(refData);
         kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
+        str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
         subtitle(str)
         grid on
         box off
@@ -216,11 +216,11 @@ for k = 1:numel(targetVar)
         ylabel('Evaporation [mm/day]')
         title([convertStringsToChars(targetVar(k)) ' variance'])
         r = corr(synData,refData);
-        nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+        %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
         alpha = std(synData)/std(refData);
         beta  = mean(synData)/mean(refData);
         kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-        str = {['Corr: ' num2str(r,'%.5f')] ['NSE: ' num2str(nseSynRef,'%.5f')] ['KGE: ' num2str(kgeSynRef,'%.5f')]};
+        str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
         subtitle(str)
         grid on
         box off
