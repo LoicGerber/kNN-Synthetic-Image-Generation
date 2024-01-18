@@ -25,7 +25,7 @@ QdateStart        = 19500101;                       % YYYYMMDD - Start of the Ge
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
 LdateStart        = 19800101;                       % YYYYMMDD - Start of the Learning period
 LdateEnd          = 20201231;                       % YYYYMMDD - End of the Learning period
-outputTime        = 1;                              % Image generation timestep: 1 = DAILY, 2 = MONTHLY
+outputTime        = 1;                              % Image generation timestep: 1 = DAILY, 2 = MONTHLY, 3 = DEKADAL
 
 % KNNDataGeneration
 shortWindow       = 5;          % Number of days to consider for the short climate window

@@ -51,6 +51,27 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
         if isempty(queryDates)
             error('Query dates match with learning dates, nothing to generate')
         end
+    elseif outputTime == 3 % dekadal
+        r = find(datesAll >= QdateStart & datesAll <= QdateEnd);
+        if min(datesAll) > QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll) < QdateEnd
+            error('Climate data last date < Query period end')
+        end
+        queryDates = datesAll(r);
+        % Convert dailyDates to a matrix of year, month, and day components
+        dateVec = datevec(datetime(queryDates, 'ConvertFrom', 'yyyyMMdd'));
+        % Find the indices of the dates for the 10th, 20th, and the last day of the month
+        selectedDays = [];
+        selectedDays = [selectedDays; find(dateVec(:,3) == 10)];
+        selectedDays = [selectedDays; find(dateVec(:,3) == 20)];
+        selectedDays = [selectedDays; find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))];
+        selectedDays = sort(selectedDays);
+        % Select the dates that are not in learningDates
+        queryDates = setdiff(queryDates(selectedDays), learningDatesDate);
+        if isempty(queryDates)
+            error('Query dates match with learning dates, nothing to generate...')
+        end
     else
         error('Invalid outputTime value')
     end
@@ -85,6 +106,24 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         lastDays   = find(dateVec(:,3) == eomday(dateVec(:,1), dateVec(:,2)));
         % Select the dates that are not in learningDates
         queryDates = queryDates(lastDays);
+    elseif outputTime == 3 % dekadal
+        r = find(datesAll >= QdateStart & datesAll <= QdateEnd);
+        if min(datesAll) > QdateStart
+            error('Climate data first date > Query period start')
+        elseif max(datesAll) < QdateEnd
+            error('Climate data last date < Query period end')
+        end
+        queryDates = datesAll(r);
+        % Convert dailyDates to a matrix of year, month, and day components
+        dateVec = datevec(datetime(queryDates, 'ConvertFrom', 'yyyyMMdd'));
+        % Find the indices of the dates for the 10th, 20th, and the last day of the month
+        selectedDays = [];
+        selectedDays = [selectedDays; find(dateVec(:,3) == 10)];
+        selectedDays = [selectedDays; find(dateVec(:,3) == 20)];
+        selectedDays = [selectedDays; find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))];
+        selectedDays = sort(selectedDays);
+        % Select the dates that are not in learningDates
+        queryDates = queryDates(selectedDays);
     else
         error('Invalid outputTime value')
     end
@@ -126,15 +165,15 @@ if validationPrep == false && optimPrep == false % validation OFF
         end
     end
     % Assign closest targetVar map to each Query date
-%     try
-%         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
-%     catch
-%         try
-%             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
-%         catch
-%             error('Adapt ConvertStructureToQueryDates function to allow more variables')
-%         end
-%     end
+    %     try
+    %         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
+    %     catch
+    %         try
+    %             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+    %         catch
+    %             error('Adapt ConvertStructureToQueryDates function to allow more variables')
+    %         end
+    %     end
     for j = 1:numel(targetVarL)
         targetVarData = learningDates.(targetVarL(j));
         % Loop through the matched dates
@@ -152,15 +191,15 @@ if validationPrep == false && optimPrep == false % validation OFF
     end
 elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     matchedTargetVarDates = [queryDates, nan(size(queryDates))];
-%     try
-%         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
-%     catch
-%         try
-%             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
-%         catch
-%             error('Adapt ConvertStructureToQueryDates function to allow more variables')
-%         end
-%     end
+    %     try
+    %         matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell'});
+    %     catch
+    %         try
+    %             matchedTargetVarTable = table('Size',[size(matchedTargetVarDates,1),numel(targetVar)+1], 'VariableTypes',{'double', 'cell', 'cell'});
+    %         catch
+    %             error('Adapt ConvertStructureToQueryDates function to allow more variables')
+    %         end
+    %     end
     for j = 1:numel(targetVarL)
         targetVarData = learningDates.(targetVarL(j));
         % Loop through the matched dates
