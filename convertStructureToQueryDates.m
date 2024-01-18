@@ -62,11 +62,7 @@ if validationPrep == false && optimPrep == false % VALIDATION OFF
         % Convert dailyDates to a matrix of year, month, and day components
         dateVec = datevec(datetime(queryDates, 'ConvertFrom', 'yyyyMMdd'));
         % Find the indices of the dates for the 10th, 20th, and the last day of the month
-        selectedDays = [];
-        selectedDays = [selectedDays; find(dateVec(:,3) == 10)];
-        selectedDays = [selectedDays; find(dateVec(:,3) == 20)];
-        selectedDays = [selectedDays; find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))];
-        selectedDays = sort(selectedDays);
+        selectedDays = sort([find(dateVec(:,3) == 10); find(dateVec(:,3) == 20); find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))]);
         % Select the dates that are not in learningDates
         queryDates = setdiff(queryDates(selectedDays), learningDatesDate);
         if isempty(queryDates)
@@ -117,11 +113,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         % Convert dailyDates to a matrix of year, month, and day components
         dateVec = datevec(datetime(queryDates, 'ConvertFrom', 'yyyyMMdd'));
         % Find the indices of the dates for the 10th, 20th, and the last day of the month
-        selectedDays = [];
-        selectedDays = [selectedDays; find(dateVec(:,3) == 10)];
-        selectedDays = [selectedDays; find(dateVec(:,3) == 20)];
-        selectedDays = [selectedDays; find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))];
-        selectedDays = sort(selectedDays);
+        selectedDays = sort([find(dateVec(:,3) == 10); find(dateVec(:,3) == 20); find(dateVec(:,3) == eomday(dateVec(:, 1), dateVec(:, 2)))]);
         % Select the dates that are not in learningDates
         queryDates = queryDates(selectedDays);
     else
