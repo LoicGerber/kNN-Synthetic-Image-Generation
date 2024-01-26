@@ -8,19 +8,11 @@ function synImages = generateSynImages(targetVar,learningDates,sortedDates,geoRe
 %
 %
 
-outputDirImages = [outputDir 'syntheticImages\'];
 var_low = lower(targetVar);
 
 % Check if output directories exist, if not create them
 for i = 1:numel(var_low)
-    disp(strcat("Processing variable '",convertStringsToChars(var_low(i)),"'..."))
-    if exist(fullfile(outputDirImages,var_low(i)),'dir')
-        rmdir(fullfile(outputDirImages,var_low(i)),'s');
-        delete(fullfile(outputDirImages,var_low(i),'*'));
-        mkdir(fullfile(outputDirImages,var_low(i)))
-    else
-        mkdir(fullfile(outputDirImages,var_low(i)))
-    end
+    disp(strcat("Processing variable '",convertStringsToChars(targetVar(i)),"'..."))
 
     % Preallocate variables for efficiency
     learningDatesDate = table2array(learningDates(:,'date'));
@@ -57,13 +49,17 @@ for i = 1:numel(var_low)
     if outputType == 2 && bootstrap == false
         % Define the main netCDF file
         outputBaseName = strcat(var_low(i),'.nc');
-        fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
+        fullDestinationFileName = fullfile(outputDir, outputBaseName);
         % Assign the CRS value
-        crs_wkt = wktstring(GeoRef.GeographicCRS);
-        % Extract the EPSG code from the WKT string using regular expressions
-        expression = 'ID\["EPSG",(\d+)\]';
-        tokens = regexp(crs_wkt, expression, 'tokens');
-        crs_value = tokens{1};
+        try
+            crs_wkt = wktstring(GeoRef.GeographicCRS);
+            % Extract the EPSG code from the WKT string using regular expressions
+            expression = 'ID\["EPSG",(\d+)\]';
+            tokens = regexp(crs_wkt, expression, 'tokens');
+            crs_value = tokens{1};
+        catch
+
+        end
         % Create the main netCDF file and define dimensions
         ncid = netcdf.create(fullDestinationFileName, 'NETCDF4');
         dimid_lat = netcdf.defDim(ncid, 'lat', GeoRef.RasterSize(1));
@@ -110,7 +106,7 @@ for i = 1:numel(var_low)
         % ---- MININMAL ----
         % Define the main netCDF file
         outputBaseNameMin = strcat(var_low(i),'_min.nc');
-        fullDestinationFileNameMin = fullfile(outputDirImages, var_low(i), outputBaseNameMin);
+        fullDestinationFileNameMin = fullfile(outputDir, outputBaseNameMin);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
         % Extract the EPSG code from the WKT string using regular expressions
@@ -162,7 +158,7 @@ for i = 1:numel(var_low)
         % ---- DETERMINISTIC ----
         % Define the main netCDF file
         outputBaseNameDet = strcat(var_low(i),'_det.nc');
-        fullDestinationFileNameDet = fullfile(outputDirImages, var_low(i), outputBaseNameDet);
+        fullDestinationFileNameDet = fullfile(outputDir, outputBaseNameDet);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
         % Extract the EPSG code from the WKT string using regular expressions
@@ -214,7 +210,7 @@ for i = 1:numel(var_low)
         % ---- MAXINMAL ----
         % Define the main netCDF file
         outputBaseNameMax = strcat(var_low(i),'_max.nc');
-        fullDestinationFileNameMax = fullfile(outputDirImages, var_low(i), outputBaseNameMax);
+        fullDestinationFileNameMax = fullfile(outputDir, outputBaseNameMax);
         % Assign the CRS value
         crs_wkt = wktstring(GeoRef.GeographicCRS);
         % Extract the EPSG code from the WKT string using regular expressions
@@ -268,7 +264,7 @@ for i = 1:numel(var_low)
     for rowIndex = 1:size(sortedDates,1)
         if bootstrap == true
             if bsSaveAll == true
-                outputDirBootstrap = fullfile(outputDirImages, var_low(i), string(sortedDates(rowIndex,1)));
+                outputDirBootstrap = fullfile(outputDir, 'bootstrap', string(sortedDates(rowIndex,1)));
                 if ~exist(outputDirBootstrap,'dir')
                     mkdir(outputDirBootstrap)
                 end
@@ -305,8 +301,8 @@ for i = 1:numel(var_low)
             availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
             if bsSaveAll == true
                 % Write the resulting image to a GeoTIFF file
-                outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
-                fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
+                outputBaseName = string(sortedDates(rowIndex,1)) + '_' + var_low(i) + '.tif';
+                fullDestinationFileName = fullfile(outputDir, 'datesAll', outputBaseName);
                 if isempty(GeoRef)
                     %disp('    Georeferencing files missing! Unreferenced output...')
                     t = Tiff(fullDestinationFileName, 'w');
@@ -382,7 +378,7 @@ for i = 1:numel(var_low)
             if bsSaveAll == true
                 for bs = 1:ensemble
                     % Write the resulting image to a GeoTIFF file
-                    outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '.tif';
+                    outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '_' + var_low(i) + '.tif';
                     fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
                     %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
                     if isempty(GeoRef)
@@ -423,7 +419,7 @@ for i = 1:numel(var_low)
 
             % Write the resulting image to a GeoTIFF file
             %outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
-            %fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
+            %fullDestinationFileName = fullfile(outputDir, var_low(i), outputBaseName);
             %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
             %if isempty(GeoRef)
             %disp('    Georeferencing files missing! Unreferenced output...')
@@ -476,8 +472,8 @@ for i = 1:numel(var_low)
             availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
             if outputType == 1
                 % Write the resulting image to a GeoTIFF file
-                outputBaseName = string(sortedDates(rowIndex,1)) + '.tif';
-                fullDestinationFileName = fullfile(outputDirImages, var_low(i), outputBaseName);
+                outputBaseName = string(sortedDates(rowIndex,1)) + var_low(i) + '.tif';
+                fullDestinationFileName = fullfile(outputDir, var_low(i), outputBaseName);
                 %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
                 if isempty(GeoRef)
                     %disp('    Georeferencing files missing! Unreferenced output...')

@@ -289,9 +289,9 @@ for k = 1:numel(targetVar)
             if ~isempty(referenceIndex)
                 % Load the two images
                 synthetic = synData(:,:,i);
-                synthetic(synthetic==-999) = NaN;
+                synthetic(synthetic==min(min(synthetic))) = NaN;
                 reference = refData(:,:,referenceIndex);
-                reference(reference==-999) = NaN;
+                reference(reference==min(min(reference))) = NaN;
 
                 sgtitle(targetVar(k))
 
@@ -301,7 +301,7 @@ for k = 1:numel(targetVar)
                 colormap(gca, jet(256));
                 set(img1, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
-                caxis([0 6])
+                caxis([0 50])
                 axis equal
                 title('Synthetic');
                 %colorbar(gca,'southoutside')
@@ -311,7 +311,7 @@ for k = 1:numel(targetVar)
                 colormap(gca, jet(256));
                 set(img2, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
-                caxis([0 6])
+                caxis([0 50])
                 axis equal
                 title('Reference');
                 h = colorbar(gca,'southoutside');
@@ -322,7 +322,7 @@ for k = 1:numel(targetVar)
                 errMap = imshow(error);
                 set(errMap, 'AlphaData', ~isnan(synthetic))
                 colormap(gca, coolwarm(256));
-                caxis([-2 2])
+                caxis([-10 10])
                 title('Error');
                 axis equal
                 h_err = colorbar(gca,'southoutside');
@@ -342,7 +342,7 @@ for k = 1:numel(targetVar)
                 plot(dates(i),bestDist(i),"Marker","o","Color",'red')
                 hold off
                 xlim([min(dates) max(dates)])
-                ylim([0.05 0.35])
+                ylim([0.5 2])
                 title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
                 ylabel('MAE')
                 xlabel('Date')

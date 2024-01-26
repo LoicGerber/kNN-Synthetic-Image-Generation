@@ -32,7 +32,7 @@ if ~isempty(files)
         ncfile = fullfile(rawDir, files(i).name);
         [~, varName, ~] = fileparts(ncfile);
         if ismember(lower(string(varName)),lower(varsAll))
-            varnameID = strcat(varName,'Index');
+            varnameID = strcat(lower(varName),'Index');
             disp(strcat("  Processing '", varName,"' data..."))
             ncid = netcdf.open(ncfile,'NC_NOWRITE'); % Open NetCDF in read-only
 
@@ -71,7 +71,7 @@ if ~isempty(files)
             dates = str2double(dates);
 
             % Create the output structure
-            rawData.(varName)   = data;
+            rawData.(lower(varName))   = data;
             rawData.(varnameID) = dates;
         else
             disp(strcat("  '",varName,"' not in variables of interest, file not processed..."))
@@ -82,55 +82,60 @@ if ~isempty(files)
 end
 if isempty(files) || numel(fields) < numel(varsAll)
     % Get a list of all GeoTIFF files in the input directory
-    files = dir(fullfile(rawDir, 'data', '*.tif'));
-    if isempty(files)
-        error('No GeoTIFF files in rawDir... Missing variable files or unknown format.')
-    end
-
-    data  = cell(length(files),1);
-    dates = nan(length(files),1);
-    
-    varPrevious = [];
-    j = 0;
-    for i = 1:length(files)
-        j = j + 1;
-        % Open the GeoTIFF file
-        tiffFile = fullfile(rawDir, 'data', files(i).name);
-        [~, filename, ~] = fileparts(tiffFile);
-
-        % Split the filename into variable and date
-        parts = split(filename, '_');
-        varName = parts{1};
-        dateStr = parts{2};
-
-        if ismember(lower(string(varName)), lower(varsAll))
-            if ~strcmp(varName,varPrevious)
-                if ~isempty(varPrevious)
-                    % Create the output structure
-                    varnameID = strcat(varPrevious, 'Index');
-                    data  = data(~cellfun('isempty',data));
-                    dates = dates(~isnan(dates));
-                    rawData.(varPrevious) = data;
-                    rawData.(varnameID)   = dates;
-                end
-                disp(strcat("  Processing '", varName, "' data..."))
-                j = 1;
-            end
-            % Read the variable data
-            data{j,1} = single(readgeoraster(tiffFile));
-            % Convert date string to numeric format
-            dates(j,1) = str2double(dateStr);
-        elseif ~strcmp(varName,varPrevious)
-            disp(strcat("  '", varName, "' not in variables of interest, file not processed..."))
+    varsTiff = varsAll(~ismember(lower(varsAll),lower(fields)));
+    for k = 1:numel(varsTiff)
+        varName = varsTiff(k);
+        files = dir(fullfile(rawDir, varName, '*.tif'));
+        if isempty(files)
+            error('No GeoTIFF files in rawDir... Missing variable files or unknown format.')
         end
-        varPrevious = varName;
+
+        data  = cell(length(files),1);
+        dates = nan(length(files),1);
+
+        varPrevious = [];
+        j = 0;
+        for i = 1:length(files)
+            j = j + 1;
+            % Open the GeoTIFF file
+            tiffFile = fullfile(rawDir, varName, files(i).name);
+            %[~, filename, ~] = fileparts(tiffFile);
+            [~, dateStr, ~] = fileparts(tiffFile);
+
+            % Split the filename into variable and date
+            %parts = split(filename, '_');
+            %varName = parts{1};
+            %dateStr = parts{2};
+
+            if ismember(lower(string(varName)), lower(varsAll))
+                if ~strcmp(varName,varPrevious)
+                    if ~isempty(varPrevious)
+                        % Create the output structure
+                        varnameID = strcat(varPrevious, 'Index');
+                        data  = data(~cellfun('isempty',data));
+                        dates = dates(~isnan(dates));
+                        rawData.(varPrevious) = data;
+                        rawData.(varnameID)   = dates;
+                    end
+                    disp(strcat("  Processing '", varName, "' data..."))
+                    j = 1;
+                end
+                % Read the variable data
+                data{j,1} = single(readgeoraster(tiffFile));
+                % Convert date string to numeric format
+                dates(j,1) = str2double(dateStr);
+            elseif ~strcmp(varName,varPrevious)
+                disp(strcat("  '", varName, "' not in variables of interest, file not processed..."))
+            end
+            varPrevious = varName;
+        end
+        % Create the output structure
+        varnameID = strcat(lower(varName), 'Index');
+        data  = data(~cellfun('isempty',data));
+        dates = dates(~isnan(dates));
+        rawData.(lower(varName))   = data;
+        rawData.(varnameID) = dates;
     end
-    % Create the output structure
-    varnameID = strcat(varName, 'Index');
-    data  = data(~cellfun('isempty',data));
-    dates = dates(~isnan(dates));
-    rawData.(varName)   = data;
-    rawData.(varnameID) = dates;
 end
 
 end

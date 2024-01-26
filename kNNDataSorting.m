@@ -46,7 +46,7 @@ sortedTarget  = cell(totQDates, 1);
 sortedAddVars = cell(totQDates, 1);
 sortedDist    = cell(totQDates, 1);
 
-if ~isempty(addVars)
+if ~isempty(additionalVars)
     addVarsDates = table2array(additionalVars(:,'date'));
     addVarsData  = table2array(removevars(additionalVars,'date'));
 else
@@ -61,7 +61,7 @@ idxShort      = contains(Weights.Properties.VariableNames,'Short');
 weightsShort  = table2cell(Weights(:,idxShort));
 idxLong       = contains(Weights.Properties.VariableNames,'Long');
 weightsLong   = table2cell(Weights(:,idxLong));
-if ~isempty(addVars)
+if ~isempty(additionalVars)
     idxAddVars     = contains(Weights.Properties.VariableNames,addVars);
     weightsAddVars = table2cell(Weights(:,idxAddVars));
 else
@@ -104,7 +104,7 @@ if parallelComputing == true
             end
 
             % Extract the additional data for the current query date
-            if ~isempty(addVars)
+            if ~isempty(additionalVars)
                 queryAddVars = cell(1, numel(addVars));
                 idx = find(addVarsDates == currentQDate);
                 queryAddVars(1,:) = addVarsData(idx,:);
@@ -134,7 +134,7 @@ if parallelComputing == true
                         end
 
                         % Extract the additional data for the current query date
-                        if ~isempty(addVars)
+                        if ~isempty(additionalVars)
                             learningAddVars = cell(1, numel(addVars));
                             idx = find(addVarsDates == currentLDate);
                             learningAddVars(1,:) = addVarsData(idx,:);
@@ -311,7 +311,7 @@ else % serial computing
             end
 
             % Extract the additional data for the current query date
-            if ~isempty(addVars)
+            if ~isempty(additionalVars)
                 queryAddVars = cell(1, numel(addVars));
                 idx = find(addVarsDates == currentQDate);
                 queryAddVars(1,:) = addVarsData(idx,:);
@@ -344,7 +344,7 @@ else % serial computing
                         end
 
                         % Extract the additional data for the current query date
-                        if ~isempty(addVars)
+                        if ~isempty(additionalVars)
                             learningAddVars = cell(1, numel(addVars));
                             idx = find(addVarsDates == currentLDate);
                             learningAddVars(1,:) = addVarsData(idx,:);
@@ -380,7 +380,7 @@ else % serial computing
 
                         % Additional variable comparison
                         % 1 distance
-                        if ~isempty(addVars) && ~isempty(cell2mat(addVarsData(qd,:)))
+                        if ~isempty(additionalVars) && ~isempty(cell2mat(addVarsData(qd,:)))
                             if metricKNN == 1 % RMSE
                                 addVarsDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryAddVars, learningAddVars, 'UniformOutput', false); % RMSE

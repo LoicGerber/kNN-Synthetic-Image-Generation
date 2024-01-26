@@ -43,10 +43,10 @@ for j = 1:numel(targetVar)
         synImageDate = synDates(i);
 
         % Load the reference and generated images
-        refImage = refImages(:,:,i);
+        refImage = double(refImages(:,:,i));
         refImage(isnan(refImage)) = -999;
         if bootstrap == false
-            synImage = synImagesAll(:,:,i);
+            synImage = double(synImagesAll(:,:,i));
             synImage(isnan(synImage)) = -999;
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
             if refImageDate == synImageDate
@@ -80,7 +80,7 @@ for j = 1:numel(targetVar)
             validationResult{i,1} = currentDate;
             % Bootstrap ensembles
             for k = 1:ensemble
-                synImage = single(synImagesAll{i}(:,:,k));
+                synImage = double(synImagesAll{i}(:,:,k));
                 synImage(isnan(synImage)) = -999;
                 if metricV == 1
                     % Calculate the RMSE
@@ -99,7 +99,7 @@ for j = 1:numel(targetVar)
                 end
             end
             % KNN result
-            synImage = maps(:,:,i);
+            synImage = double(maps(:,:,i));
             synImage(isnan(synImage)) = -999;
             if metricV == 1
                 % Calculate the RMSE
