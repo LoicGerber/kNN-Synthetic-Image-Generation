@@ -1,10 +1,7 @@
 function geoRef = extractGeoInfo(targetVar, coordRefSysCode, rawDir, inputDir)
 
 for i = 1:numel(targetVar)
-    % Check file extension and use appropriate function
-    [~, ~, ext] = fileparts(targetVar(i));
-    
-    if strcmpi(ext, '.nc')
+    try
         file_path = fullfile(rawDir, targetVar(i) + '.nc');
         ncid = netcdf.open(file_path, 'NOWRITE');
         latVarID = netcdf.inqVarID(ncid, 'lat');
@@ -33,7 +30,7 @@ for i = 1:numel(targetVar)
             GeoRef.CellExtentInLongitude = double((maxLon - minLon) / (numel(lon) - 1));
         end
         GeoRef.GeographicCRS = geocrs(coordRefSysCode);
-    elseif strcmpi(ext, '')
+    catch
         tiffDir = fullfile(rawDir, targetVar(i));
         tiffFiles = dir(fullfile(tiffDir, '*.tif'));
         
@@ -46,8 +43,6 @@ for i = 1:numel(targetVar)
         info = geotiffinfo(file_path);
         GeoRef = info.SpatialRef;
         GeoRef.GeographicCRS = geocrs(coordRefSysCode);
-    else
-        error('Unsupported file format');
     end
     geoRef.(targetVar(i)) = GeoRef;
 end

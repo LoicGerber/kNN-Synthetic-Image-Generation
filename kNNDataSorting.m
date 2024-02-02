@@ -143,7 +143,7 @@ if parallelComputing == true
                         end
 
                         % Target variable comparison
-                        if ~isempty(cell2mat(queryDatesData(qd,:))) || ~isnan(cell2mat(queryDatesData(qd,:))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
+                        if ~(isempty(cell2mat(queryDatesData(qd,:))) || unique(isnan(cell2mat(queryDatesData(qd,:))))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
                             if metricKNN == 1 % RMSE
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE
@@ -353,7 +353,7 @@ else % serial computing
                         end
 
                         % Target variable comparison
-                        if ~isempty(cell2mat(queryDatesData(qd,:))) || ~isnan(cell2mat(queryDatesData(qd,:))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
+                        if ~(isempty(cell2mat(queryDatesData(qd,:))) || unique(isnan(cell2mat(queryDatesData(qd,:))))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
                             if metricKNN == 1 % RMSE
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE

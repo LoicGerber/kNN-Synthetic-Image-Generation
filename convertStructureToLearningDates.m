@@ -12,7 +12,7 @@ targetVarL = lower(targetVar);
 commonDates = [];
 for i = 1:numel(targetVarL)
     % Learning dates - variable to be generated
-    disp("  Processing '" + targetVarL(i) + "' for learningDates...")
+    disp("  Processing '" + targetVar(i) + "' for learningDates...")
     learningDates = rawData.(lower(targetVarL(i))+'Index');
     % Extract the common dates
     if isempty(commonDates)
@@ -27,7 +27,7 @@ learningDates = commonDates;
 targetVarDataAll = {};
 for i = 1:numel(targetVarL)
     data = rawData.(lower(targetVarL(i))+'Index');
-    [r,~] = find(data>=commonDates(1) & data<=commonDates(end));
+    [r,~] = find(ismember(data,commonDates));
     % Load data set
     targetVarData = rawData.(lower(targetVarL(i)));
     targetVarDataAll = [targetVarDataAll targetVarData(r)];
@@ -58,14 +58,10 @@ targetVarDataAll = targetVarDataAll(indexLearningDates,:);
 [~, ~, indexLearningDates] = intersect(climateData.date, learningDates);
 learningDates = learningDates(indexLearningDates); % KEEP ONLY DATES MATCHING CLIMATE DATA
 targetVarDataAll = targetVarDataAll(indexLearningDates,:);
-learningDatesTable = table(learningDates,targetVarDataAll,'VariableNames',["date" targetVarL']);
-% if numel(targetVar) == 1
-%     learningDates_table = table(learningDates,targetVarDataAll,'VariableNames',['date',targetVar]);
-% elseif numel(targetVar) == 2
-%     learningDates_table = table(learningDates,targetVarDataAll(:,1),targetVarDataAll(:,2),'VariableNames',['date',targetVar(1),targetVar(2)]);
-% else
-%     error('Change ConvertStructureToLearningDates to allow more variable names')
-% end
+learningDatesTable = table(learningDates,'VariableNames',"date");
+for i = 1:numel(targetVar)
+    learningDatesTable.(targetVarL(i)) = targetVarDataAll(:,i);
+end
 learningDates = learningDatesTable;
 disp('  Saving Learning dates, may take a while depending on input size...')
 save(fullfile(inputDir,'learningDates.mat'), 'learningDates', '-v7.3','-nocompression');

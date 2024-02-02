@@ -203,17 +203,7 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         end
     end
 end
-% Rename the columns
-% try
-%     matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar)};
-% catch
-%     try
-%         matchedTargetVarTable.Properties.VariableNames = {'Date', convertStringsToChars(targetVar(1)),convertStringsToChars(targetVar(2))};
-%     catch
-%         error('Adapt ConvertStructureToQueryDates function to allow more variables')
-%     end
-% end
-matchedTargetVarTable = cell2table(matchedTargetVarTable,"VariableNames",["date" targetVarL']);
+matchedTargetVarTable = cell2table(matchedTargetVarTable,"VariableNames",["date" targetVarL]');
 queryDates = matchedTargetVarTable;
 disp('  Saving Query dates, may take a while depending on input size...')
 save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');

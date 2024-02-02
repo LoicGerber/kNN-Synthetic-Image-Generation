@@ -1,4 +1,4 @@
-function climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir)
+function climateData = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir)
 
 %
 %
@@ -10,31 +10,61 @@ function climateData = extractClimateData(vars,rawData,QdateStart,QdateEnd,Ldate
 
 % Get fieldnames matching the string
 matchingFields     = string(fieldnames(rawData));
-matchingDataFields = matchingFields(ismember(lower(matchingFields), lower(vars)));
-datesFields        = matchingFields(ismember(lower(matchingFields), lower(vars+'index')));
+matchingDataFields = matchingFields(ismember(lower(matchingFields), lower(climateVars)));
+datesFields        = matchingFields(ismember(lower(matchingFields), lower(climateVars+'index')));
 
 % Create cell array with each variable in a separate column
 %num_vars = length(matchingDataFields);
 %climateData = cell(numel(output_data.(matchingDataFields(1))), num_vars);
 climateData = table();
 for i = 1:length(matchingDataFields)
-    % Flatten the cell array into a single numeric array
-    numMatrices = numel(rawData.(matchingDataFields(i)));
-    flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
-    for j = 1:numMatrices
-        flattenedData(j, :) = rawData.(matchingDataFields(i)){j}(:); % Flatten each matrix and store in the matrix
+    currentName = matchingDataFields(i);
+    currentIdx  = find(strcmpi(climateVars,currentName));
+    if normMethods(icurrentIdx) == 1 %MinMax
+        % Flatten the cell array into a single numeric array
+        numMatrices = numel(rawData.(matchingDataFields(i)));
+        flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
+        for j = 1:numMatrices
+            flattenedData(j, :) = rawData.(matchingDataFields(i)){j}(:); % Flatten each matrix and store in the matrix
+        end
+        % Find the minimum and maximum values of the entire numeric array
+        minValue = min(flattenedData(:));
+        maxValue = max(flattenedData(:));
+        % Normalize each matrix in the cell array
+        normalizedCellArray = cell(numMatrices, 1);
+        for j = 1:numMatrices
+            normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - minValue) / (maxValue - minValue);
+        end
+        % climateData is normalised
+        climateData(:,i) = normalizedCellArray;
+    elseif normMethods(currentIdx) == 2 %Q10-Q90
+        % Flatten the cell array into a single numeric array
+        numMatrices = numel(rawData.(matchingDataFields(i)));
+        flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
+        for j = 1:numMatrices
+            flattenedData(j, :) = rawData.(matchingDataFields(i)){j}(:); % Flatten each matrix and store in the matrix
+        end
+        % Find the Q10 and Q90 values of the entire numeric array
+        Q10 = quantile(flattenedData(:),0.1);
+        Q90 = quantile(flattenedData(:),0.9);
+        % Normalize each matrix in the cell array
+        normalizedCellArray = cell(numMatrices, 1);
+        for j = 1:numMatrices
+            normRawData = rawData.(matchingDataFields(i)){j} > Q90;
+            rawData.(matchingDataFields(i)){j}(normRawData) = Q90;
+            normRawData = rawData.(matchingDataFields(i)){j} < Q10;
+            rawData.(matchingDataFields(i)){j}(normRawData) = Q10;
+            normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - Q10) / (Q90 - Q10);
+        end
+        % climateData is normalised
+        climateData(:,i) = normalizedCellArray;
+    elseif normMethods(currentIdx) == 3 % log
+        % Transform data to log(data+0.1, to avoid log(0))
+        climateData(:,i) = cellfun(@(x) log(x+0.01),rawData.(matchingDataFields(i)),'UniformOutput',false);
+    elseif normMethods(currentIdx) == 4 % 
+        % Transform data to log(data), only for data > 0
+        climateData(:,i) = cellfun(@(x) log(x(x>0)),rawData.(matchingDataFields(i)),'UniformOutput',false);
     end
-    % Find the minimum and maximum values of the entire numeric array
-    minValue = min(flattenedData(:));
-    maxValue = max(flattenedData(:));
-    % Normalize each matrix in the cell array
-    normalizedCellArray = cell(numMatrices, 1);
-    for j = 1:numMatrices
-        normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - minValue) / (maxValue - minValue);
-    end
-    % climateData is normalised
-    climateData(:,i) = normalizedCellArray;
-
     % climateData is not normalised
     %climateData(:,i) = rawData.(matchingDataFields(i));
 end
