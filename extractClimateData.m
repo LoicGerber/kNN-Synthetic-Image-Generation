@@ -20,7 +20,7 @@ climateData = table();
 for i = 1:length(matchingDataFields)
     currentName = matchingDataFields(i);
     currentIdx  = find(strcmpi(climateVars,currentName));
-    if normMethods(icurrentIdx) == 1 %MinMax
+    if normMethods(currentIdx) == 1 %MinMax
         % Flatten the cell array into a single numeric array
         numMatrices = numel(rawData.(matchingDataFields(i)));
         flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
@@ -37,7 +37,7 @@ for i = 1:length(matchingDataFields)
         end
         % climateData is normalised
         climateData(:,i) = normalizedCellArray;
-    elseif normMethods(currentIdx) == 2 %Q10-Q90
+    elseif normMethods(currentIdx) == 2 %Q10-Q90 WORK IN PROGRESS <--------------------------------------------------------------------------------------------------------------------------
         % Flatten the cell array into a single numeric array
         numMatrices = numel(rawData.(matchingDataFields(i)));
         flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
@@ -63,7 +63,7 @@ for i = 1:length(matchingDataFields)
         climateData(:,i) = cellfun(@(x) log(x+0.01),rawData.(matchingDataFields(i)),'UniformOutput',false);
     elseif normMethods(currentIdx) == 4 % 
         % Transform data to log(data), only for data > 0
-        climateData(:,i) = cellfun(@(x) log(x(x>0)),rawData.(matchingDataFields(i)),'UniformOutput',false);
+        climateData(:,i) = cellfun(@(x) log1p(x.*(x > 0)),rawData.(matchingDataFields(i)),'UniformOutput',false);
     end
     % climateData is not normalised
     %climateData(:,i) = rawData.(matchingDataFields(i));
