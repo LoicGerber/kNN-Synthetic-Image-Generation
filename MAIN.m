@@ -1,7 +1,7 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
     rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
-    maxThreshold,shortWindow,longWindow,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
+    maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
@@ -73,7 +73,7 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if kNNsorting == true || validationPrep == true || optimPrep == true
-    sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
 elseif kNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
@@ -110,7 +110,7 @@ if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
     validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir);
+    visualiseMetrics(targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else

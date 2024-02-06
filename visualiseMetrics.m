@@ -1,4 +1,4 @@
-function visualiseMetrics(targetVar,refValidation,synImages,validationMetric,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,bootstrap,outputDir)
+function visualiseMetrics(targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
 
 %
 %
@@ -274,7 +274,13 @@ for k = 1:numel(targetVar)
         dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
         synData  = synImages.(targetVar(k));
         bdName   = [convertStringsToChars(targetVar(k)) '_BestDistance'];
-        bestDist = synImages.(bdName);
+        analogs  = sortedDates(:,2);
+        currentDOY  = nan(numel(analogs{1}),numel(dates));
+        meanDOY     = nan(numel(dates),1);
+        diffDOY     = nan(numel(analogs{1}),1);
+        diffBest    = nan(numel(dates),1);
+        bestAnalog  = nan(numel(dates),1);
+        bestDist    = synImages.(bdName);
         currentBest = nan(size(synDates));
 
         % Create an empty figure
@@ -285,13 +291,48 @@ for k = 1:numel(targetVar)
             % Find the corresponding file in the reference directory with the same name
             referenceIndex = find(refDates == synDates(i));
 
+            analogDOY  = day(datetime(sort(analogs{i},'descend'),'ConvertFrom','yyyyMMdd'),'dayofyear');
+            bestAnalog = day(datetime(analogs{i}(1),'ConvertFrom','yyyyMMdd'),'dayofyear');
+            refDOY     = day(datetime(refDates(i),'ConvertFrom','yyyyMMdd'),'dayofyear');
+            % Check for circular transition
+            % Compute the minimum and maximum range boundaries
+            minRange = refDOY - daysRange;
+            maxRange = refDOY + daysRange;
+            % Handle circular transition for minRangeQ
+            if minRange <= 0
+                minRange = 365 + minRange;
+            end
+            % Handle circular transition for maxRangeQ
+            if maxRange > 365
+                maxRange = maxRange - 365;
+            end
+            % Construct the rangeTot array
+            if minRange < maxRange
+                rangeTot = minRange:maxRange;
+            else
+                rangeQmin = minRange:365;
+                rangeQmax = 1:maxRange;
+                rangeTot    = [rangeQmin rangeQmax];
+            end
+            rangeTot = rangeTot';
+            % Find the index of refDOY and analogDOY(i) in rangeTot
+            indexRef = find(rangeTot == refDOY);
+            for di = 1:numel(analogDOY)
+                indexAnalog   = find(rangeTot == analogDOY(di));
+                diffDOY(di)   = indexRef - indexAnalog;
+            end
+            idxBestAnalog = find(rangeTot == bestAnalog);
+            diffBest(i)   = indexRef - idxBestAnalog;
+
             % If a matching file is found, display the two images side by side
             if ~isempty(referenceIndex)
                 % Load the two images
                 synthetic = synData(:,:,i);
-                synthetic(synthetic==min(min(synthetic))) = NaN;
+                %synthetic(synthetic==min(min(synthetic))) = NaN;
+                synthetic(synthetic==-999) = NaN;
                 reference = refData(:,:,referenceIndex);
-                reference(reference==min(min(reference))) = NaN;
+                %reference(reference==min(min(reference))) = NaN;
+                reference(reference==-999) = NaN;
 
                 sgtitle(targetVar(k))
 
@@ -301,7 +342,7 @@ for k = 1:numel(targetVar)
                 colormap(gca, jet(256));
                 set(img1, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
-                caxis([0 50])
+                caxis([0 6])
                 axis equal
                 title('Synthetic');
                 %colorbar(gca,'southoutside')
@@ -311,7 +352,7 @@ for k = 1:numel(targetVar)
                 colormap(gca, jet(256));
                 set(img2, 'AlphaData', ~isnan(synthetic))
                 %caxis([0 maxColor])
-                caxis([0 50])
+                caxis([0 6])
                 axis equal
                 title('Reference');
                 h = colorbar(gca,'southoutside');
@@ -322,7 +363,7 @@ for k = 1:numel(targetVar)
                 errMap = imshow(error);
                 set(errMap, 'AlphaData', ~isnan(synthetic))
                 colormap(gca, coolwarm(256));
-                caxis([-10 10])
+                caxis([-2 2])
                 title('Error');
                 axis equal
                 h_err = colorbar(gca,'southoutside');
@@ -336,17 +377,38 @@ for k = 1:numel(targetVar)
 
                 % Best candidate MAE
                 subplot(3,3,[7,8,9])
-                currentBest(1:i) = bestDist(1:i);
-                plot(dates,currentBest);
+                currentDOY(:,i) = diffDOY;
+                meanDOY(i)      = mean(currentDOY(:,i));
+                boxchart(currentDOY);%,synDates(i));
                 hold on
-                plot(dates(i),bestDist(i),"Marker","o","Color",'red')
+                plot(1:i,meanDOY(1:i),"Color",'red')
+                scatter(1:i,diffBest(1:i),"red")
+                %plot(dates(1:i),meanDOY(1:i),"Color",'red')
                 hold off
-                xlim([min(dates) max(dates)])
-                ylim([0.5 2])
-                title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
-                ylabel('MAE')
+                %xlim([1 length(synDates)])
+                %xlim([min(dates) max(dates)])
+                ylim([-daysRange-10 daysRange+10])
+                title(['Mean DOY difference: ' num2str(mean(diffDOY),'%2.0f')]);
+                ylabel('DOY difference')
                 xlabel('Date')
                 grid on
+                ax = gca();
+                ax.XTick = categorical(1:numel(dates));
+                ax.XTickLabels = char(dates);
+
+%                 % Best candidate MAE
+%                 subplot(3,3,[7,8,9])
+%                 currentBest(1:i) = bestDist(1:i);
+%                 plot(dates,currentBest);
+%                 hold on
+%                 plot(dates(i),bestDist(i),"Marker","o","Color",'red')
+%                 hold off
+%                 xlim([min(dates) max(dates)])
+%                 ylim([0.5 2])
+%                 title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
+%                 ylabel('MAE')
+%                 xlabel('Date')
+%                 grid on
 
                 % Set the title of the figure to the name of the images
                 if metricV == 1

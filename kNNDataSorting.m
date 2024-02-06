@@ -1,4 +1,4 @@
-function sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir)
+function sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir)
 
 %
 %
@@ -80,9 +80,9 @@ if parallelComputing == true
     parfor qd = 1:totQDates % parallel computing
         currentQDate = queryDatesDate(qd);
         dayOfYearQ = day(datetime(currentQDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-        minRangeQ = dayOfYearQ - 90;
+        minRangeQ = dayOfYearQ - daysRange;
         if minRangeQ <= 0, minRangeQ = 365 + minRangeQ; end
-        maxRangeQ = dayOfYearQ + 90;
+        maxRangeQ = dayOfYearQ + daysRange;
         if maxRangeQ > 365, maxRangeQ = maxRangeQ - 365; end
         if minRangeQ < maxRangeQ
             rangeQ = minRangeQ:1:maxRangeQ;
@@ -305,9 +305,9 @@ else % serial computing
     for qd = 1:totQDates
         currentQDate = queryDatesDate(qd);
         dayOfYearQ = day(datetime(currentQDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-        minRangeQ = dayOfYearQ - 90;
+        minRangeQ = dayOfYearQ - daysRange;
         if minRangeQ <= 0, minRangeQ = 365 + minRangeQ; end
-        maxRangeQ = dayOfYearQ + 90;
+        maxRangeQ = dayOfYearQ + daysRange;
         if maxRangeQ > 365, maxRangeQ = maxRangeQ - 365; end
         if minRangeQ < maxRangeQ
             rangeQ = minRangeQ:1:maxRangeQ;
