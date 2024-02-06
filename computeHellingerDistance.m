@@ -1,7 +1,7 @@
 % Function to calculate Hellinger distance based on histograms
-function distance = calculateHellingerDistance(values1, values2)
-    % Create histograms with a fixed number of bins (adjust as needed)
-    numBins = max([histcounts(values1), histcounts(values2)]);
+function distance = computeHellingerDistance(values1, values2)
+    % Create histograms with automatic number of bins
+    numBins = max(size(histcounts(values1),2), size(histcounts(values2),2));
     edges = linspace(min(min([values1; values2])), max(max([values1; values2])), numBins + 1);
 
     % Compute histograms

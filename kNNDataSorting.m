@@ -216,27 +216,25 @@ if parallelComputing == true
                             binaryLClim = cellfun(@(x) (x>0)+isnan(x).*x, learningClimate(:,climVarIdx), 'UniformOutput', false);
                             binaryQClim = cellfun(@(x) (x>0)+isnan(x).*x, queryClimate(:,climVarIdx), 'UniformOutput', false);
                             hammingDist{ld,1} = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
-                            hellingDist{ld,1} = cellfun(@(x,y) single(calculateHellingerDistance(x(x>0), y(y>0))), ...
+                            hellingDist{ld,1} = cellfun(@(x,y) single(computeHellingerDistance(x(x>0), y(y>0))), ...
                                 learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
                             climateDistHH{ld,1} = cellfun(@(x,y) x + y,hammingDist{ld,1},hellingDist{ld,1},'UniformOutput',false); % Total Hamming + Hellinger distance
+                            climateDistAll{ld,1}(:,climVarIdx) = climateDistHH{ld,1}(:);
                         end
                         if metricKNN == 1 % RMSE
-                            climateDistAll{ld,1} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % RMSE
                         elseif metricKNN == 2 % MAE
-                            climateDistAll{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % MAE
                         elseif metricKNN == 3 % Manhattan
-                            climateDistAll{ld,1} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Manhattan
                         elseif metricKNN == 4 % Euclidean
-                            climateDistAll{ld,1} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Euclidean
                         else
                             error('Bad metricKNN parameter')
-                        end
-                        if sum(ismember(normMethods,4))>=1
-                            climateDistAll{ld,1} = [climateDistHH{ld,1} climateDistAll{ld,1}];
                         end
                         climateDistance{ld,1} = currentLDate;
                         if shortWindow > 0
@@ -345,7 +343,7 @@ else % serial computing
             targetDistance  = cell(totLDates,1);
             addVarsDistance = cell(totLDates,1);
             climateDistance = cell(totLDates,2);
-            %climateDistAll  = cell(1,3);
+            climateDistAll  = cell(longWindow,numel(climateVars));
             % Display progress - only for serial computing
             progress = 0;
             fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
@@ -452,27 +450,25 @@ else % serial computing
                             hammingDist = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
                             %hellingDist = cellfun(@(x, y) 1/sqrt(2)*sqrt(sum((sqrt(x(x > 0)) - sqrt(y(y > 0))).^2)), ...
                             %    learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
-                            hellingDist = cellfun(@(x,y) single(calculateHellingerDistance(x(x>0), y(y>0))), ...
+                            hellingDist = cellfun(@(x,y) single(computeHellingerDistance(x(x>0), y(y>0))), ...
                                 learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
                             climateDistHH = cellfun(@(x,y) x + y,hammingDist,hellingDist,'UniformOutput',false); % Total Hamming + Hellinger distance
+                            climateDistAll(:,climVarIdx) = climateDistHH(:);
                         end
                         if metricKNN == 1 % RMSE
-                            climateDistAll = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % RMSE
                         elseif metricKNN == 2 % MAE
-                            climateDistAll = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % MAE
                         elseif metricKNN == 3 % Manhattan
-                            climateDistAll = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Manhattan
                         elseif metricKNN == 4 % Euclidean
-                            climateDistAll = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Euclidean
                         else
                             error('Bad metricKNN parameter')
-                        end
-                        if sum(ismember(normMethods,4))>=1
-                            climateDistAll = [climateDistHH climateDistAll];
                         end
                         climateDistance{ld,1} = currentLDate;
                         if shortWindow > 0
