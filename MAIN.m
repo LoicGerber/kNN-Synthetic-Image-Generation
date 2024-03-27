@@ -1,8 +1,8 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
@@ -73,7 +73,11 @@ disp('--- 2. KNN DATA SORTING ---')
 
 % Generate ranked Learning Dates for each Query Date
 if kNNsorting == true || validationPrep == true || optimPrep == true
-    sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    if pixelWise == false
+        sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    else
+        sortedDates = pixelWise_kNNDataSorting(maskDir,targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir);
+    end
 elseif kNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
     disp('Loading sortedDates.mat file...')
     sortedDates = load(fullfile(inputDir,'KNNSorting.mat'));
@@ -90,7 +94,11 @@ disp('--- 2. KNN DATA SORTING DONE ---')
 disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
-    synImages = generateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+    if pixelWise == false
+        synImages = generateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+    else
+        synImages = pixelWise_generateSynImages(maskDir,targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+    end
 elseif optimisation == true && validation == false
     disp('Optimisation run, synthetic image generation skipped...')
     synImages = [];
@@ -110,7 +118,7 @@ if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
     validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir);
+    visualiseMetrics(pixelWise,targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else

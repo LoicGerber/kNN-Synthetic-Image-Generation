@@ -15,6 +15,7 @@ rawDir            = 'path/to/raw/data';                         % Path to raw da
 inputDir          = 'path/to/saved/inputs';                     % Path to saved input data, will be automatically created
 outputDir         = 'path/to/outputs';                          % Path to results, will be automatically created
 optiWeightsDir    = 'path/to/optimised/weights/matrix.mat';     % Path to optimised weights matrix .mat file (if available, otherwise '')
+maskDir           = 'path/to/binary/mask';                      % Path to binary mask delimiting the area to generate with the pixel-based approach (.tif image)
 
 % ConvertStructureToInputs
 targetVar         = ["Et"];                         % Variables to be generated, with ["example1","example2"]
@@ -29,10 +30,11 @@ LdateEnd          = 20201231;                       % YYYYMMDD - End of the Lear
 outputTime        = 1;                              % Image generation timestep: 1 = DAILY, 2 = MONTHLY, 3 = DEKADAL
 
 % KNNDataGeneration
+pixelWise         = true;       % Pixel-wise kNN (true), or domain-wise kNN (false)
 shortWindow       = 5;          % Number of days to consider for the short climate window
-longWindow        = 30;         % Number of days to consider for the long climate window (total days, including shortWindow)
+longWindow        = 20;         % Number of days to consider for the long climate window (total days, including shortWindow)
 nbImages          = 10;         % K, number of days to consider for the generation of images
-metricKNN         = 1;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance
+metricKNN         = 2;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance
 daysRange         = 90;         % Range of possible learning days (before and after) the query date's DOY
 
 % GenerateSynImages
@@ -68,8 +70,8 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
 [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
     MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation, ...
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 
