@@ -1,9 +1,12 @@
 function geoRef = extractGeoInfo(targetVar, coordRefSysCode, rawDir, inputDir)
 
 for i = 1:numel(targetVar)
-    try
-        file_path = fullfile(rawDir, targetVar(i) + '.nc');
-        ncid = netcdf.open(file_path, 'NOWRITE');
+    % Check file extension and use appropriate function
+    tarVarL = lower(targetVar(i));
+    filePath = fullfile(rawDir,[convertStringsToChars(tarVarL(i)) '.nc']);
+    
+    if exist(filePath, 'file') == 2 %strcmpi(ext, '.nc')
+        ncid = netcdf.open(filePath, 'NOWRITE');
         latVarID = netcdf.inqVarID(ncid, 'lat');
         lonVarID = netcdf.inqVarID(ncid, 'lon');
         lat = netcdf.getVar(ncid, latVarID);
@@ -30,12 +33,12 @@ for i = 1:numel(targetVar)
             GeoRef.CellExtentInLongitude = double((maxLon - minLon) / (numel(lon) - 1));
         end
         GeoRef.GeographicCRS = geocrs(coordRefSysCode);
-    catch
+    else
         tiffDir = fullfile(rawDir, targetVar(i));
         tiffFiles = dir(fullfile(tiffDir, '*.tif'));
         
         if isempty(tiffFiles)
-            error('No GeoTIFF files found in the directory.');
+            warning('No GeoTIFF files found in the directory.');
         end
         
         % Select the first GeoTIFF file in the directory

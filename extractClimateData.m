@@ -59,11 +59,11 @@ for i = 1:length(matchingDataFields)
         % climateData is normalised
         climateData(:,i) = normalizedCellArray;
     elseif normMethods(currentIdx) == 3 % log
-        % Transform data to log(data+0.1, to avoid log(0))
-        climateData(:,i) = cellfun(@(x) log(x+0.01),rawData.(matchingDataFields(i)),'UniformOutput',false);
+        % Transform data to log(data+1, to avoid log(0))
+        climateData(:,i) = cellfun(@(x) log(x+1),rawData.(matchingDataFields(i)),'UniformOutput',false);
     elseif normMethods(currentIdx) == 4 % 
-        % Transform data to log(data), only for data > 0
-        climateData(:,i) = cellfun(@(x) log1p(x.*(x > 0)),rawData.(matchingDataFields(i)),'UniformOutput',false);
+        % Transform data to log(data+1), only for data > 0
+        climateData(:,i) = cellfun(@(x) log(x.*(x > 0)+1),rawData.(matchingDataFields(i)),'UniformOutput',false);
     end
     % climateData is not normalised
     %climateData(:,i) = rawData.(matchingDataFields(i));
