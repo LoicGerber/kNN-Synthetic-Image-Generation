@@ -1,4 +1,4 @@
-function visualiseMetrics(pixelWise,targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
+function visualiseMetrics(nbImages,pixelWise,targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
 
 %
 %
@@ -389,28 +389,32 @@ for k = 1:numel(targetVar)
                     if numel(dates)<60
                         boxchart(currentDOY);%,synDates(i));
                     else
-                        inBetweenRegionX = [(1:i), fliplr(1:i)];
-                        %inBetweenRegionX = [1:numel(dates), fliplr(1:numel(dates))];
-                        quartileDOY = quantile(currentDOY(:,i),4);
-                        q1DOY = [q1DOY quartileDOY(1)];
-                        q3DOY = [q3DOY quartileDOY(3)];
-                        inBetweenRegionY = [q3DOY, fliplr(q1DOY)];
-                        itqDOY(i) = iqr(currentDOY(:,i));
-                        minOut = [minOut, min(currentDOY(currentDOY(:,i) > (q1DOY(i) - itqDOY(i)),i))];
-                        maxOut = [maxOut, max(currentDOY(currentDOY(:,i) < (q3DOY(i) + itqDOY(i)),i))];
-                        inBetweenRegionY2 = [minOut, fliplr(maxOut)];
-                        minCurDOY(i) = min(currentDOY(:,i));
-                        maxCurDOY(i) = max(currentDOY(:,i));
-                        patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.15)
-                        hold on
-                        patch(inBetweenRegionX, inBetweenRegionY2, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.1)
-                        hold on
-                        plot(1:i,minCurDOY(1:i),'LineStyle','--','Color','k')
-                        hold on
-                        plot(1:i,maxCurDOY(1:i),'LineStyle','--','Color','k')
+                        if nbImages > 1
+                            inBetweenRegionX = [(1:i), fliplr(1:i)];
+                            %inBetweenRegionX = [1:numel(dates), fliplr(1:numel(dates))];
+                            quartileDOY = quantile(currentDOY(:,i),4);
+                            q1DOY = [q1DOY quartileDOY(1)];
+                            q3DOY = [q3DOY quartileDOY(3)];
+                            inBetweenRegionY = [q3DOY, fliplr(q1DOY)];
+                            itqDOY(i) = iqr(currentDOY(:,i));
+                            minOut = [minOut, min(currentDOY(currentDOY(:,i) > (q1DOY(i) - itqDOY(i)),i))];
+                            maxOut = [maxOut, max(currentDOY(currentDOY(:,i) < (q3DOY(i) + itqDOY(i)),i))];
+                            inBetweenRegionY2 = [minOut, fliplr(maxOut)];
+                            minCurDOY(i) = min(currentDOY(:,i));
+                            maxCurDOY(i) = max(currentDOY(:,i));
+                            patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.15)
+                            hold on
+                            patch(inBetweenRegionX, inBetweenRegionY2, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.1)
+                            hold on
+                            plot(1:i,minCurDOY(1:i),'LineStyle','--','Color','k')
+                            hold on
+                            plot(1:i,maxCurDOY(1:i),'LineStyle','--','Color','k')
+                        end
                     end
                     hold on
-                    plot(1:i,meanDOY(1:i),"Color",'red')
+                    if nbImages > 1
+                        plot(1:i,meanDOY(1:i),"Color",'red')
+                    end
                     scatter(1:i,diffBest(1:i),"red")
                     %plot(dates(1:i),meanDOY(1:i),"Color",'red')
                     hold off
