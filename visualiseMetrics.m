@@ -418,7 +418,7 @@ for k = 1:numel(targetVar)
                     scatter(1:i,diffBest(1:i),"red")
                     %plot(dates(1:i),meanDOY(1:i),"Color",'red')
                     hold off
-                    xlim([1 numel(dates)])
+                    %xlim([1 numel(dates)])
                     %xlim([min(dates) max(dates)])
                     ylim([-daysRange-10 daysRange+10])
                     title(['Mean DOY difference: ' num2str(mean(diffDOY),'%2.0f')]);
