@@ -1,14 +1,14 @@
 function spem = spem(synImage,refImage)
 
 % Alpha
-cc    = corrcoef(refImage,synImage); % Pearson correlation coefficient
-alpha = cc(1,2);
+index = ~(isnan(synImage) | isnan(refImage));
+alpha = corr(refImage(index),synImage(index)); % Pearson correlation coefficient
 
 % Beta
-meanRef = mean(refImage(:));
-meanSyn = mean(synImage(:));
-stdRef  = std(refImage(:));
-stdSyn  = std(synImage(:));
+meanRef = mean(refImage(:),'omitnan');
+meanSyn = mean(synImage(:),'omitnan');
+stdRef  = std(refImage(:),'omitnan');
+stdSyn  = std(synImage(:),'omitnan');
 if meanSyn == 0 || stdRef == 0 || stdSyn == 0
     beta = 0;
     disp('WARNING: beta term in SPEM was forced to be 0')
@@ -17,9 +17,11 @@ else
 end
 
 % Gamma
-zScoreSyn = zscore(synImage);
-zScoreRef = zscore(refImage);
-gamma     = 1 - sqrt(immse(zScoreSyn,zScoreRef));
+%zScoreSyn = zscore(synImage);
+zScoreSyn = (synImage - meanSyn)/stdSyn;
+%zScoreRef = zscore(refImage);
+zScoreRef = (refImage - meanRef)/stdRef;
+gamma     = 1 - sqrt(mean(mean((zScoreSyn-zScoreRef).^2,'omitnan'),'omitnan'));
 
 % SPEM
 spem = 1 - sqrt((1-alpha)^2 + (1-beta)^2 + (1-gamma)^2);

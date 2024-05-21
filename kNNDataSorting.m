@@ -157,6 +157,9 @@ if parallelComputing == true
                             elseif metricKNN == 4 % Euclidean
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+                            elseif metricKNN == 5 % SPEM
+                                targetDistance{ld} = cellfun(@(x, y) spem(x, y), ...
+                                    queryDatesData(qd,:), learningDatesData(ld,:));
                             else
                                 error('Bad metricKNN parameter')
                             end
@@ -185,6 +188,9 @@ if parallelComputing == true
                                 elseif metricKNN == 4 % Euclidean
                                     addVarsDistance{ld,1} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                         queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                                elseif metricKNN == 5 % SPEM
+                                    addVarsDistance{ld,1} = cellfun(@(x, y) spem(x, y), ...
+                                        queryAddVars, learningAddVars);
                                 else
                                     error('Bad metricKNN parameter')
                                 end
@@ -233,6 +239,9 @@ if parallelComputing == true
                         elseif metricKNN == 4 % Euclidean
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Euclidean
+                        elseif metricKNN == 5 % SPEM
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) spem(x, y), ...
+                                learningClimate(:,otherIdx), queryClimate(:,otherIdx));
                         else
                             error('Bad metricKNN parameter')
                         end
@@ -386,6 +395,9 @@ else % serial computing
                             elseif metricKNN == 4 % Euclidean
                                 targetDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+                            elseif metricKNN == 5 % SPEM
+                                targetDistance{ld} = cellfun(@(x, y) spem(x, y), ...
+                                    queryDatesData(qd,:), learningDatesData(ld,:));
                             else
                                 error('Bad metricKNN parameter')
                             end
@@ -413,6 +425,9 @@ else % serial computing
                             elseif metricKNN == 4 % Euclidean
                                 addVarsDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                     queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                            elseif metricKNN == 5 % SPEM
+                                addVarsDistance{ld} = cellfun(@(x, y) spem(x, y), ...
+                                    queryAddVars, learningAddVars);
                             else
                                 error('Bad metricKNN parameter')
                             end
@@ -467,6 +482,9 @@ else % serial computing
                         elseif metricKNN == 4 % Euclidean
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx), 'UniformOutput', false); % Euclidean
+                        elseif metricKNN == 5 % SPEM
+                            climateDistAll(:,otherIdx) = num2cell(cellfun(@(x, y) spem(x, y), ...
+                                    learningClimate(:,otherIdx), queryClimate(:,otherIdx)));
                         else
                             error('Bad metricKNN parameter')
                         end
