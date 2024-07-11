@@ -123,7 +123,10 @@ if parallelComputing == true
                 learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-                idx             = find(climateDates == currentLDate);
+                if dayOfYearL == 366
+                    dayOfYearL = 1;
+                end
+                idx = find(climateDates == currentLDate);
                 %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     if idx >= longWindow % skips learning dates that are in the longWindow
@@ -360,7 +363,10 @@ else % serial computing
                 learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
-                idx             = find(climateDates == currentLDate);
+                if dayOfYearL == 366
+                    dayOfYearL = 1;
+                end
+                idx = find(climateDates == currentLDate);
                 %disp(['    Computing distance to day ' num2str(l) '/' num2str(totLDates) ' (' num2str(currentLDate) ')'])
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     %disp(['    Processing learning day ', num2str(currentLDate)])

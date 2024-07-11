@@ -321,6 +321,9 @@ for k = 1:numel(targetVar)
                     rangeQmax = 1:maxRange;
                     rangeTot    = [rangeQmin rangeQmax];
                 end
+                if refDOY == 366
+                    refDOY = 1;
+                end
                 rangeTot = rangeTot';
                 % Find the index of refDOY and analogDOY(i) in rangeTot
                 indexRef = find(rangeTot == refDOY);
@@ -346,7 +349,7 @@ for k = 1:numel(targetVar)
                     % Create a figure with three subplots
                     subplot(3,3,[1,4]);
                     img1 = imshow(synthetic);
-                    colormap(gca, jet(256));
+                    colormap(gca, turbo(256));
                     set(img1, 'AlphaData', ~isnan(synthetic))
                     %caxis([0 maxColor])
                     caxis([0 6])
@@ -356,7 +359,7 @@ for k = 1:numel(targetVar)
 
                     subplot(3,3,[2,5]);
                     img2 = imshow(reference);
-                    colormap(gca, jet(256));
+                    colormap(gca, turbo(256));
                     set(img2, 'AlphaData', ~isnan(synthetic))
                     %caxis([0 maxColor])
                     caxis([0 6])
@@ -418,7 +421,7 @@ for k = 1:numel(targetVar)
                     scatter(1:i,diffBest(1:i),"red")
                     %plot(dates(1:i),meanDOY(1:i),"Color",'red')
                     hold off
-                    %xlim([1 numel(dates)])
+                    xlim([1 numel(dates)])
                     %xlim([min(dates) max(dates)])
                     ylim([-daysRange-10 daysRange+10])
                     title(['Mean DOY difference: ' num2str(mean(diffDOY),'%2.0f')]);
@@ -506,7 +509,7 @@ for k = 1:numel(targetVar)
                     % Create a figure with three subplots
                     subplot(1,3,1);
                     img1 = imshow(synthetic);
-                    colormap(gca, jet(256));
+                    colormap(gca, turbo(256));
                     set(img1, 'AlphaData', ~isnan(synthetic))
                     %caxis([0 maxColor])
                     caxis([0 6])
@@ -516,7 +519,7 @@ for k = 1:numel(targetVar)
 
                     subplot(1,3,2);
                     img2 = imshow(reference);
-                    colormap(gca, jet(256));
+                    colormap(gca, turbo(256));
                     set(img2, 'AlphaData', ~isnan(synthetic))
                     %caxis([0 maxColor])
                     caxis([0 6])

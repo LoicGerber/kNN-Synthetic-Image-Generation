@@ -13,14 +13,14 @@ synValidation = synImages;
 validOptim = 0;
 
 for j = 1:numel(targetVar)
-    refImages = refValidation.(targetVar(j));
+    refImages = refValidation.(lower(targetVar(j)));
     refDates  = refValidation.date;
     synDates  = synValidation.date;
 
     if bootstrap == false
         % Initialize an array to store the RMSE values
         validationResult = zeros(size(refImages,3), 2);
-        synImagesAll = synValidation.(targetVar(j));
+        synImagesAll = synValidation.(lower(targetVar(j)));
         if size(refImages,3) ~= size(synImagesAll,3)
             error('Numbers of reference and synthetic images do not match');
         end

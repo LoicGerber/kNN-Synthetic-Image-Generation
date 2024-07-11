@@ -162,6 +162,9 @@ if parallelComputing == true
                                         elseif metricKNN == 4 % Euclidean
                                             targetDistance(ld) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                                 queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+                                        elseif metricKNN == 5 % SPEM
+                                            targetDistance(ld) = cellfun(@(x, y) spem(x, y), ...
+                                                queryDatesData(qd,:), learningDatesData(ld,:));
                                         else
                                             error('Bad metricKNN parameter')
                                         end
@@ -190,6 +193,9 @@ if parallelComputing == true
                                             elseif metricKNN == 4 % Euclidean
                                                 addVarsDistance(ld) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                                     queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                                            elseif metricKNN == 5 % SPEM
+                                                addVarsDistance(ld) = cellfun(@(x, y) spem(x, y), ...
+                                                    queryAddVars, learningAddVars);
                                             else
                                                 error('Bad metricKNN parameter')
                                             end
@@ -216,6 +222,8 @@ if parallelComputing == true
                                         climateDistance = sum(abs(learningClimate - queryClimate));
                                     elseif metricKNN == 4 % Euclidean
                                         climateDistance = sqrt(sum((learningClimate - queryClimate).^2));
+                                    elseif metricKNN == 5 % SPEM
+                                        climateDistance = spem(learningClimate, queryClimate);
                                     else
                                         error('Bad metricKNN parameter')
                                     end
@@ -380,6 +388,9 @@ else
                                         elseif metricKNN == 4 % Euclidean
                                             targetDistance = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                                 queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+                                        elseif metricKNN == 5 % SPEM
+                                            targetDistance = cellfun(@(x, y) spem(x, y), ...
+                                                queryDatesData(qd,:), learningDatesData(ld,:));
                                         else
                                             error('Bad metricKNN parameter')
                                         end
@@ -407,6 +418,9 @@ else
                                         elseif metricKNN == 4 % Euclidean
                                             addVarsDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
                                                 queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                                        elseif metricKNN == 5 % SPEM
+                                            addVarsDistance{ld} = cellfun(@(x, y) spem(x, y), ...
+                                                queryAddVars, learningAddVars);
                                         else
                                             error('Bad metricKNN parameter')
                                         end
@@ -434,6 +448,8 @@ else
                                         climateDistance = sum(abs(learningClimate - queryClimate));
                                     elseif metricKNN == 4 % Euclidean
                                         climateDistance = sqrt(sum((learningClimate - queryClimate).^2));
+                                    elseif metricKNN == 5 % SPEM
+                                        climateDistance = spem(learningClimate, queryClimate);
                                     else
                                         error('Bad metricKNN parameter')
                                     end

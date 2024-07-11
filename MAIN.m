@@ -1,6 +1,6 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,optimisedWeights] = MAIN(...
-    rawDir,inputDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime, ...
+    rawDir,inputDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
     metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
@@ -22,13 +22,17 @@ disp('--- 1. READING DATA ---')
 
 if netCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Formatting input data...')
-    rawData        = convertRawDataToStructure(targetVar,climateVars,addVars,rawDir,inputDir);
+    rawData        = convertRawDataToStructure(targetVar,targetDim,climateVars,addVars,rawDir,inputDir);
     disp('Extracting georeference informations...')
-    geoRef         = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inputDir);
+    if targetDim ~= 1
+        geoRef = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inputDir);
+    else
+        geoRef = [];
+    end
     disp('Extracting climate informations...')
     climateData    = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir);
     disp('Extracting Learning dates...')
-    learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir);
+    learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inputDir);
     disp('Extracting Query dates...')
     [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     disp('Extracting additional variables...')
@@ -95,7 +99,7 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
 
 if (generateImage == true || validation == true) && optimisation == false
     if pixelWise == false
-        synImages = generateSynImages(targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+        synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
     else
         synImages = pixelWise_generateSynImages(maskDir,targetVar,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
     end

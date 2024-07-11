@@ -1,4 +1,4 @@
-function learningDates = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,optimPrep,inputDir)
+function learningDates = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inputDir)
 
 %
 %
@@ -13,7 +13,7 @@ commonDates = [];
 for i = 1:numel(targetVarL)
     % Learning dates - variable to be generated
     disp("  Processing '" + targetVar(i) + "' for learningDates...")
-    learningDates = rawData.(lower(targetVarL(i))+'Index');
+    learningDates = rawData.(strcat(lower(targetVarL(i)),'Index'));
     % Extract the common dates
     if isempty(commonDates)
         % For the first variable, set the common dates as all available learning dates
@@ -24,13 +24,23 @@ for i = 1:numel(targetVarL)
     end
 end
 learningDates = commonDates;
-targetVarDataAll = {};
-for i = 1:numel(targetVarL)
-    data = rawData.(lower(targetVarL(i))+'Index');
-    [r,~] = find(ismember(data,commonDates));
-    % Load data set
-    targetVarData = rawData.(lower(targetVarL(i)));
-    targetVarDataAll = [targetVarDataAll targetVarData(r)];
+if targetDim ~= 1
+    targetVarDataAll = {};
+    for i = 1:numel(targetVarL)
+        data = rawData.(strcat(lower(targetVarL(i)),'Index'));
+        [r,~] = find(ismember(data,commonDates));
+        % Load data set
+        targetVarData = rawData.(lower(targetVarL(i)));
+        targetVarDataAll = [targetVarDataAll targetVarData(r)];
+    end
+else
+    for i = 1:numel(targetVarL)
+        data = rawData.(strcat(lower(targetVarL(i)),'Index'));
+        [r,~] = find(ismember(data,commonDates));
+        % Load data set
+        targetVarData = rawData.(lower(targetVarL(i)));
+        targetVarData = targetVarData(r);
+    end
 end
 % Keep only the target variable data corresponding to the common dates
 r = find(learningDates>=LdateStart & learningDates<=LdateEnd);
@@ -45,14 +55,21 @@ elseif max(learningDates)<LdateEnd
     warning(['Target data last date < Learning period end (',num2str(max(learningDates)),' vs ',num2str(LdateEnd),')'])
 end
 learningDates = learningDates(r);
-targetVarData = targetVarDataAll(r);
-    
+if targetDim ~= 1
+    targetVarData = targetVarDataAll(r);
+else
+    targetVarData = targetVarData(r);
+end
 datesAll = commonDates;
 
 % Find the last common elements of target variable dates and learningDates
 [~, ~, indexLearningDates] = intersect(datesAll, learningDates);
 learningDates = learningDates(indexLearningDates); % KEEP ONLY DATES MATCHING CLIMATE DATA
-targetVarDataAll = targetVarDataAll(indexLearningDates,:);
+if targetDim ~= 1
+    targetVarDataAll = targetVarDataAll(indexLearningDates,:);
+else
+    targetVarDataAll = targetVarData(indexLearningDates);
+end
 
 % Find the last common elements of climate dates and learningDates
 [~, ~, indexLearningDates] = intersect(climateData.date, learningDates);
