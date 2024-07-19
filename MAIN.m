@@ -34,7 +34,7 @@ if netCDFtoInputs == true || optimPrep == true || validationPrep == true
     disp('Extracting Learning dates...')
     learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inputDir);
     disp('Extracting Query dates...')
-    [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir);
+    [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir);
     disp('Extracting additional variables...')
     additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,maxThreshold,inputDir);
 elseif netCDFtoInputs == false && validationPrep == false
@@ -51,8 +51,12 @@ elseif netCDFtoInputs == false && validationPrep == false
     additionalVars = load(fullfile(inputDir,'additionalVars.mat'));
     additionalVars = additionalVars.additionalVars;
     disp('Loading GeoRef.mat file...')
-    geoRef         = load(fullfile(inputDir,'GeoRef.mat'));
-    geoRef         = geoRef.geoRef;
+    if targetDim ~= 1
+        geoRef         = load(fullfile(inputDir,'GeoRef.mat'));
+        geoRef         = geoRef.geoRef;
+    else
+        geoRef = [];
+    end
     if optimisation == true || validation == true || metricViz == true
         disp('Loading refValidation.mat file...')
         refValidation = load(fullfile(inputDir,'refValidation.mat'));
@@ -121,8 +125,8 @@ disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
-    validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
-    visualiseMetrics(nbImages,pixelWise,targetVar,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir);
+    validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir);
+    visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else
