@@ -1,4 +1,4 @@
-function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir)
 
 %
 %
@@ -126,12 +126,20 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
     referenceValidation = {};
     for j = 1:numel(targetVarL)
         referenceValidation = [referenceValidation table2cell(learningDates(ismem,targetVarL(j)))];
-        imagesRefValidation = nan(size(referenceValidation{1,j},1),size(referenceValidation{1,j},2),size(learningDatesValidation,1));
-        % Create matrix of reference dates
-        for i = 1:size(learningDatesValidation,1)
-            imagesRefValidation(:,:,i) = referenceValidation{i,j};
+        if targetDim ~= 1
+            imagesRefValidation = nan(size(referenceValidation{1,j},1),size(referenceValidation{1,j},2),size(learningDatesValidation,1));
+            % Create matrix of reference dates
+            for i = 1:size(learningDatesValidation,1)
+                imagesRefValidation(:,:,i) = referenceValidation{i,j};
+            end
+        else
+            imagesRefValidation = nan(size(learningDatesValidation,1),1);
+            % Create matrix of reference dates
+            for i = 1:size(learningDatesValidation,1)
+                imagesRefValidation(i) = referenceValidation{i,j};
+            end
         end
-        refValidation.(targetVar(j)) = single(imagesRefValidation);
+        refValidation.(targetVarL(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
     disp('  Saving refValidation.mat file...')

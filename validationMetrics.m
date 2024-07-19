@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(targetVar,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
 
 %
 %
@@ -12,41 +12,59 @@ synValidation = synImages;
 
 validOptim = 0;
 
+targetVarL = lower(targetVar);
+
 for j = 1:numel(targetVar)
-    refImages = refValidation.(lower(targetVar(j)));
+    refImages = refValidation.(targetVarL(j));
     refDates  = refValidation.date;
     synDates  = synValidation.date;
 
     if bootstrap == false
         % Initialize an array to store the RMSE values
-        validationResult = zeros(size(refImages,3), 2);
-        synImagesAll = synValidation.(lower(targetVar(j)));
-        if size(refImages,3) ~= size(synImagesAll,3)
-            error('Numbers of reference and synthetic images do not match');
+        if targetDim ~= 1
+            validationResult = zeros(size(refImages,3), 2);
+            synImagesAll = synValidation.(targetVarL(j));
+            if size(refImages,3) ~= size(synImagesAll,3)
+                error('Numbers of reference and synthetic images do not match');
+            end
+        else
+            validationResult = zeros(size(refImages,1),1);
+            synImagesAll = synValidation.(targetVarL(j));
+            if size(validationResult) ~= size(synImagesAll)
+                error('Numbers of reference and synthetic images do not match');
+            end
         end
     else
         % Initialize an array to store the RMSE values
         validationResult = cell(size(refImages,3), 3);
         varBS = strcat(targetVar(j), "_Bootstrap");
         synImagesAll = synValidation.(varBS);
-        maps = synValidation.(targetVar(j));
+        maps = synValidation.(targetVarL(j));
         if size(refImages,3) ~= size(synImagesAll,1)
             error('Numbers of reference and synthetic images do not match');
         end
     end
 
     % Loop through each file in the reference directory
-    for i = 1:size(refImages,3)
+    for i = 1:size(validationResult,1)
         % Get the reference image filename and full path
         refImageDate = refDates(i);
         % Get the generated image filename and full path
         synImageDate = synDates(i);
 
         % Load the reference and generated images
-        refImage = double(refImages(:,:,i));
+        if targetDim ~= 1
+            refImage = double(refImages(:,:,i));
+        else
+            refImage = double(refImages(i));
+        end
         refImage(isnan(refImage)) = -999;
         if bootstrap == false
-            synImage = double(synImagesAll(:,:,i));
+            if targetDim ~= 1
+                synImage = double(synImagesAll(:,:,i));
+            else
+                synImage = double(synImagesAll(i));
+            end
             synImage(isnan(synImage)) = -999;
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
             if refImageDate == synImageDate
@@ -119,7 +137,7 @@ for j = 1:numel(targetVar)
         end
     end
     if optimisation == false
-        validationMetric.(targetVar(j)) = validationResult;
+        validationMetric.(targetVarL(j)) = validationResult;
     else
         validOptim = validOptim + mean(validationResult(:,2));
     end

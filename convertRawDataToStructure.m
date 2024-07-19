@@ -48,8 +48,9 @@ if ~isempty(files)
             time_varid   = netcdf.inqVarID(ncid,'time');
             time_data    = netcdf.getVar(ncid,time_varid);
             time_units   = netcdf.getAtt(ncid,time_varid,'units');
-            if strlength(time_units) > 21
-                time_units   = strrep(time_units,'hours since ','');
+            time_step    = strip(extractBefore(time_units,'since'));
+            if strlength(time_units) > 22
+                time_units = strip(strrep(time_units,strcat(time_step,' since '),''));
                 try
                     time_origin = datetime(time_units,'InputFormat','yyyy-MM-dd hh:mm:ss');
                 catch
@@ -57,9 +58,13 @@ if ~isempty(files)
                 end
                 time_datenum = datenum(time_origin + hours(time_data));
             else
-                time_units   = strrep(time_units,'days since ','');
-                time_origin = datetime(time_units,'InputFormat','yyyy-MM-dd');
-                time_datenum = datenum(time_origin + days(time_data));
+                time_units   = strip(strrep(time_units,strcat(time_step,' since '),''));
+                time_origin  = datetime(time_units,'InputFormat','yyyy-MM-dd');
+                if strcmp(time_step,'days')
+                    time_datenum = datenum(time_origin + days(time_data));
+                elseif strcmp(time_step,'hours')
+                    time_datenum = datenum(time_origin + hours(time_data));
+                end
             end
 
             % Get the variable data for each day and store in a cell array

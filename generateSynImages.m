@@ -8,10 +8,10 @@ function synImages = generateSynImages(targetVar,targetDim,learningDates,sortedD
 %
 %
 
-var_low = lower(targetVar);
+targetVarL = lower(targetVar);
 
 % Check if output directories exist, if not create them
-for i = 1:numel(var_low)
+for i = 1:numel(targetVarL)
     disp(strcat("Processing variable '",convertStringsToChars(targetVar(i)),"'..."))
 
     % Preallocate variables for efficiency
@@ -49,7 +49,7 @@ for i = 1:numel(var_low)
         % netCDF file definition
         if outputType == 2 && bootstrap == false
             % Define the main netCDF file
-            outputBaseName = strcat(var_low(i),'.nc');
+            outputBaseName = strcat(targetVarL(i),'.nc');
             fullDestinationFileName = fullfile(outputDir, outputBaseName);
             % Assign the CRS value
             %try
@@ -67,12 +67,12 @@ for i = 1:numel(var_low)
             dimid_lon = netcdf.defDim(ncid, 'lon', GeoRef.RasterSize(2));
             dimid_time = netcdf.defDim(ncid, 'time', netcdf.getConstant('NC_UNLIMITED'));
             % Define variables
-            varid = netcdf.defVar(ncid, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
+            varid = netcdf.defVar(ncid, targetVarL(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
             timeid = netcdf.defVar(ncid, 'time', 'double', dimid_time);
             latid = netcdf.defVar(ncid, 'lat', 'double', dimid_lat);
             lonid = netcdf.defVar(ncid, 'lon', 'double', dimid_lon);
             % Define attributes
-            netcdf.putAtt(ncid, varid, 'long_name', var_low(i));
+            netcdf.putAtt(ncid, varid, 'long_name', targetVarL(i));
             netcdf.putAtt(ncid, varid, '_FillValue', -999);
             netcdf.putAtt(ncid, timeid, 'long_name', 'time');
             netcdf.putAtt(ncid, timeid, 'units', 'days since 1970-01-01');
@@ -106,7 +106,7 @@ for i = 1:numel(var_low)
         elseif bootstrap == true
             % ---- MININMAL ----
             % Define the main netCDF file
-            outputBaseNameMin = strcat(var_low(i),'_min.nc');
+            outputBaseNameMin = strcat(targetVarL(i),'_min.nc');
             fullDestinationFileNameMin = fullfile(outputDir, outputBaseNameMin);
             % Assign the CRS value
             crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -120,12 +120,12 @@ for i = 1:numel(var_low)
             dimid_lon = netcdf.defDim(ncid_min, 'lon', GeoRef.RasterSize(2));
             dimid_time = netcdf.defDim(ncid_min, 'time', netcdf.getConstant('NC_UNLIMITED'));
             % Define variables
-            varid = netcdf.defVar(ncid_min, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
+            varid = netcdf.defVar(ncid_min, targetVarL(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
             timeid = netcdf.defVar(ncid_min, 'time', 'double', dimid_time);
             latid = netcdf.defVar(ncid_min, 'lat', 'double', dimid_lat);
             lonid = netcdf.defVar(ncid_min, 'lon', 'double', dimid_lon);
             % Define attributes
-            netcdf.putAtt(ncid_min, varid, 'long_name', var_low(i));
+            netcdf.putAtt(ncid_min, varid, 'long_name', targetVarL(i));
             netcdf.putAtt(ncid_min, varid, '_FillValue', -999);
             netcdf.putAtt(ncid_min, timeid, 'long_name', 'time');
             netcdf.putAtt(ncid_min, timeid, 'units', 'days since 1970-01-01');
@@ -158,7 +158,7 @@ for i = 1:numel(var_low)
             netcdf.putVar(ncid_min,lonid,lon);
             % ---- DETERMINISTIC ----
             % Define the main netCDF file
-            outputBaseNameDet = strcat(var_low(i),'_det.nc');
+            outputBaseNameDet = strcat(targetVarL(i),'_det.nc');
             fullDestinationFileNameDet = fullfile(outputDir, outputBaseNameDet);
             % Assign the CRS value
             crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -172,12 +172,12 @@ for i = 1:numel(var_low)
             dimid_lon = netcdf.defDim(ncid_det, 'lon', GeoRef.RasterSize(2));
             dimid_time = netcdf.defDim(ncid_det, 'time', netcdf.getConstant('NC_UNLIMITED'));
             % Define variables
-            varid = netcdf.defVar(ncid_det, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
+            varid = netcdf.defVar(ncid_det, targetVarL(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
             timeid = netcdf.defVar(ncid_det, 'time', 'double', dimid_time);
             latid = netcdf.defVar(ncid_det, 'lat', 'double', dimid_lat);
             lonid = netcdf.defVar(ncid_det, 'lon', 'double', dimid_lon);
             % Define attributes (similar to your existing code)
-            netcdf.putAtt(ncid_det, varid, 'long_name', var_low(i));
+            netcdf.putAtt(ncid_det, varid, 'long_name', targetVarL(i));
             netcdf.putAtt(ncid_det, varid, '_FillValue', -999);
             netcdf.putAtt(ncid_det, timeid, 'long_name', 'time');
             netcdf.putAtt(ncid_det, timeid, 'units', 'days since 1970-01-01');
@@ -210,7 +210,7 @@ for i = 1:numel(var_low)
             netcdf.putVar(ncid_det,lonid,lon);
             % ---- MAXINMAL ----
             % Define the main netCDF file
-            outputBaseNameMax = strcat(var_low(i),'_max.nc');
+            outputBaseNameMax = strcat(targetVarL(i),'_max.nc');
             fullDestinationFileNameMax = fullfile(outputDir, outputBaseNameMax);
             % Assign the CRS value
             crs_wkt = wktstring(GeoRef.GeographicCRS);
@@ -224,12 +224,12 @@ for i = 1:numel(var_low)
             dimid_lon = netcdf.defDim(ncid_max, 'lon', GeoRef.RasterSize(2));
             dimid_time = netcdf.defDim(ncid_max, 'time', netcdf.getConstant('NC_UNLIMITED'));
             % Define variables
-            varid = netcdf.defVar(ncid_max, var_low(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
+            varid = netcdf.defVar(ncid_max, targetVarL(i), 'double', [dimid_lon, dimid_lat, dimid_time]);
             timeid = netcdf.defVar(ncid_max, 'time', 'double', dimid_time);
             latid = netcdf.defVar(ncid_max, 'lat', 'double', dimid_lat);
             lonid = netcdf.defVar(ncid_max, 'lon', 'double', dimid_lon);
             % Define attributes (similar to your existing code)
-            netcdf.putAtt(ncid_max, varid, 'long_name', var_low(i));
+            netcdf.putAtt(ncid_max, varid, 'long_name', targetVarL(i));
             netcdf.putAtt(ncid_max, varid, '_FillValue', -999);
             netcdf.putAtt(ncid_max, timeid, 'long_name', 'time');
             netcdf.putAtt(ncid_max, timeid, 'units', 'days since 1970-01-01');
@@ -314,7 +314,7 @@ for i = 1:numel(var_low)
             availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
             if bsSaveAll == true
                 % Write the resulting image to a GeoTIFF file
-                outputBaseName = string(sortedDates(rowIndex,1)) + '_' + var_low(i) + '.tif';
+                outputBaseName = string(sortedDates(rowIndex,1)) + '_' + targetVarL(i) + '.tif';
                 fullDestinationFileName = fullfile(outputDir, 'datesAll', outputBaseName);
                 if isempty(GeoRef)
                     %disp('    Georeferencing files missing! Unreferenced output...')
@@ -395,7 +395,7 @@ for i = 1:numel(var_low)
             if bsSaveAll == true
                 for bs = 1:ensemble
                     % Write the resulting image to a GeoTIFF file
-                    outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '_' + var_low(i) + '.tif';
+                    outputBaseName = string(sortedDates(rowIndex,1)) + '_' + num2str(bs) + '_' + targetVarL(i) + '.tif';
                     fullDestinationFileName = fullfile(outputDirBootstrap, outputBaseName);
                     %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
                     if isempty(GeoRef)
@@ -430,9 +430,9 @@ for i = 1:numel(var_low)
             netcdf.putVar(ncid_det, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
             netcdf.putVar(ncid_max, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
             % Write data to the variable (hydrological map) for the current date
-            ncwrite(fullDestinationFileNameMin, var_low(i), bsMin', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
-            ncwrite(fullDestinationFileNameDet, var_low(i), resultImages', [1, 1, rowIndex]);
-            ncwrite(fullDestinationFileNameMax, var_low(i), bsMax', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+            ncwrite(fullDestinationFileNameMin, targetVarL(i), bsMin', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+            ncwrite(fullDestinationFileNameDet, targetVarL(i), resultImages', [1, 1, rowIndex]);
+            ncwrite(fullDestinationFileNameMax, targetVarL(i), bsMax', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
 
             % Write the resulting image to a GeoTIFF file
             %outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
@@ -479,6 +479,7 @@ for i = 1:numel(var_low)
                 end
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
+                sortedDates{rowIndex,3}(sortedDates{rowIndex,3} == 0) = 0.0001;
                 selectedDist = 1./sortedDates{rowIndex,3}(1:nbImages);
                 % Normalize the selectedDist values
                 normalizedWeights = selectedDist / sum(selectedDist);
@@ -515,8 +516,8 @@ for i = 1:numel(var_low)
                 availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
                 if outputType == 1
                     % Write the resulting image to a GeoTIFF file
-                    outputBaseName = string(sortedDates(rowIndex,1)) + var_low(i) + '.tif';
-                    fullDestinationFileName = fullfile(outputDir, var_low(i), outputBaseName);
+                    outputBaseName = string(sortedDates(rowIndex,1)) + targetVarL(i) + '.tif';
+                    fullDestinationFileName = fullfile(outputDir, targetVarL(i), outputBaseName);
                     %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
                     if isempty(GeoRef)
                         %disp('    Georeferencing files missing! Unreferenced output...')
@@ -547,7 +548,7 @@ for i = 1:numel(var_low)
                     netcdf.putVar(ncid, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
                     % Write data to the variable for the current date
                     resultImages(isnan(resultImages)) = -999;
-                    ncwrite(fullDestinationFileName, var_low(i), single(resultImages)', [1, 1, rowIndex]);
+                    ncwrite(fullDestinationFileName, targetVarL(i), single(resultImages)', [1, 1, rowIndex]);
                 else
                     error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')
                 end
@@ -587,7 +588,7 @@ for i = 1:numel(var_low)
         synImages.date = cell2mat(sortedDates(:,1));
         fprintf('\n')
     end
-    synImages.(targetVar(i)) = map;
+    synImages.(targetVarL(i)) = map;
     varDist = strcat(targetVar(i), "_BestDistance");
     minDist = single(nan(size(sortedDates,1),1));
     for c = 1:size(sortedDates, 1)
