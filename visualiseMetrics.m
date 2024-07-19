@@ -116,7 +116,7 @@ for k = 1:numel(targetVar)
         elseif metricV == 3
             title([convertStringsToChars(targetVar(k)) ' - SPAEF'])
         elseif metricV == 4
-            title([convertStringsToChars(targetVar(k)) ' - SPOMF'])
+            title([convertStringsToChars(targetVar(k)) ' - KGE'])
         end
         %str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
         str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['RMSE - MAE correlation: ' num2str(corr(singleDataVal,bestDist),'%.5f')]};
@@ -135,7 +135,7 @@ for k = 1:numel(targetVar)
         elseif metricV == 3
             ylabel('SPAEF')
         elseif metricV == 4
-            ylabel('SPOMF')
+            ylabel('KGE')
         end
         ax = gca;
         ax.YAxis(1).Color = 'k';
@@ -182,7 +182,7 @@ for k = 1:numel(targetVar)
         elseif metricV == 3
             title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         elseif metricV == 4
-            title([convertStringsToChars(targetVar(k)) ' - SPOMF (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         end
         if strcmp(startLdate, startQdate)
             subtitle(['Learning periode: ' endQdate '-' endLdate])
@@ -199,7 +199,7 @@ for k = 1:numel(targetVar)
         elseif metricV == 3
             ylabel('SPAEF')
         elseif metricV == 4
-            ylabel('SPOMF')
+            ylabel('KGE')
         end
         set(gcf, 'color', 'white');
         grid on
@@ -483,7 +483,7 @@ for k = 1:numel(targetVar)
                                 ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 4
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         end
 
                         % Save the current frame as a GIF
@@ -582,7 +582,7 @@ for k = 1:numel(targetVar)
                                 ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 4
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPOMF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         end
 
                         % Save the current frame as a GIF

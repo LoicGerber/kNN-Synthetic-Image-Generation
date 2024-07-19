@@ -44,6 +44,10 @@ for j = 1:numel(targetVar)
             error('Numbers of reference and synthetic images do not match');
         end
     end
+    
+    % Initialize accumulation variables
+    accumulatedRef = [];
+    accumulatedSyn = [];
 
     % Loop through each file in the reference directory
     for i = 1:size(validationResult,1)
@@ -82,9 +86,10 @@ for j = 1:numel(targetVar)
             elseif metricV == 3
                 % Calculate the SPAEF
                 validationResult(i,2) = spaef(synImage,refImage);
-            elseif metricV == 4
-                % Calculate the SPOMF absolute error
-                validationResult(i,2) = spae_metric(synImage,refImage);
+            elseif metricV == 4  || metricV == 5
+                % Accumulate data for KGE calculation
+                accumulatedRef = [accumulatedRef; refImage(:)];
+                accumulatedSyn = [accumulatedSyn; synImage(:)];
             else
                 error('Invalid metric flag...')
             end
@@ -109,9 +114,10 @@ for j = 1:numel(targetVar)
                 elseif metricV == 3
                     % Calculate the SPAEF
                     validationResult{i,2}(k) = spaef(synImage,refImage);
-                elseif metricV == 4
-                    % Calculate the SPOMF absolute error
-                    validationResult{i,2}(k) = spae_metric(synImage,refImage);
+                elseif metricV == 4 || metricV == 5
+                    % Calculate the KGE (1D)
+                    accumulatedRef = [accumulatedRef; refImage(:)];
+                    accumulatedSyn = [accumulatedSyn; synImage(:)];
                 else
                     error('Invalid metric flag...')
                 end
@@ -128,14 +134,28 @@ for j = 1:numel(targetVar)
             elseif metricV == 3
                 % Calculate the SPAEF
                 validationResult{i,3} = spaef(synImage,refImage);
-            elseif metricV == 4
-                % Calculate the SPOMF absolute error
-                validationResult{i,3} = spae_metric(synImage,refImage);
             else
                 error('Invalid metric flag...')
             end
         end
     end
+    
+    if metricV == 4 % Compute KGE for the entire time series
+        kgeValue = computeKGE(accumulatedSyn, accumulatedRef);
+        if bootstrap == false
+            validationResult(:,2) = kgeValue;
+        else
+            validationResult{:,2} = kgeValue;
+        end
+    elseif metricV == 5 % Compute NSE for the entire time series
+        nseValue = computeNSE(accumulatedSyn, accumulatedRef);
+        if bootstrap == false
+            validationResult(:,2) = nseValue;
+        else
+            validationResult{:,2} = nseValue;
+        end
+    end
+
     if optimisation == false
         validationMetric.(targetVarL(j)) = validationResult;
     else
