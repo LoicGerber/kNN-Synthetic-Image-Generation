@@ -1,4 +1,4 @@
-function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir)
+function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir,saveMats)
 
 %
 %
@@ -142,8 +142,10 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
         refValidation.(targetVarL(j)) = single(imagesRefValidation);
     end
     refValidation.date = learningDatesValidation;
-    disp('  Saving refValidation.mat file...')
-    save(fullfile(inputDir,'refValidation.mat'), 'refValidation', '-v7.3','-nocompression');
+    if saveMats == true
+        disp('  Saving refValidation.mat file...')
+        save(fullfile(inputDir,'refValidation.mat'), 'refValidation', '-v7.3','-nocompression');
+    end
     learningDates = learningDataValidation;
 end
 
@@ -213,7 +215,9 @@ elseif validationPrep == true || optimPrep == true % validation or optimPrep ON
 end
 matchedTargetVarTable = cell2table(matchedTargetVarTable,"VariableNames",["date" targetVarL]');
 queryDates = matchedTargetVarTable;
-disp('  Saving Query dates, may take a while depending on input size...')
-save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
+if saveMats == true
+    disp('  Saving Query dates, may take a while depending on input size...')
+    save(fullfile(inputDir,'queryDates.mat'), 'queryDates', '-v7.3','-nocompression');
+end
 
 end

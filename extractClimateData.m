@@ -1,4 +1,4 @@
-function climateData = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir)
+function climateData = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inputDir,saveMats)
 
 %
 %
@@ -94,8 +94,10 @@ r = unique([rLD; rQD]);
 
 climateData = climateData(r,:);
 
-disp('  Saving climateData table...')
-allVarsSave = fullfile(inputDir, 'climateData.mat');
-save(allVarsSave, 'climateData', '-v7.3','-nocompression');
+if saveMats == true
+    disp('  Saving climateData table...')
+    allVarsSave = fullfile(inputDir, 'climateData.mat');
+    save(allVarsSave, 'climateData', '-v7.3','-nocompression');
+end
 
 end

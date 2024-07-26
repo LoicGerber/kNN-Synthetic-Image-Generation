@@ -28,6 +28,7 @@ LdateStart        = 19800101;                       % YYYYMMDD - Start of the Le
 LdateEnd          = 20201231;                       % YYYYMMDD - End of the Learning period
 outputTime        = 1;                              % Image generation timestep: 1 = DAILY, 2 = MONTHLY, 3 = DEKADAL
 targetDim         = 2;                              % Dimension of target variable: 1 = 1D, 2 = 2D
+saveMats          = false;                          % Save all intermediary results
 
 % KNNDataGeneration
 pixelWise         = true;       % Pixel-wise kNN (true), or domain-wise kNN (false)
@@ -64,6 +65,11 @@ varLegend         = 'Test [m^3]';   % Legend of the graphs
 varRange          = [0, 50];        % Range of values to visualise in reference and synthetic maps
 errRange          = [-10, 10];      % Range of error to visualise in error maps
 
+% Sensitivity analysis
+sensiAnalysis     = false;      % true = sensitivity analysis ON, false = sensitivity analysis OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
+nbImages_range    = 1:1:15;     % Range of K to test (!!! BYPASSES PREVIOUS K VALUE !!!)
+longWindow_range  = 1:1:4;      % Range of longWindow length to test (!!! BYPASSES PREVIOUS LONGWINDOW VALUE !!!)
+
 % Bayesian optimisation switches
 optimPrep         = false;      % true = optimisation preparation ON, false = optimisation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 saveOptimPrep     = false;      % true = save optimisation inputs ON, false = save optimisation inputs OFF
@@ -72,10 +78,10 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
 
 % Pass all arguments to MAIN function
 [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
-    Weights,sortedDates,synImages,validationMetric,optimisedWeights] = ...
+    Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = ...
     MAIN(...
-    rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
+    rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats         , ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
-    metricViz,metricV,nanValue,varLegend,varRange,errRange,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
+    metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 

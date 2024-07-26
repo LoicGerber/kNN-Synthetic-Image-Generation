@@ -1,4 +1,4 @@
-function sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir)
+function sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir,saveMats)
 
 %
 %
@@ -572,7 +572,7 @@ end
 
 sortedDates = sortedDates(~cellfun('isempty',sortedDates(:,1)),:);
 
-if optimPrep == false
+if optimPrep == false && saveMats == true
     disp('Saving KNNSorting.mat file...')
     save(fullfile(inputDir,'KNNSorting.mat'),'sortedDates', '-v7.3','-nocompression'); % Save Ranked Learning Dates per Query Date
 else

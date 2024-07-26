@@ -1,4 +1,4 @@
-function learningDates = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inputDir)
+function learningDates = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inputDir,saveMats)
 
 %
 %
@@ -80,7 +80,10 @@ for i = 1:numel(targetVar)
     learningDatesTable.(targetVarL(i)) = targetVarDataAll(:,i);
 end
 learningDates = learningDatesTable;
-disp('  Saving Learning dates, may take a while depending on input size...')
-save(fullfile(inputDir,'learningDates.mat'), 'learningDates', '-v7.3','-nocompression');
+
+if saveMats == true
+    disp('  Saving Learning dates, may take a while depending on input size...')
+    save(fullfile(inputDir,'learningDates.mat'), 'learningDates', '-v7.3','-nocompression');
+end
 
 end
