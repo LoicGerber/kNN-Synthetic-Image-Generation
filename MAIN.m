@@ -3,7 +3,7 @@ function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVa
     rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
-    metricViz,metricV,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
+    metricViz,metricV,nanValue,varLegend,varRange,errRange,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
 close all
@@ -129,7 +129,7 @@ if (validation == true || metricViz == true) && optimisation == false
     disp('--- 4. VALIDATION ---')
     
     validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
-    visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir);
+    visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir);
     
     disp('--- 4. VALIDATION DONE ---')
 else

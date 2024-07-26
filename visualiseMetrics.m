@@ -1,4 +1,4 @@
-function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
+function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
 
 %
 %
@@ -207,19 +207,27 @@ for k = 1:numel(targetVar)
 
         % --------------------------------------------------------------------
         if targetDim ~= 1
-            refData    = squeeze(mean(mean(refValidation.(targetVarL(k)),1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
-            synData    = squeeze(mean(mean(synImages.(targetVarL(k)),1,'omitnan'),2,'omitnan'));
+
+            refData  = refValidation.(targetVarL(k));
+            synData = synImages.(targetVarL(k));
+            if ~isnan(nanValue)
+                refData(refData == nanValue) = nan;
+                synData(isnan(refData)) = nan;
+            end
+
+            meanRefData = squeeze(mean(mean(refData,1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
+            meanSynData = squeeze(mean(mean(synData,1,'omitnan'),2,'omitnan'));
             figure('WindowState', 'maximized');
             date = datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-            plot(date, refData, 'r-', date, synData, 'k-');
+            plot(date, meanRefData, 'r-', date, meanSynData, 'k-');
             legend('Reference','Synthetic','Location','southeast')
             xlabel('Date')
-            ylabel('Evaporation [mm/day]')
+            ylabel(varLegend)
             title(['Mean ' convertStringsToChars(targetVarL(k))])
-            r = corr(synData,refData);
+            r = corr(meanSynData,meanRefData);
             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            alpha = std(synData)/std(refData);
-            beta  = mean(synData)/mean(refData);
+            alpha = std(meanSynData)/std(meanRefData);
+            beta  = mean(meanSynData)/mean(meanRefData);
             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
             subtitle(str)
@@ -239,8 +247,8 @@ for k = 1:numel(targetVar)
             [b, a] = butter(filterOrder, cutoffFrequency, 'high');
 
             % Apply the filter to both reference and synthetic datasets
-            refDataHighPass = filtfilt(b, a, double(refData));
-            synDataHighPass = filtfilt(b, a, double(synData));
+            refDataHighPass = filtfilt(b, a, double(meanRefData));
+            synDataHighPass = filtfilt(b, a, double(meanSynData));
 
             % Plot the original and high-pass filtered data
             figure('WindowState', 'maximized');
@@ -249,7 +257,7 @@ for k = 1:numel(targetVar)
             legend('Reference', 'Synthetic', 'Location', 'southeast');
             title('High-Pass Filtered Data');
             xlabel('Date');
-            ylabel('Detrended Evaporation [mm/day]');
+            ylabel(strcat('Detrended ', varLegend));
             grid on;
             r = corr(synDataHighPass,refDataHighPass);
             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
@@ -265,20 +273,20 @@ for k = 1:numel(targetVar)
             saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
 
             % --------------------------------------------------------------------
-
-            refData    = squeeze(var(refValidation.(targetVarL(k)),0,[1 2],'omitnan'));
-            synData    = squeeze(var(synImages.(targetVarL(k)),0,[1 2],'omitnan'));
+            
+            varRefData = squeeze(var(refData,0,[1 2],'omitnan'));
+            varSynData = squeeze(var(synData,0,[1 2],'omitnan'));
             figure('WindowState', 'maximized');
             date = datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-            plot(date, refData, 'r-', date, synData, 'k-');
+            plot(date, varRefData, 'r-', date, varSynData, 'k-');
             legend('Reference','Synthetic','Location','northeast')
             xlabel('Date')
-            ylabel('Evaporation [mm/day]^2')
+            ylabel(strcat(varLegend,'^2'))
             title([convertStringsToChars(targetVar(k)) ' variance'])
-            r = corr(synData,refData);
+            r = corr(varSynData,varRefData);
             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            alpha = std(synData)/std(refData);
-            beta  = mean(synData)/mean(refData);
+            alpha = std(varSynData)/std(varRefData);
+            beta  = mean(varSynData)/mean(varRefData);
             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
             subtitle(str)
@@ -295,10 +303,8 @@ for k = 1:numel(targetVar)
                 gifVal = fullfile(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
-                refData  = refValidation.(targetVarL(k));
                 synDates = synImages.date;
                 dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
-                synData  = synImages.(targetVarL(k));
                 bdName   = [convertStringsToChars(targetVar(k)) '_BestDistance'];
                 analogs  = sortedDates(:,2);
                 currentDOY  = nan(numel(analogs{1}),numel(dates));
@@ -367,10 +373,10 @@ for k = 1:numel(targetVar)
                         % Load the two images
                         synthetic = synData(:,:,i);
                         %synthetic(synthetic==min(min(synthetic))) = NaN;
-                        synthetic(synthetic==-999) = NaN;
+                        %synthetic(synthetic==-999) = NaN;
                         reference = refData(:,:,referenceIndex);
                         %reference(reference==min(min(reference))) = NaN;
-                        reference(reference==-999) = NaN;
+                        %reference(reference==-999) = NaN;
 
                         sgtitle(targetVar(k))
 
@@ -380,7 +386,7 @@ for k = 1:numel(targetVar)
                         colormap(gca, turbo(256));
                         set(img1, 'AlphaData', ~isnan(synthetic))
                         %caxis([0 maxColor])
-                        caxis([0 6])
+                        caxis(varRange)
                         axis equal
                         title('Synthetic');
                         %colorbar(gca,'southoutside')
@@ -390,7 +396,7 @@ for k = 1:numel(targetVar)
                         colormap(gca, turbo(256));
                         set(img2, 'AlphaData', ~isnan(synthetic))
                         %caxis([0 maxColor])
-                        caxis([0 6])
+                        caxis(varRange)
                         axis equal
                         title('Reference');
                         h = colorbar(gca,'southoutside');
@@ -401,7 +407,7 @@ for k = 1:numel(targetVar)
                         errMap = imshow(error);
                         set(errMap, 'AlphaData', ~isnan(synthetic))
                         colormap(gca, coolwarm(256));
-                        caxis([-2 2])
+                        caxis(errRange)
                         title('Error');
                         axis equal
                         h_err = colorbar(gca,'southoutside');
@@ -409,9 +415,9 @@ for k = 1:numel(targetVar)
                         % Add a colorbar to the reference image subplot
                         %h = colorbar('southoutside');
                         set(h, 'Position', [0.13 0.4 0.5 0.03]);
-                        set(get(h,'label'),'string','Evaporation [mm/day]');
+                        set(get(h,'label'),'string',varLegend);
                         set(h_err, 'Position', [0.7 0.4 0.205 0.03])
-                        set(get(h_err,'label'),'string','Evaporation [mm/day]');
+                        set(get(h_err,'label'),'string',varLegend);
 
                         % DOY difference
                         subplot(3,3,[7,8,9])
@@ -509,10 +515,8 @@ for k = 1:numel(targetVar)
                 gifVal = fullfile(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
-                refData  = refValidation.(targetVarL(k));
                 synDates = synImages.date;
                 dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
-                synData  = synImages.(targetVarL(k));
 
                 % Create an empty figure
                 figure('WindowState', 'maximized');
@@ -527,10 +531,10 @@ for k = 1:numel(targetVar)
                         % Load the two images
                         synthetic = synData(:,:,i);
                         %synthetic(synthetic==min(min(synthetic))) = NaN;
-                        synthetic(synthetic==-999) = NaN;
+                        %synthetic(synthetic==-999) = NaN;
                         reference = refData(:,:,referenceIndex);
                         %reference(reference==min(min(reference))) = NaN;
-                        reference(reference==-999) = NaN;
+                        %reference(reference==-999) = NaN;
 
                         sgtitle(targetVar(k))
 
@@ -540,7 +544,7 @@ for k = 1:numel(targetVar)
                         colormap(gca, turbo(256));
                         set(img1, 'AlphaData', ~isnan(synthetic))
                         %caxis([0 maxColor])
-                        caxis([0 6])
+                        caxis(varRange)
                         axis equal
                         title('Synthetic');
                         %colorbar(gca,'southoutside')
@@ -550,7 +554,7 @@ for k = 1:numel(targetVar)
                         colormap(gca, turbo(256));
                         set(img2, 'AlphaData', ~isnan(synthetic))
                         %caxis([0 maxColor])
-                        caxis([0 6])
+                        caxis(varRange)
                         axis equal
                         title('Reference');
                         h = colorbar(gca,'southoutside');
@@ -561,7 +565,7 @@ for k = 1:numel(targetVar)
                         errMap = imshow(error);
                         set(errMap, 'AlphaData', ~isnan(synthetic))
                         colormap(gca, coolwarm(256));
-                        caxis([-2 2])
+                        caxis(errRange)
                         title('Error');
                         axis equal
                         h_err = colorbar(gca,'southoutside');
@@ -569,9 +573,9 @@ for k = 1:numel(targetVar)
                         % Add a colorbar to the reference image subplot
                         %h = colorbar('southoutside');
                         set(h, 'Position', [0.13 0.2 0.5 0.03]);
-                        set(get(h,'label'),'string','Evaporation [mm/day]');
+                        set(get(h,'label'),'string',varLegend);
                         set(h_err, 'Position', [0.7 0.2 0.205 0.03])
-                        set(get(h_err,'label'),'string','Evaporation [mm/day]');
+                        set(get(h_err,'label'),'string',varLegend);
 
                         % Set the title of the figure to the name of the images
                         if metricV == 1
