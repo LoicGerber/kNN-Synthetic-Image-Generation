@@ -353,6 +353,9 @@ for k = 1:numel(targetVar)
                     % Find the index of refDOY and analogDOY(i) in rangeTot
                     indexRef = find(rangeTot == refDOY);
                     for di = 1:numel(analogDOY)
+                        if analogDOY(di) == 366
+                            analogDOY(di) = 1;
+                        end
                         indexAnalog   = find(rangeTot == analogDOY(di));
                         diffDOY(di)   = indexRef - indexAnalog;
                     end
