@@ -20,9 +20,9 @@ end
 inDir = strcat(outputDir,'\inputData');
 outDir = strcat(outputDir,'\output');
 
-if sensiAnalysis == false
     %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
-    disp('--- 1. READING DATA ---')
+if sensiAnalysis == false
+        disp('--- 1. READING DATA ---')
     
     if netCDFtoInputs == true || optimPrep == true || validationPrep == true
         disp('Formatting input data...')
@@ -151,6 +151,8 @@ if sensiAnalysis == true
     optimisedWeights = [];
 
     disp('--- SENSITIVITY ANALYSIS DONE')
+else
+    sensitivityResults = [];
 end
 %% Optimisation
 if optimisation == true
