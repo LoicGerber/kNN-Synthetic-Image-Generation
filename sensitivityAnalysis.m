@@ -103,7 +103,7 @@ hcb=colorbar;
 set(get(hcb,'label'),'string','Mean RMSE','Rotation',90);
 set(gcf, 'color', 'white');
 title('Best parameters combination')
-saveas(gcf,strcat(outputDir,'sensitivityAnalysis.png'))
+saveas(gcf,strcat(outDir,'sensitivityAnalysis.png'))
 
 end
 
