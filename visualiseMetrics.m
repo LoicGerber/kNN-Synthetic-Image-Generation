@@ -239,38 +239,38 @@ for k = 1:numel(targetVar)
 
             % --------------------------------------------------------------------
 
-            % Set the filter order (adjust as needed)
-            filterOrder = 3;
-            % Set the cutoff frequency for the high-pass filter (adjust as needed)
-            cutoffFrequency = 0.01; % Adjust this value based on your data characteristics
-            % Design a Butterworth high-pass filter
-            [b, a] = butter(filterOrder, cutoffFrequency, 'high');
-
-            % Apply the filter to both reference and synthetic datasets
-            refDataHighPass = filtfilt(b, a, double(meanRefData));
-            synDataHighPass = filtfilt(b, a, double(meanSynData));
-
-            % Plot the original and high-pass filtered data
-            figure('WindowState', 'maximized');
-            date = datetime(validationMetric.(targetVarL(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
-            plot(date, refDataHighPass, 'r-', date, synDataHighPass, 'k-');
-            legend('Reference', 'Synthetic', 'Location', 'southeast');
-            title('High-Pass Filtered Data');
-            xlabel('Date');
-            ylabel(strcat('Detrended ', varLegend));
-            grid on;
-            r = corr(synDataHighPass,refDataHighPass);
-            %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            alpha = std(synDataHighPass)/std(refDataHighPass);
-            beta  = mean(synDataHighPass)/mean(refDataHighPass);
-            kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-            str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-            subtitle(str)
-            grid on
-            box off
-            %legend boxoff
-            set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
+%             % Set the filter order (adjust as needed)
+%             filterOrder = 3;
+%             % Set the cutoff frequency for the high-pass filter (adjust as needed)
+%             cutoffFrequency = 0.01; % Adjust this value based on your data characteristics
+%             % Design a Butterworth high-pass filter
+%             [b, a] = butter(filterOrder, cutoffFrequency, 'high');
+% 
+%             % Apply the filter to both reference and synthetic datasets
+%             refDataHighPass = filtfilt(b, a, double(meanRefData));
+%             synDataHighPass = filtfilt(b, a, double(meanSynData));
+% 
+%             % Plot the original and high-pass filtered data
+%             figure('WindowState', 'maximized');
+%             date = datetime(validationMetric.(targetVarL(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
+%             plot(date, refDataHighPass, 'r-', date, synDataHighPass, 'k-');
+%             legend('Reference', 'Synthetic', 'Location', 'southeast');
+%             title('High-Pass Filtered Data');
+%             xlabel('Date');
+%             ylabel(strcat('Detrended ', varLegend));
+%             grid on;
+%             r = corr(synDataHighPass,refDataHighPass);
+%             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+%             alpha = std(synDataHighPass)/std(refDataHighPass);
+%             beta  = mean(synDataHighPass)/mean(refDataHighPass);
+%             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+%             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
+%             subtitle(str)
+%             grid on
+%             box off
+%             %legend boxoff
+%             set(gcf, 'color', 'white');
+%             saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
 
             % --------------------------------------------------------------------
             
