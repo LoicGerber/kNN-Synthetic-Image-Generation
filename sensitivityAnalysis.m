@@ -73,8 +73,14 @@ for i = 1:size(sensitivityResults, 1)
     end
 end
 
-sortedMeanTS = sortrows(meanTS,1);
-best         = sortedMeanTS(1,2);
+if metricV == 4 || metricV == 5
+    sortedMeanTS = sortrows(meanTS,1,'descend');
+else
+    sortedMeanTS = sortrows(meanTS,1,'ascend');
+end
+best = sortedMeanTS(1,2);
+
+metrics = {'RMSE','SPEM','SPAEF','KGE','NSE'};
 
 it = 0;
 bestDistImg = nan(size(sensitivityResults));
@@ -82,10 +88,10 @@ for i = 1:size(sensitivityResults, 1)
     for j = 1:size(sensitivityResults, 2)
         it = it + 1;
         if it == best
-            disp('Best parameter combination to optimise RMSE:')
+            disp(['Best parameter combination to optimise ' metrics{metricV} ':'])
             disp(['  k: ', num2str(nbImages_range(i))])
             disp(['  long: ', num2str(longWindow_range(j))])
-            disp(['  Mean RMSE: ', num2str(sortedMeanTS(1,1))])
+            disp(['  Mean ' metrics{metricV} ': ', num2str(sortedMeanTS(1,1))])
             %break
         end
         bestDistImg(i,j) = meanTS(it);
@@ -101,7 +107,7 @@ yticklabels({nbImages_range})
 xlabel('Climate window length')
 xticklabels({longWindow_range})
 hcb=colorbar;
-set(get(hcb,'label'),'string','Mean RMSE','Rotation',90);
+set(get(hcb,'label'),'string',['Mean ' metrics{metricV}],'Rotation',90);
 set(gcf, 'color', 'white');
 title('Best parameters combination')
 saveas(gcf,strcat(outDir,'sensitivityAnalysis.png'))
