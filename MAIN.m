@@ -129,7 +129,7 @@ if sensiAnalysis == false
     if (validation == true || metricViz == true) && optimisation == false
         disp('--- 4. VALIDATION ---')
         
-        validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
+        validationMetric = validationMetrics(targetVar,targetDim,nanValue,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
         visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir);
         
         disp('--- 4. VALIDATION DONE ---')

@@ -59,7 +59,7 @@ bsSaveAll         = false;      % true = saves all bootstrap ensembles, false = 
 validationPrep    = false;          % true = validation preparation ON, false = validation preparation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 validation        = false;          % true = validation ON,             false = validation OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
 metricViz         = false;          % true = visualisation ON,          false = visualisation OFF
-metricV           = 1;              % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = KGE (1D ONLY), 5 = NSE (1D ONLY)
+metricV           = 1;              % 1 = RMSE, 2 = SPEM, 3 = SPAEF, 4 = KGE, 5 = NSE (1D ONLY)
 nanValue          = -9999;          % Value of NaN values in target variable (e.g. -9999, nan)
 varLegend         = 'Test [m^3]';   % Legend of the graphs
 varRange          = [0, 50];        % Range of values to visualise in reference and synthetic maps

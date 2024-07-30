@@ -76,7 +76,7 @@ for k = 1:numel(targetVar)
         legend('Synthetic data spread','Deterministic mean','Reference data mean')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['\bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
 
         % -----------------------------------------------------------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ for k = 1:numel(targetVar)
         legend('Stochastic ensembles','Deterministic','Best distance')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['\bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
     else
         if targetDim == 1
             figure('WindowState', 'maximized');
@@ -168,7 +168,7 @@ for k = 1:numel(targetVar)
             legend()
             set(gcf, 'color', 'white');
             grid on
-            saveas(gcf,strcat(outputDir,[convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outputDir,['\' convertStringsToChars(targetVar(k)) '.png']))
         end
         figure('WindowState', 'maximized');
         plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
@@ -203,7 +203,7 @@ for k = 1:numel(targetVar)
         end
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.png']))
 
         % --------------------------------------------------------------------
         if targetDim ~= 1
@@ -235,7 +235,7 @@ for k = 1:numel(targetVar)
             box off
             %legend boxoff
             set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outputDir,['\correlation_' convertStringsToChars(targetVar(k)) '.png']))
 
             % --------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ for k = 1:numel(targetVar)
 %             box off
 %             %legend boxoff
 %             set(gcf, 'color', 'white');
-%             saveas(gcf,strcat(outputDir,['correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
+%             saveas(gcf,strcat(outputDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
 
             % --------------------------------------------------------------------
             
@@ -294,13 +294,13 @@ for k = 1:numel(targetVar)
             box off
             %legend boxoff
             set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outputDir,['variance_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outputDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
 
             % Set the output GIF file name
             if pixelWise == false
-                gifVal = fullfile(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.gif']);
+                gifVal = fullfile(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
                 synDates = synImages.date;
@@ -512,7 +512,7 @@ for k = 1:numel(targetVar)
                 % -------------------------------------------------------------------------
 
                 % Set the output GIF file name
-                gifVal = fullfile(outputDir,['validation_' convertStringsToChars(targetVar(k)) '.gif']);
+                gifVal = fullfile(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
                 synDates = synImages.date;

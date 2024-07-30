@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,targetDim,nanValue,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
 
 %
 %
@@ -62,14 +62,14 @@ for j = 1:numel(targetVar)
         else
             refImage = double(refImages(i));
         end
-        refImage(isnan(refImage)) = -999;
+        %refImage(isnan(refImage)) = -999;
         if bootstrap == false
             if targetDim ~= 1
                 synImage = double(synImagesAll(:,:,i));
             else
                 synImage = double(synImagesAll(i));
             end
-            synImage(isnan(synImage)) = -999;
+            %synImage(isnan(synImage)) = -999;
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
             if refImageDate == synImageDate
                 currentDate = refImageDate;
@@ -87,9 +87,13 @@ for j = 1:numel(targetVar)
                 % Calculate the SPAEF
                 validationResult(i,2) = spaef(synImage,refImage);
             elseif metricV == 4  || metricV == 5
-                % Accumulate data for KGE calculation
-                accumulatedRef = [accumulatedRef; refImage(:)];
-                accumulatedSyn = [accumulatedSyn; synImage(:)];
+                if targetDim == 2
+                    validationResult(i,2) = computeKGE(synImage,refImage,nanValue);
+                else
+                    % Accumulate data for KGE calculation
+                    accumulatedRef = [accumulatedRef; refImage(:)];
+                    accumulatedSyn = [accumulatedSyn; synImage(:)];
+                end
             else
                 error('Invalid metric flag...')
             end
@@ -115,9 +119,13 @@ for j = 1:numel(targetVar)
                     % Calculate the SPAEF
                     validationResult{i,2}(k) = spaef(synImage,refImage);
                 elseif metricV == 4 || metricV == 5
-                    % Calculate the KGE (1D)
-                    accumulatedRef = [accumulatedRef; refImage(:)];
-                    accumulatedSyn = [accumulatedSyn; synImage(:)];
+                    if targetDim == 2
+                        validationResult{i,2}(k) = computeKGE(synImage,refImage,nanValue);
+                    else
+                        % Accumulate data for KGE calculation
+                        accumulatedRef = [accumulatedRef; refImage(:)];
+                        accumulatedSyn = [accumulatedSyn; synImage(:)];
+                    end
                 else
                     error('Invalid metric flag...')
                 end
@@ -140,14 +148,14 @@ for j = 1:numel(targetVar)
         end
     end
     
-    if metricV == 4 % Compute KGE for the entire time series
-        kgeValue = computeKGE(accumulatedSyn, accumulatedRef);
+    if metricV == 4 && targetDim == 1 % Compute KGE for the entire time series
+        kgeValue = computeKGE(accumulatedSyn, accumulatedRef, nanValue);
         if bootstrap == false
             validationResult(:,2) = kgeValue;
         else
             validationResult{:,2} = kgeValue;
         end
-    elseif metricV == 5 % Compute NSE for the entire time series
+    elseif metricV == 5 && targetDim == 1 % Compute NSE for the entire time series
         nseValue = computeNSE(accumulatedSyn, accumulatedRef);
         if bootstrap == false
             validationResult(:,2) = nseValue;
