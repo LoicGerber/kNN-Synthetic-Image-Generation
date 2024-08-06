@@ -88,28 +88,36 @@ for i = 1:size(sensitivityResults, 1)
     for j = 1:size(sensitivityResults, 2)
         it = it + 1;
         if it == best
-            disp(['Best parameter combination to optimise ' metrics{metricV} ':'])
-            disp(['  k: ', num2str(nbImages_range(i))])
-            disp(['  long: ', num2str(longWindow_range(j))])
-            disp(['  Mean ' metrics{metricV} ': ', num2str(sortedMeanTS(1,1))])
+            bestK = nbImages_range(i);
+            bestLW = longWindow_range(j);
             %break
         end
         bestDistImg(i,j) = meanTS(it);
     end
 end
 
+disp(['Best parameter combination to optimise ' metrics{metricV} ':'])
+disp(['  k: ', num2str(bestK)])
+disp(['  long: ', num2str(bestLW)])
+disp(['  Mean ' metrics{metricV} ': ', num2str(sortedMeanTS(1,1))])
+
 figure('WindowState', 'maximized');
 hold on
 imagesc(bestDistImg)
 colormap(gca, turbo(256));
 ylabel('\it k')
+yticks(nbImages_range)
 yticklabels({nbImages_range})
+ylim([min(nbImages_range) max(nbImages_range)])
 xlabel('Climate window length')
+xticks(longWindow_range)
 xticklabels({longWindow_range})
+xlim([min(longWindow_range) max(longWindow_range)])
 hcb=colorbar;
 set(get(hcb,'label'),'string',['Mean ' metrics{metricV}],'Rotation',90);
 set(gcf, 'color', 'white');
 title('Best parameters combination')
+subtitle(['k: ' num2str(bestK) ' - climate window: ' num2str(bestLW)])
 saveas(gcf,strcat(outDir,'sensitivityAnalysis.png'))
 
 end
