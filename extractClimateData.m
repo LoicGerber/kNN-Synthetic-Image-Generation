@@ -39,33 +39,32 @@ for i = 1:length(matchingDataFields)
         end
         % climateData is normalised
         climateData(:,i) = normalizedCellArray;
-    elseif normMethods(currentIdx) == 2 %Q10-Q90 WORK IN PROGRESS <--------------------------------------------------------------------------------------------------------------------------
+    elseif normMethods(currentIdx) == 2 %Q5-Q95
         % Flatten the cell array into a single numeric array
         numMatrices = numel(rawData.(matchingDataFields(i)));
         flattenedData = nan(numMatrices, numel(rawData.(matchingDataFields(i)){1})); % Initialize a matrix to store flattened data
         for j = 1:numMatrices
             flattenedData(j, :) = rawData.(matchingDataFields(i)){j}(:); % Flatten each matrix and store in the matrix
         end
-        % Find the Q10 and Q90 values of the entire numeric array
-        Q10 = quantile(flattenedData(:),0.1);
-        Q90 = quantile(flattenedData(:),0.9);
+        % Find the Q5 and Q95 values of the entire numeric array
+        Q5  = quantile(flattenedData(:),0.05);
+        Q95 = quantile(flattenedData(:),0.95);
         % Normalize each matrix in the cell array
         normalizedCellArray = cell(numMatrices, 1);
         for j = 1:numMatrices
-            normRawData = rawData.(matchingDataFields(i)){j} > Q90;
-            rawData.(matchingDataFields(i)){j}(normRawData) = Q90;
-            normRawData = rawData.(matchingDataFields(i)){j} < Q10;
-            rawData.(matchingDataFields(i)){j}(normRawData) = Q10;
-            normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - Q10) / (Q90 - Q10);
+            normRawData = rawData.(matchingDataFields(i)){j} > Q95;
+            rawData.(matchingDataFields(i)){j}(normRawData) = Q95;
+            normRawData = rawData.(matchingDataFields(i)){j} < Q5;
+            rawData.(matchingDataFields(i)){j}(normRawData) = Q5;
+            normalizedCellArray{j} = (rawData.(matchingDataFields(i)){j} - Q5) / (Q95 - Q5);
         end
         % climateData is normalised
         climateData(:,i) = normalizedCellArray;
     elseif normMethods(currentIdx) == 3 % log
-        % Transform data to log(data+1, to avoid log(0))
-        climateData(:,i) = cellfun(@(x) log(x+1),rawData.(matchingDataFields(i)),'UniformOutput',false);
+        % Transform data to log(data+1), , only for data > 0
+        climateData(:,i) = cellfun(@(x) log(x + 1) .* (x > 0),rawData.(matchingDataFields(i)),'UniformOutput',false);
     elseif normMethods(currentIdx) == 4 % 
         % Transform data to log(data+1), only for data > 0
-        %climateData(:,i) = cellfun(@(x) log(x.*(x > 0)+0.0001),rawData.(matchingDataFields(i)),'UniformOutput',false);
         climateData(:,i) = cellfun(@(x) log(x + 1) .* (x > 0),rawData.(matchingDataFields(i)),'UniformOutput',false);
     end
     % climateData is not normalised

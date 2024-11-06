@@ -62,14 +62,14 @@ for j = 1:numel(targetVar)
         else
             refImage = double(refImages(i));
         end
-        %refImage(isnan(refImage)) = -999;
+        refImage(isnan(refImage)) = -999;
         if bootstrap == false
             if targetDim ~= 1
                 synImage = double(synImagesAll(:,:,i));
             else
                 synImage = double(synImagesAll(i));
             end
-            %synImage(isnan(synImage)) = -999;
+            synImage(isnan(synImage)) = -999;
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
             if refImageDate == synImageDate
                 currentDate = refImageDate;

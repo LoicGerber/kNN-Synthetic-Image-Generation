@@ -4,8 +4,8 @@ function distance = computeHellingerDistance(values1, values2)
     %numBins = max(size(histcounts(values1),2), size(histcounts(values2),2));
     % Create histograms with fixed number of bins
     
-    values1 = values1(values1 > 0);
-    values2 = values2(values2 > 0);
+%     values1 = values1(values1 > 0);
+%     values2 = values2(values2 > 0);
 
     if ~isempty(values1) && ~isempty(values2) && (min(min([values1; values2])) < max(max([values1; values2])))
         numBins = 10;

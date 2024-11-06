@@ -365,6 +365,9 @@ for k = 1:numel(targetVar)
                         indexAnalog   = find(rangeTot == analogDOY(di));
                         diffDOY(di)   = indexRef - indexAnalog;
                     end
+                    if bestAnalog == 366
+                        bestAnalog = 1;
+                    end
                     idxBestAnalog = find(rangeTot == bestAnalog);
                     diffBest(i)   = indexRef - idxBestAnalog;
 

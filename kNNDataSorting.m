@@ -213,6 +213,7 @@ if parallelComputing == true
                         % Climate distance
                         % 1 date, 2 distance
                         climateDistAll = cell(ld,1);
+                        spemDist       = cell(ld,1);
                         hammingDist    = cell(ld,1);
                         hellingDist    = cell(ld,1);
                         climateDistHH  = cell(ld,1);
@@ -227,7 +228,7 @@ if parallelComputing == true
                             hammingDist{ld,1} = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
                             hellingDist{ld,1} = cellfun(@(x,y) single(computeHellingerDistance(x(x>0), y(y>0))), ...
                                 learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
-                            climateDistHH{ld,1} = cellfun(@(x,y) x + y,hammingDist{ld,1},hellingDist{ld,1},'UniformOutput',false); % Total Hamming + Hellinger distance
+                            climateDistHH{ld,1} = cellfun(@(x,y) (x/2)+(y/2),hammingDist{ld,1},hellingDist{ld,1},'UniformOutput',false); % Total Hamming + Hellinger distance
                             climateDistAll{ld,1}(:,climVarIdx) = climateDistHH{ld,1}(:);
                         end
                         if metricKNN == 1 % RMSE
@@ -245,6 +246,11 @@ if parallelComputing == true
                         elseif metricKNN == 5 % SPEM
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) spem(x, y), ...
                                 learningClimate(:,otherIdx), queryClimate(:,otherIdx));
+                        elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                            spemDist{ld,1}    = num2cell(cellfun(@(x,y) spem(x, y), learningClimate(:,otherIdx), queryClimate(:,otherIdx)));
+                            hellingDist{ld,1} = cellfun(@(x,y) single(computeHellingerDistance(x,y)), ...
+                                learningClimate(:,otherIdx),queryClimate(:,otherIdx),'UniformOutput',false);
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) (x/2)+(y/2),spemDist{ld,1},hellingDist{ld,1},'UniformOutput',false);
                         else
                             error('Bad metricKNN parameter')
                         end
@@ -471,9 +477,9 @@ else % serial computing
                             hammingDist = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
                             %hellingDist = cellfun(@(x, y) 1/sqrt(2)*sqrt(sum((sqrt(x(x > 0)) - sqrt(y(y > 0))).^2)), ...
                             %    learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
-                            hellingDist = cellfun(@(x,y) single(computeHellingerDistance(x, y)), ...
+                            hellingDist = cellfun(@(x,y) single(computeHellingerDistance(x(x>0), y(y>0))), ...
                                 learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
-                            climateDistHH = cellfun(@(x,y) x + y,hammingDist,hellingDist,'UniformOutput',false); % Total Hamming + Hellinger distance
+                            climateDistHH = cellfun(@(x,y) (x/2)+(y/2),hammingDist,hellingDist,'UniformOutput',false); % Total Hamming + Hellinger distance
                             climateDistAll(:,climVarIdx) = climateDistHH(:);
                         end
                         if metricKNN == 1 % RMSE
@@ -491,6 +497,11 @@ else % serial computing
                         elseif metricKNN == 5 % SPEM
                             climateDistAll(:,otherIdx) = num2cell(cellfun(@(x, y) spem(x, y), ...
                                     learningClimate(:,otherIdx), queryClimate(:,otherIdx)));
+                        elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                            spemDist    = num2cell(cellfun(@(x,y) spem(x, y), learningClimate(:,otherIdx), queryClimate(:,otherIdx)));
+                            hellingDist = cellfun(@(x,y) single(computeHellingerDistance(x, y)), ...
+                                learningClimate(:,otherIdx),queryClimate(:,otherIdx),'UniformOutput',false);
+                            climateDistAll(:,otherIdx) = cellfun(@(x,y) (x/2)+(y/2),spemDist,hellingDist,'UniformOutput',false);
                         else
                             error('Bad metricKNN parameter')
                         end
