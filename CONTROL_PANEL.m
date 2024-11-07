@@ -20,7 +20,7 @@ maskDir           = 'path\to\binary\mask';                      % OPTIONAL - Pat
 targetVar         = ["Et"];                         % Variables to be generated, with ["example1","example2"]
 climateVars       = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
 addVars           = ["sm","twsa"];                  % Additional input variables, with ["example1","example2"], if empty use []
-normMethods       = [1,1,1,4];                      % Method of normalisation of the climate data. 0 = No normalisation, 1 = MinMax, 2 = Q5-Q95, 3 = log(x(x>0)+1), 4 = log(x(x>0)+1), with 1-Hamming dist. + 1-Hellinger dist.
+normMethods       = [1,1,1,4];                      % Method of normalisation of the climate data. 0 = No normalisation, 1 = MinMax, 2 = Q5-Q95, 3 = log(x(x>0)+1), 4 = log(x(x>0)+1), with 1-Hamming dist. + Hellinger dist.
 maxThreshold      = 30;                             % Days, max threshold for closest additional variables attribution
 QdateStart        = 19500101;                       % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
@@ -35,7 +35,7 @@ pixelWise         = true;       % Pixel-wise kNN (true), or domain-wise kNN (fal
 shortWindow       = 5;          % Number of days to consider for the short climate window
 longWindow        = 20;         % Number of days to consider for the long climate window (total days, including shortWindow)
 nbImages          = 10;         % K, number of days to consider for the generation of images
-metricKNN         = 6;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance, 5 = 1-SPEM, 6 = 0.5*(1-SPEM) + 0.5*(1-Hellinger)
+metricKNN         = 6;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance, 5 = 1-SPEM, 6 = 0.5*(1-SPEM) + 0.5*Hellinger
 daysRange         = 90;         % Range of possible learning days (before and after) the query date's DOY
 
 % GenerateSynImages
