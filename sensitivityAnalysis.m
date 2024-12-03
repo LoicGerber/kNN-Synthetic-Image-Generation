@@ -1,6 +1,6 @@
 function [climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-    nanValue,maxThreshold,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV,saveMats)
+    nanValue,maxThreshold,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
 
 % Perform sensitivity analysis loop
 iteration = 0;
@@ -31,11 +31,11 @@ for iRange = 1:length(nbImages_range)
 
         disp('--- 1. READING DATA ---')
         disp('Extracting climate informations...')
-        climateData    = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inDir,saveMats);
+        climateData    = extractClimateData(climateVars,rawData,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,longWindow,inDir,false);
         disp('Extracting Learning dates...')
-        learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,saveMats);
+        learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,false);
         disp('Extracting Query dates...')
-        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,true,false,outputTime,inDir,outDir,saveMats);
+        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,true,false,outputTime,inDir,outDir,false);
         disp('Extracting additional variables...')
         additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,maxThreshold,inDir);
         disp('Loading optimisedWeights.mat file...')
@@ -43,7 +43,7 @@ for iRange = 1:length(nbImages_range)
         disp('--- 1. READING DATA DONE ---')
 
         disp('--- 2. KNN DATA SORTING ---')
-        sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,saveMats);
+        sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,false);
         disp('--- 2. KNN DATA SORTING DONE ---')
 
         disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
@@ -88,18 +88,15 @@ for i = 1:size(sensitivityResults, 1)
     for j = 1:size(sensitivityResults, 2)
         it = it + 1;
         if it == best
-            bestK = nbImages_range(i);
-            bestLW = longWindow_range(j);
+            disp(['Best parameter combination to optimise ' metrics{metricV} ':'])
+            disp(['  k: ', num2str(nbImages_range(i))])
+            disp(['  long: ', num2str(longWindow_range(j))])
+            disp(['  Mean ' metrics{metricV} ': ', num2str(sortedMeanTS(1,1))])
             %break
         end
         bestDistImg(i,j) = meanTS(it);
     end
 end
-
-disp(['Best parameter combination to optimise ' metrics{metricV} ':'])
-disp(['  k: ', num2str(bestK)])
-disp(['  long: ', num2str(bestLW)])
-disp(['  Mean ' metrics{metricV} ': ', num2str(sortedMeanTS(1,1))])
 
 figure('WindowState', 'maximized');
 hold on
@@ -117,7 +114,6 @@ hcb=colorbar;
 set(get(hcb,'label'),'string',['Mean ' metrics{metricV}],'Rotation',90);
 set(gcf, 'color', 'white');
 title('Best parameters combination')
-subtitle(['k: ' num2str(bestK) ' - climate window: ' num2str(bestLW)])
 saveas(gcf,strcat(outDir,'sensitivityAnalysis.png'))
 
 end
