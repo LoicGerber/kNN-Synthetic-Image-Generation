@@ -1,29 +1,27 @@
-function spem = spem(synImage,refImage)
+function spem = spem(x, y)
+    % Logical indexing for valid values
+    index = ~(isnan(x) | isnan(y));
+    validX = x(index);
+    validY = y(index);
 
-% Alpha
-index = ~(isnan(synImage) | isnan(refImage));
-rs = spear(refImage(index),synImage(index)); % Spearman Rank Correlation
+    % Alpha (Spearman Rank Correlation)
+    rs = corr(validY, validX, 'Type', 'Spearman');
 
-% Beta
-meanRef = mean(refImage(:),'omitnan');
-meanSyn = mean(synImage(:),'omitnan');
-stdRef  = std(refImage(:),'omitnan');
-stdSyn  = std(synImage(:),'omitnan');
-if meanSyn == 0 || stdRef == 0 || stdSyn == 0
-    theta = 0;
-%     fprintf('\n    WARNING: beta term in SPEM was forced to be 0')
-else
-    theta = (stdSyn/meanSyn) / (stdRef/meanRef); % cv ratio
-end
+    % Beta (Coefficient of Variation Ratio)
+    meanY = mean(y(:), 'omitnan');
+    meanX = mean(x(:), 'omitnan');
+    stdY  = std(y(:), 'omitnan');
+    stdX  = std(x(:), 'omitnan');
+    if meanX == 0 || stdY == 0 || stdX == 0
+        gamma = 0;
+    else
+        gamma = (stdX / meanX) / (stdY / meanY);
+    end
 
-% Gamma
-%zScoreSyn = zscore(synImage);
-zScoreSyn = (synImage - meanSyn)/stdSyn;
-%zScoreRef = zscore(refImage);
-zScoreRef = (refImage - meanRef)/stdRef;
-alpha     = 1 - sqrt(mean(mean((zScoreSyn-zScoreRef).^2,'omitnan'),'omitnan'));
+    % Gamma (Z-Score Difference)
+    zDiff = ((x - meanX) / stdX) - ((y - meanY) / stdY);
+    alpha = 1 - sqrt(mean(zDiff(:).^2, 'omitnan'));
 
-% SPEM
-spem = 1 - sqrt((rs-1)^2 + (theta-1)^2 + (alpha-1)^2);
-
+    % SPEM
+    spem = 1 - sqrt((rs - 1)^2 + (gamma - 1)^2 + (alpha - 1)^2);
 end
