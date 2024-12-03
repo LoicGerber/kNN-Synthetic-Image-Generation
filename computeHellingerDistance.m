@@ -1,8 +1,8 @@
 % Function to calculate Hellinger distance based on histograms
 function distance = computeHellingerDistance(x, y)
-    % Remove non-positive values
-%     values1 = values1(values1 > 0);
-%     values2 = values2(values2 > 0);
+
+%     x = x(~isnan(x));
+%     y = y(~isnan(y));
 
     % Return maximum distance if inputs are empty or invalid
     minV = min([x(:); y(:)]);
@@ -17,11 +17,14 @@ function distance = computeHellingerDistance(x, y)
     edges = linspace(minV, maxV, numBins + 1);
 
     % Compute and normalize histograms
-    histX = histcounts(x, edges, 'Normalization', 'probability');
-    histY = histcounts(y, edges, 'Normalization', 'probability');
+    histX = histcounts(x, edges);
+    histX = histX./sum(histX);
+    histY = histcounts(y, edges);
+    histY = histY./sum(histY);
+%     histX = histcounts(x, edges, 'Normalization','probability');
+%     histY = histcounts(y, edges, 'Normalization', 'probability');
 
     % Compute Hellinger distance
     sqrtDiff = sqrt(histX) - sqrt(histY);
     distance = sqrt(sum(sqrtDiff.^2)) / sqrt(2);
 end
-
