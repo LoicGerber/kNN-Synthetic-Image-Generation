@@ -1,5 +1,5 @@
 % Function to calculate Hellinger distance based on histograms
-function distance = computeHellingerDistance(x, y)
+function distance = hellingerDist(x, y)
 
 %     x = x(~isnan(x));
 %     y = y(~isnan(y));
