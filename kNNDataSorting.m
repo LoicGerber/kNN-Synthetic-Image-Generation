@@ -59,12 +59,12 @@ end
 idxTarget     = contains(Weights.Properties.VariableNames,targetVar);
 weightsTarget = table2array(Weights(:,idxTarget));
 idxShort      = contains(Weights.Properties.VariableNames,'Short');
-weightsShort  = table2cell(Weights(:,idxShort));
+weightsShort  = table2array(Weights(:,idxShort));
 idxLong       = contains(Weights.Properties.VariableNames,'Long');
-weightsLong   = table2cell(Weights(:,idxLong));
+weightsLong   = table2array(Weights(:,idxLong));
 if ~isempty(additionalVars)
     idxAddVars     = contains(Weights.Properties.VariableNames,addVars);
-    weightsAddVars = table2cell(Weights(:,idxAddVars));
+    weightsAddVars = table2array(Weights(:,idxAddVars));
 else
     weightsAddVars = [];
 end
@@ -150,16 +150,16 @@ if parallelComputing == true
 %                         if ~(isempty(cell2mat(queryDatesData(qd,:))) || unique(isnan(cell2mat(queryDatesData(qd,:))))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
 %                             if metricKNN == 1 % RMSE
 %                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % RMSE
 %                             elseif metricKNN == 2 % MAE
 %                                 targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % MAE
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % MAE
 %                             elseif metricKNN == 3 % Manhattan
 %                                 targetDistance{ld} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Manhattan
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % Manhattan
 %                             elseif metricKNN == 4 % Euclidean
 %                                 targetDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % Euclidean
 %                             elseif metricKNN == 5 % SPEM
 %                                 targetDistance{ld} = cellfun(@(x, y) spem(x, y), ...
 %                                     queryDatesData(qd,:), learningDatesData(ld,:));
@@ -181,29 +181,29 @@ if parallelComputing == true
                             if ~isempty(addVarsData(qd,:))
                                 if metricKNN == 1 % RMSE
                                     addVarsDistance{ld,1} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-                                        queryAddVars, learningAddVars, 'UniformOutput', false); % RMSE
+                                        queryAddVars, learningAddVars); % RMSE
                                 elseif metricKNN == 2 % MAE
                                     addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                                        queryAddVars, learningAddVars, 'UniformOutput', false); % MAE
+                                        queryAddVars, learningAddVars); % MAE
                                 elseif metricKNN == 3 % Manhattan
                                     addVarsDistance{ld,1} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                        queryAddVars, learningAddVars, 'UniformOutput', false); % Manhattan
+                                        queryAddVars, learningAddVars); % Manhattan
                                 elseif metricKNN == 4 % Euclidean
                                     addVarsDistance{ld,1} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                        queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                                        queryAddVars, learningAddVars); % Euclidean
                                 elseif metricKNN == 5 % SPEM
-                                    addVarsDistance{ld,1} = cellfun(@(x, y) spem(x, y), ...
+                                    addVarsDistance{ld,1} = cellfun(@(x, y) (1 - spem(x, y)), ...
+                                        queryAddVars, learningAddVars);
+                                elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                                    addVarsDistance{ld,1} = cellfun(@(x, y) ...
+                                        computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
                                         queryAddVars, learningAddVars);
                                 else
                                     error('Bad metricKNN parameter')
                                 end
-                                addVarsDistance{ld,1} = sum(cell2mat(addVarsDistance{ld,1}),1,'omitnan');
+                                addVarsDistance{ld,1} = sum(addVarsDistance{ld,1},1,'omitnan');
                                 if optimPrep == false
-                                    if numel(addVars) == 1
-                                        addVarsDistance{ld,1} = addVarsDistance{ld,1} .* cell2mat(weightsAddVars);
-                                    else
-                                        addVarsDistance{ld,1} = num2cell(cell2mat(addVarsDistance{ld,1}) .* cell2mat(weightsAddVars));
-                                    end
+                                    addVarsDistance{ld,1} = addVarsDistance{ld,1} .* weightsAddVars;
                                 end
                             end
                         else
@@ -213,8 +213,6 @@ if parallelComputing == true
                         % Climate distance
                         % 1 date, 2 distance
                         climateDistAll = cell(ld,1);
-                        spemDist       = cell(ld,1);
-                        combinedResults = cell(ld,1);
                         hammingDist    = cell(ld,1);
                         hellingDist    = cell(ld,1);
                         climateDistHH  = cell(ld,1);
@@ -236,16 +234,16 @@ if parallelComputing == true
                         querySubset    = queryClimate(:, otherIdx);
                         if metricKNN == 1 % RMSE
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % RMSE
+                                learningSubset, querySubset); % RMSE
                         elseif metricKNN == 2 % MAE
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % MAE
+                                learningSubset, querySubset); % MAE
                         elseif metricKNN == 3 % Manhattan
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % Manhattan
+                                learningSubset, querySubset); % Manhattan
                         elseif metricKNN == 4 % Euclidean
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % Euclidean
+                                learningSubset, querySubset); % Euclidean
                         elseif metricKNN == 5 % SPEM
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) (1 - spem(x, y)), ...
                                 learningSubset, querySubset);
@@ -254,24 +252,23 @@ if parallelComputing == true
                             %hellingDist{ld,1} = cellfun(@(x,y) single(hellingerDist(x,y)), ...
                             %    learningSubset,querySubset,'UniformOutput',false);
                             %climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) ((1-x)/2)+(y/2),spemDist{ld,1},hellingDist{ld,1},'UniformOutput',false);
-                            combinedResults{ld,1} = cellfun(@(x, y) ...
+                            climateDistAll{ld,1}(:, otherIdx) = cellfun(@(x, y) ...
                                 computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
-                                learningSubset, querySubset, 'UniformOutput', false);
-                            climateDistAll{ld,1}(:, otherIdx) = combinedResults{ld,1};
+                                learningSubset, querySubset);
                         else
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
                         if shortWindow > 0
-                            climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll{ld,1}(1:shortWindow,:)),1,'omitnan');
+                            climateDistance{ld,2}(1,:) = sum(climateDistAll{ld,1}(1:shortWindow,:),1,'omitnan');
                         else
-                            climateDistance{ld,2}(1,:) = single(zeros(1,size(climateDistAll{ld,1},2)));
+                            climateDistance{ld,2}(1,:) = zeros(1,size(climateDistAll{ld,1},2));
                         end
-                        climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll{ld,1}(shortWindow+1:end,:)),1,'omitnan');
+                        climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1,'omitnan');
                         % Assign weights to corresponding index
                         if optimPrep == false
-                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
-                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
+                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
+                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
                             climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
                             climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+addVarsDistance{ld,1}; %targetDistance{ld,1}+
                         end
@@ -368,7 +365,7 @@ else % serial computing
             %targetDistance  = cell(totLDates,1);
             addVarsDistance = cell(totLDates,1);
             climateDistance = cell(totLDates,2);
-            climateDistAll  = cell(longWindow,numel(climateVars));
+            climateDistAll  = inf(longWindow,numel(climateVars));
             % Display progress - only for serial computing
             progress = 0;
             fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
@@ -404,16 +401,16 @@ else % serial computing
 %                         if ~(isempty(cell2mat(queryDatesData(qd,:))) || unique(isnan(cell2mat(queryDatesData(qd,:))))) %&& sum(sum(cell2mat(queryDatesData(qd,:))))~=0
 %                             if metricKNN == 1 % RMSE
 %                                 targetDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % RMSE
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % RMSE
 %                             elseif metricKNN == 2 % MAE
 %                                 targetDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % MAE
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % MAE
 %                             elseif metricKNN == 3 % Manhattan
 %                                 targetDistance{ld} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Manhattan
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % Manhattan
 %                             elseif metricKNN == 4 % Euclidean
 %                                 targetDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-%                                     queryDatesData(qd,:), learningDatesData(ld,:), 'UniformOutput', false); % Euclidean
+%                                     queryDatesData(qd,:), learningDatesData(ld,:)); % Euclidean
 %                             elseif metricKNN == 5 % SPEM
 %                                 targetDistance{ld} = cellfun(@(x, y) spem(x, y), ...
 %                                     queryDatesData(qd,:), learningDatesData(ld,:));
@@ -431,32 +428,32 @@ else % serial computing
 
                         % Additional variable comparison
                         % 1 distance
-                        if ~isempty(additionalVars) && ~isempty(cell2mat(addVarsData(qd,:)))
+                        if ~isempty(additionalVars) && ~isempty(addVarsData(qd,:))
                             if metricKNN == 1 % RMSE
                                 addVarsDistance{ld} = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-                                    queryAddVars, learningAddVars, 'UniformOutput', false); % RMSE
+                                    queryAddVars, learningAddVars); % RMSE
                             elseif metricKNN == 2 % MAE
                                 addVarsDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                                    queryAddVars, learningAddVars, 'UniformOutput', false); % MAE
+                                    queryAddVars, learningAddVars); % MAE
                             elseif metricKNN == 3 % Manhattan
                                 addVarsDistance{ld} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                    queryAddVars, learningAddVars, 'UniformOutput', false); % Manhattan
+                                    queryAddVars, learningAddVars); % Manhattan
                             elseif metricKNN == 4 % Euclidean
                                 addVarsDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                    queryAddVars, learningAddVars, 'UniformOutput', false); % Euclidean
+                                    queryAddVars, learningAddVars); % Euclidean
                             elseif metricKNN == 5 % SPEM
-                                addVarsDistance{ld} = cellfun(@(x, y) spem(x, y), ...
+                                addVarsDistance{ld} = cellfun(@(x, y) (1 - spem(x, y)), ...
+                                    queryAddVars, learningAddVars);
+                            elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                                addVarsDistance{ld} = cellfun(@(x, y) ...
+                                    computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
                                     queryAddVars, learningAddVars);
                             else
                                 error('Bad metricKNN parameter')
                             end
-                            addVarsDistance{ld} = sum(cell2mat(addVarsDistance{ld}),1,'omitnan');
+                            addVarsDistance{ld} = sum(addVarsDistance{ld},1,'omitnan');
                             if optimPrep == false
-                                if numel(addVars) == 1
-                                    addVarsDistance{ld} = addVarsDistance{ld} .* cell2mat(weightsAddVars);
-                                else
-                                    addVarsDistance{ld} = cell2mat(addVarsDistance{ld}) .* cell2mat(weightsAddVars);
-                                end
+                                addVarsDistance{ld} = addVarsDistance{ld} .* weightsAddVars;
                             end
                         else
                             addVarsDistance{ld} = 0;
@@ -466,13 +463,13 @@ else % serial computing
                         % 1 date, 2 distance
 
                         %                         rmse      = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-                        %                             learningClimate, queryClimate, 'UniformOutput', false); % root mean square error
+                        %                             learningClimate, queryClimate); % root mean square error
                         %                         mae       = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                        %                             learningClimate, queryClimate, 'UniformOutput', false); % mean absolute error
+                        %                             learningClimate, queryClimate); % mean absolute error
                         %                         manhattan = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                        %                             learningClimate, queryClimate, 'UniformOutput', false); % Manhattan
+                        %                             learningClimate, queryClimate); % Manhattan
                         %                         euclidean = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                        %                             learningClimate, queryClimate, 'UniformOutput', false); % Euclidean
+                        %                             learningClimate, queryClimate); % Euclidean
                         climVarIdx = zeros(1,numel(climateVarsNames));
                         otherIdx   = ~climVarIdx;
                         if sum(ismember(normMethods,4))>=1
@@ -493,42 +490,41 @@ else % serial computing
                         querySubset    = queryClimate(:, otherIdx);
                         if metricKNN == 1 % RMSE
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(mean((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % RMSE
+                                learningSubset, querySubset); % RMSE
                         elseif metricKNN == 2 % MAE
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % MAE
+                                learningSubset, querySubset); % MAE
                         elseif metricKNN == 3 % Manhattan
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % Manhattan
+                                learningSubset, querySubset); % Manhattan
                         elseif metricKNN == 4 % Euclidean
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset, 'UniformOutput', false); % Euclidean
+                                learningSubset, querySubset); % Euclidean
                         elseif metricKNN == 5 % SPEM
-                            climateDistAll(:,otherIdx) = num2cell(cellfun(@(x, y) (1 - spem(x, y)), ...
-                                    learningSubset, querySubset));
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) (1 - spem(x, y)), ...
+                                    learningSubset, querySubset);
                         elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
                             %spemDist    = num2cell(cellfun(@(x,y) spem(x, y), learningSubset, querySubset));
                             %hellingDist = cellfun(@(x,y) single(hellingerDist(x, y)), ...
                             %    learningSubset,querySubset,'UniformOutput',false);
                             %climateDistAll(:,otherIdx) = cellfun(@(x,y) ((1-x)/2)+(y/2),spemDist,hellingDist,'UniformOutput',false);
-                            combinedResults = cellfun(@(x, y) ...
+                            climateDistAll(:, otherIdx) = cellfun(@(x, y) ...
                                 computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
-                                learningSubset, querySubset, 'UniformOutput', false);
-                            climateDistAll(:, otherIdx) = combinedResults;
+                                learningSubset, querySubset);
                         else
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
                         if shortWindow > 0
-                            climateDistance{ld,2}(1,:) = sum(cell2mat(climateDistAll(1:shortWindow,:)),1,'omitnan');
+                            climateDistance{ld,2}(1,:) = sum(climateDistAll(1:shortWindow,:),1,'omitnan');
                         else
-                            climateDistance{ld,2}(1,:) = single(zeros(1,size(climateDistAll,2)));
+                            climateDistance{ld,2}(1,:) = zeros(1,size(climateDistAll,2));
                         end
-                        climateDistance{ld,2}(2,:) = sum(cell2mat(climateDistAll(shortWindow+1:end,:)),1,'omitnan');
+                        climateDistance{ld,2}(2,:) = sum(climateDistAll(shortWindow+1:end,:),1,'omitnan');
                         % Assign weights to corresponding index
                         if optimPrep == false
-                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* cell2mat(weightsShort);
-                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* cell2mat(weightsLong);
+                            climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
+                            climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
                             climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
                             climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan')+addVarsDistance{ld}; %+targetDistance{ld}
                         end
