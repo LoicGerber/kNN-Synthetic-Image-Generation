@@ -297,6 +297,61 @@ for k = 1:numel(targetVar)
             saveas(gcf,strcat(outputDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
+            
+            %refData   = refValidation.(targetVarL(k));
+            %synData   = synImages.(targetVarL(k));
+            absDayErr = zeros(size(synData));
+            dayErr    = absDayErr;
+            relErr    = absDayErr;
+            for day = 1:size(synData,3)
+                absDayErr(:,:,day) = abs(synData(:,:,day) - refData(:,:,day));
+                dayErr(:,:,day)    = synData(:,:,day) - refData(:,:,day);
+                relErr(:,:,day)    = abs((synData(:,:,day) - refData(:,:,day))./refData(:,:,day));
+            end
+            meanError  = mean(absDayErr,3);
+            meanBias   = mean(dayErr,3);
+            meanRelErr = mean(relErr,3);
+            
+            figure;
+            figMean = imagesc(meanError);
+            set(figMean, 'AlphaData', ~isnan(meanError))
+            colormap(gca, turbo(256));
+            caxis([0.2 0.6])
+            title('Mean absolute error')
+            subtitle(['Mean MAE: ' num2str(mean(mean(meanError,'omitnan'),'omitnan'),'%1.5f')])
+            set(gcf, 'color', 'white');
+            hcb=colorbar;
+            set(get(hcb,'label'),'string','Mean absolute error [mm/day]','Rotation',90);
+            axis equal off
+            saveas(gcf,strcat(outputDir,['\mae_' convertStringsToChars(targetVar(k)) '.png']))
+            
+            figure;
+            figMean = imagesc(meanBias);
+            set(figMean, 'AlphaData', ~isnan(meanBias))
+            colormap(gca, turbo(256));
+            caxis([-0.2 0.2])
+            title('Bias')
+            subtitle(['Mean bias: ' num2str(mean(mean(meanBias,'omitnan'),'omitnan'),'%1.5f')])
+            set(gcf, 'color', 'white');
+            hcb=colorbar;
+            set(get(hcb,'label'),'string','Bias [mm/day]','Rotation',90);
+            axis equal off
+            saveas(gcf,strcat(outputDir,['\bias_' convertStringsToChars(targetVar(k)) '.png']))
+            
+            figure;
+            figMean = imagesc(meanRelErr);
+            set(figMean, 'AlphaData', ~isnan(meanRelErr))
+            colormap(gca, turbo(256));
+            caxis([0 1])
+            title('Mean relative error')
+            subtitle(['Mean: ' num2str(mean(mean(meanRelErr,'omitnan'),'omitnan'),'%1.5f')])
+            set(gcf, 'color', 'white');
+            hcb=colorbar;
+            set(get(hcb,'label'),'string','Mean relative error','Rotation',90);
+            axis equal off
+            saveas(gcf,strcat(outputDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
+
+            % -------------------------------------------------------------------------
 
             % Set the output GIF file name
             if pixelWise == false
