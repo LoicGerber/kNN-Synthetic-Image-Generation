@@ -185,18 +185,18 @@ if parallelComputing == true
                                 elseif metricKNN == 2 % MAE
                                     addVarsDistance{ld,1} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                         queryAddVars, learningAddVars); % MAE
-                                elseif metricKNN == 3 % Manhattan
-                                    addVarsDistance{ld,1} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                        queryAddVars, learningAddVars); % Manhattan
-                                elseif metricKNN == 4 % Euclidean
-                                    addVarsDistance{ld,1} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                        queryAddVars, learningAddVars); % Euclidean
-                                elseif metricKNN == 5 % SPEM
+                                elseif metricKNN == 3 % 1-bSPEM
                                     addVarsDistance{ld,1} = cellfun(@(x, y) (1 - spem(x, y)), ...
                                         queryAddVars, learningAddVars);
-                                elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                                elseif metricKNN == 4 % Hellinger
+                                    addVarsDistance{ld,1} = cellfun(@(x, y) hellingerDist(x, y), ...
+                                        queryAddVars, learningAddVars);
+                                elseif metricKNN == 5 % 0.5*(1-bSPEM) + 0.5*Hellinger
                                     addVarsDistance{ld,1} = cellfun(@(x, y) ...
                                         computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
+                                        queryAddVars, learningAddVars);
+                                elseif metricKNN == 6 % SPAEF
+                                    addVarsDistance{ld,1} = cellfun(@(x, y) (1 - spaef(x, y)), ...
                                         queryAddVars, learningAddVars);
                                 else
                                     error('Bad metricKNN parameter')
@@ -238,22 +238,18 @@ if parallelComputing == true
                         elseif metricKNN == 2 % MAE
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                 learningSubset, querySubset); % MAE
-                        elseif metricKNN == 3 % Manhattan
-                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset); % Manhattan
-                        elseif metricKNN == 4 % Euclidean
-                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset); % Euclidean
-                        elseif metricKNN == 5 % SPEM
+                        elseif metricKNN == 3 % 1-bSPEM
                             climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) (1 - spem(x, y)), ...
                                 learningSubset, querySubset);
-                        elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
-                            %spemDist{ld,1}    = num2cell(cellfun(@(x,y) spem(x, y), learningSubset, querySubset));
-                            %hellingDist{ld,1} = cellfun(@(x,y) single(hellingerDist(x,y)), ...
-                            %    learningSubset,querySubset,'UniformOutput',false);
-                            %climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) ((1-x)/2)+(y/2),spemDist{ld,1},hellingDist{ld,1},'UniformOutput',false);
+                        elseif metricKNN == 4 % Hellinger
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) hellingDist(x, y), ...
+                                learningSubset, querySubset);
+                        elseif metricKNN == 5 % 0.5*(1-bSPEM) + 0.5*Hellinger
                             climateDistAll{ld,1}(:, otherIdx) = cellfun(@(x, y) ...
                                 computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
+                                learningSubset, querySubset);
+                        elseif metricKNN == 6 % SPAEF
+                            climateDistAll{ld,1}(:,otherIdx) = cellfun(@(x,y) (1 - spaef(x, y)), ...
                                 learningSubset, querySubset);
                         else
                             error('Bad metricKNN parameter')
@@ -435,18 +431,18 @@ else % serial computing
                             elseif metricKNN == 2 % MAE
                                 addVarsDistance{ld} = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                     queryAddVars, learningAddVars); % MAE
-                            elseif metricKNN == 3 % Manhattan
-                                addVarsDistance{ld} = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                    queryAddVars, learningAddVars); % Manhattan
-                            elseif metricKNN == 4 % Euclidean
-                                addVarsDistance{ld} = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                    queryAddVars, learningAddVars); % Euclidean
-                            elseif metricKNN == 5 % SPEM
+                            elseif metricKNN == 3 % 1-bSPEM
                                 addVarsDistance{ld} = cellfun(@(x, y) (1 - spem(x, y)), ...
                                     queryAddVars, learningAddVars);
-                            elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
+                            elseif metricKNN == 4 % Hellinger
+                                addVarsDistance{ld} = cellfun(@(x, y) hellingerDist(x, y), ...
+                                    queryAddVars, learningAddVars);
+                            elseif metricKNN == 5 % 0.5*(1-bSPEM) + 0.5*Hellinger
                                 addVarsDistance{ld} = cellfun(@(x, y) ...
                                     computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
+                                    queryAddVars, learningAddVars);
+                            elseif metricKNN == 6 % SPAEF
+                                addVarsDistance{ld} = cellfun(@(x, y) (1 - spaef(x, y)), ...
                                     queryAddVars, learningAddVars);
                             else
                                 error('Bad metricKNN parameter')
@@ -494,23 +490,19 @@ else % serial computing
                         elseif metricKNN == 2 % MAE
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) mean(abs(x - y), 'all', 'omitnan'), ...
                                 learningSubset, querySubset); % MAE
-                        elseif metricKNN == 3 % Manhattan
-                            climateDistAll(:,otherIdx) = cellfun(@(x, y) sum(abs(x - y), 'all', 'omitnan'), ...
-                                learningSubset, querySubset); % Manhattan
-                        elseif metricKNN == 4 % Euclidean
-                            climateDistAll(:,otherIdx) = cellfun(@(x, y) sqrt(sum((x - y).^2, 'all', 'omitnan')), ...
-                                learningSubset, querySubset); % Euclidean
-                        elseif metricKNN == 5 % SPEM
+                        elseif metricKNN == 3 % 1-bSPEM
                             climateDistAll(:,otherIdx) = cellfun(@(x, y) (1 - spem(x, y)), ...
                                     learningSubset, querySubset);
-                        elseif metricKNN == 6 % 0.5*SPEM + 0.5*Hellinger
-                            %spemDist    = num2cell(cellfun(@(x,y) spem(x, y), learningSubset, querySubset));
-                            %hellingDist = cellfun(@(x,y) single(hellingerDist(x, y)), ...
-                            %    learningSubset,querySubset,'UniformOutput',false);
-                            %climateDistAll(:,otherIdx) = cellfun(@(x,y) ((1-x)/2)+(y/2),spemDist,hellingDist,'UniformOutput',false);
+                        elseif metricKNN == 4 % Hellinger
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) hellingerDist(x, y), ...
+                                    learningSubset, querySubset);
+                        elseif metricKNN == 5 % 0.5*(1-bSPEM) + 0.5*Hellinger
                             climateDistAll(:, otherIdx) = cellfun(@(x, y) ...
                                 computeHellingerSPEM(x, y, @spem, @hellingerDist), ...
                                 learningSubset, querySubset);
+                        elseif metricKNN == 6 % SPAEF
+                            climateDistAll(:,otherIdx) = cellfun(@(x, y) (1 - spaef(x, y)), ...
+                                    learningSubset, querySubset);
                         else
                             error('Bad metricKNN parameter')
                         end

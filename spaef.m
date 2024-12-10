@@ -1,33 +1,39 @@
-function spaef = spaef(synImage,refImage)
+function spaef = spaef(x,y)
+
+index = ~(isnan(x) | isnan(y));
+validX = x(index);
+validY = y(index);
 
 % Alpha
-cc    = corrcoef(refImage,synImage); % Pearson correlation coefficient
+cc    = corrcoef(validY,validX); % Pearson correlation coefficient
 alpha = cc(1,2);
 
 % Beta
-meanRef = mean(refImage(:));
-meanSyn = mean(synImage(:));
-stdRef  = std(refImage(:));
-stdSyn  = std(synImage(:));
-if meanSyn == 0 || stdRef == 0 || stdSyn == 0
+meanY = mean(y(:),'omitnan');
+meanX = mean(x(:),'omitnan');
+stdY  = std(y(:),'omitnan');
+stdX  = std(x(:),'omitnan');
+if meanX == 0 || stdY == 0 || stdX == 0
     beta = 0;
-    disp('WARNING: beta term in SPAEF was forced to be 0')
+    % disp('WARNING: beta term in SPAEF was forced to be 0')
 else
-    beta  = (stdSyn/meanSyn) / (stdRef/meanRef); % cv ratio
+    beta  = (stdX/meanX) / (stdY/meanY); % cv ratio
 end
 
 % Gamma
-zScoreRef      = zscore(refImage);
-zScoreSyn      = zscore(synImage);
+% zScoreY      = zscore(y);
+% zScoreX      = zscore(x);
+zScoreY = (y - meanY) / stdY;
+zScoreX = (x - meanX) / stdX;
 
-bins           = floor(sqrt(length(refImage)));
+bins = floor(sqrt(length(y)));
 
-[refN,~]       = histcounts(zScoreRef,bins);
-[synN,~]       = histcounts(zScoreSyn,bins);
+[yN,~] = histcounts(zScoreY,bins);
+[xN,~] = histcounts(zScoreX,bins);
 
-minOfHists     = min([refN; synN], [], 1);
+minOfHists     = min([yN; xN], [], 1);
 overlappedHist = sum(minOfHists);
-histogramMatch = overlappedHist/sum(refN);
+histogramMatch = overlappedHist/sum(yN);
 gamma          = histogramMatch;
 
 % SPAEF

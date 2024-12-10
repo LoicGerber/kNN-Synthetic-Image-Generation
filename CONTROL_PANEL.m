@@ -35,7 +35,7 @@ pixelWise         = true;       % Pixel-wise kNN (true), or domain-wise kNN (fal
 shortWindow       = 5;          % Number of days to consider for the short climate window
 longWindow        = 20;         % Number of days to consider for the long climate window (total days, including shortWindow)
 nbImages          = 10;         % K, number of days to consider for the generation of images
-metricKNN         = 6;          % 1 = RMSE, 2 = MAE, 3 = Manhattan distance, 4 = Euclidean distance, 5 = 1-SPEM, 6 = 0.5*(1-SPEM) + 0.5*Hellinger
+metricKNN         = 6;          % 1 = RMSE, 2 = MAE, 3 = 1-bSPEM, 4 = Hellinger, 5 = 0.5*(1-bSPEM) + 0.5*Hellinger, 6 = SPAEF
 daysRange         = 90;         % Range of possible learning days (before and after) the query date's DOY
 
 % GenerateSynImages
