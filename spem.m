@@ -23,5 +23,8 @@ function spem = spem(x, y)
     alpha = 1 - sqrt(mean(zDiff(:).^2, 'omitnan'));
 
     % SPEM
-    spem = 1 - sqrt((rs - 1)^2 + (gamma - 1)^2 + (alpha - 1)^2);
+    % spem = 1 - sqrt((rs - 1)^2 + (gamma - 1)^2 + (alpha - 1)^2);
+    
+    % Bounded SPEM
+    spem = exp(-sqrt((rs - 1)^2 + (gamma - 1)^2 + (alpha - 1)^2));
 end
