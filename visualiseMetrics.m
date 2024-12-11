@@ -1,4 +1,4 @@
-function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outputDir)
+function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir)
 
 %
 %
@@ -76,7 +76,7 @@ for k = 1:numel(targetVar)
         legend('Synthetic data spread','Deterministic mean','Reference data mean')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['\bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outDir,['\bsValidation_AVG_' convertStringsToChars(targetVar(k)) '.png']))
 
         % -----------------------------------------------------------------------------------------------------------------------------
 
@@ -145,7 +145,7 @@ for k = 1:numel(targetVar)
         legend('Stochastic ensembles','Deterministic','Best distance')
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['\bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outDir,['\bsValidation_RMSE_' convertStringsToChars(targetVar(k)) '.png']))
     else
         if targetDim == 1
             figure('WindowState', 'maximized');
@@ -168,7 +168,7 @@ for k = 1:numel(targetVar)
             legend()
             set(gcf, 'color', 'white');
             grid on
-            saveas(gcf,strcat(outputDir,['\' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\' convertStringsToChars(targetVar(k)) '.png']))
         end
         figure('WindowState', 'maximized');
         plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
@@ -203,7 +203,7 @@ for k = 1:numel(targetVar)
         end
         set(gcf, 'color', 'white');
         grid on
-        saveas(gcf,strcat(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.png']))
+        saveas(gcf,strcat(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.png']))
 
         % --------------------------------------------------------------------
         if targetDim ~= 1
@@ -235,7 +235,7 @@ for k = 1:numel(targetVar)
             box off
             %legend boxoff
             set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outputDir,['\correlation_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '.png']))
 
             % --------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ for k = 1:numel(targetVar)
 %             box off
 %             %legend boxoff
 %             set(gcf, 'color', 'white');
-%             saveas(gcf,strcat(outputDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
+%             saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
 
             % --------------------------------------------------------------------
             
@@ -294,19 +294,19 @@ for k = 1:numel(targetVar)
             box off
             %legend boxoff
             set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outputDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
             
-            %refData   = refValidation.(targetVarL(k));
-            %synData   = synImages.(targetVarL(k));
+            refData   = refValidation.(targetVarL(k));
+            synData   = synImages.(targetVarL(k));
             absDayErr = zeros(size(synData));
             dayErr    = absDayErr;
             relErr    = absDayErr;
-            for day = 1:size(synData,3)
-                absDayErr(:,:,day) = abs(synData(:,:,day) - refData(:,:,day));
-                dayErr(:,:,day)    = synData(:,:,day) - refData(:,:,day);
-                relErr(:,:,day)    = abs((synData(:,:,day) - refData(:,:,day))./refData(:,:,day));
+            for i = 1:size(synData,3)
+                absDayErr(:,:,i) = abs(synData(:,:,i) - refData(:,:,i));
+                dayErr(:,:,i)    = synData(:,:,i) - refData(:,:,i);
+                relErr(:,:,i)    = abs((synData(:,:,i) - refData(:,:,i))./refData(:,:,i));
             end
             meanError  = mean(absDayErr,3);
             meanBias   = mean(dayErr,3);
@@ -323,7 +323,7 @@ for k = 1:numel(targetVar)
             hcb=colorbar;
             set(get(hcb,'label'),'string','Mean absolute error [mm/day]','Rotation',90);
             axis equal off
-            saveas(gcf,strcat(outputDir,['\mae_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\mae_' convertStringsToChars(targetVar(k)) '.png']))
             
             figure;
             figMean = imagesc(meanBias);
@@ -336,7 +336,7 @@ for k = 1:numel(targetVar)
             hcb=colorbar;
             set(get(hcb,'label'),'string','Bias [mm/day]','Rotation',90);
             axis equal off
-            saveas(gcf,strcat(outputDir,['\bias_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\bias_' convertStringsToChars(targetVar(k)) '.png']))
             
             figure;
             figMean = imagesc(meanRelErr);
@@ -349,13 +349,13 @@ for k = 1:numel(targetVar)
             hcb=colorbar;
             set(get(hcb,'label'),'string','Mean relative error','Rotation',90);
             axis equal off
-            saveas(gcf,strcat(outputDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
+            saveas(gcf,strcat(outDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
 
             % Set the output GIF file name
             if pixelWise == false
-                gifVal = fullfile(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
+                gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
                 synDates = synImages.date;
@@ -570,7 +570,7 @@ for k = 1:numel(targetVar)
                 % -------------------------------------------------------------------------
 
                 % Set the output GIF file name
-                gifVal = fullfile(outputDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
+                gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
                 refDates = refValidation.date;
                 synDates = synImages.date;

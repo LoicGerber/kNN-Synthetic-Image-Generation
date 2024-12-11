@@ -22,7 +22,7 @@ outDir = strcat(outputDir,'\output');
 
     %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 if sensiAnalysis == false
-        disp('--- 1. READING DATA ---')
+    disp('--- 1. READING DATA ---')
     
     if netCDFtoInputs == true || optimPrep == true || validationPrep == true
         disp('Formatting input data...')
