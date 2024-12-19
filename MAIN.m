@@ -1,7 +1,7 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = MAIN(...
     rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats, ...
-    maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
+    maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
     metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
@@ -107,7 +107,7 @@ if sensiAnalysis == false
     
     if (generateImage == true || validation == true) && optimisation == false
         if pixelWise == false
-            synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,geoRef,outDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
+            synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,mps,geoRef,outDir,generationType,nanValue,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
         else
             synImages = pixelWise_generateSynImages(maskDir,targetVar,learningDates,sortedDates,geoRef,outDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
         end
@@ -129,7 +129,7 @@ if sensiAnalysis == false
     if (validation == true || metricViz == true) && optimisation == false
         disp('--- 4. VALIDATION ---')
         
-        validationMetric = validationMetrics(targetVar,targetDim,nanValue,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
+        validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
         visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir);
         
         disp('--- 4. VALIDATION DONE ---')
