@@ -94,9 +94,13 @@ for k = 1:numel(targetVar)
         elseif metricKNN == 2
             ylabel('MAE')
         elseif metricKNN == 3
-            ylabel('Manhattan distance')
+            ylabel('1-bSPEM')
         elseif metricKNN == 4
-            ylabel('Euclidean distance')
+            ylabel('Hellinger distance')
+        elseif metricKNN == 5
+            ylabel('0.5*(1-bSPEM) + 0.5*Hellinger')
+        elseif metricKNN == 6
+            ylabel('SPAEF')
         end
         %         for i = 1:numel(dates)
         %             ensemble = ensembleData{i};
@@ -110,12 +114,14 @@ for k = 1:numel(targetVar)
         %ylim([0 1.4])
         yyaxis left
         if metricV == 1
-            title([convertStringsToChars(targetVar(k)) ' - RMSE'])
+            title([convertStringsToChars(targetVar(k)) ' - MAE'])
         elseif metricV == 2
-            title([convertStringsToChars(targetVar(k)) ' - SPEM'])
+            title([convertStringsToChars(targetVar(k)) ' - RMSE'])
         elseif metricV == 3
-            title([convertStringsToChars(targetVar(k)) ' - SPAEF'])
+            title([convertStringsToChars(targetVar(k)) ' - SPEM'])
         elseif metricV == 4
+            title([convertStringsToChars(targetVar(k)) ' - SPAEF'])
+        elseif metricV == 5
             title([convertStringsToChars(targetVar(k)) ' - KGE'])
         end
         %str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
@@ -129,12 +135,14 @@ for k = 1:numel(targetVar)
         end
         xlabel('Date')
         if metricV == 1
-            ylabel('RMSE')
+            ylabel('MAE')
         elseif metricV == 2
-            ylabel('SPEM')
+            ylabel('RMSE')
         elseif metricV == 3
-            ylabel('SPAEF')
+            ylabel('SPEM')
         elseif metricV == 4
+            ylabel('SPAEF')
+        elseif metricV == 5
             ylabel('KGE')
         end
         ax = gca;
@@ -176,12 +184,14 @@ for k = 1:numel(targetVar)
         yline(mean(validationMetric.(targetVarL(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2)))],'Color','r')
         %ylim([0 1.4])
         if metricV == 1
-            title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - MAE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         elseif metricV == 2
-            title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         elseif metricV == 3
-            title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
+            title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         elseif metricV == 4
+            title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
+        elseif metricV == 5
             title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         end
         if strcmp(startLdate, startQdate)
@@ -193,12 +203,14 @@ for k = 1:numel(targetVar)
         end
         xlabel('Date')
         if metricV == 1
-            ylabel('RMSE')
+            ylabel('MAE')
         elseif metricV == 2
-            ylabel('SPEM')
+            ylabel('RMSE')
         elseif metricV == 3
-            ylabel('SPAEF')
+            ylabel('SPEM')
         elseif metricV == 4
+            ylabel('SPAEF')
+        elseif metricV == 5
             ylabel('KGE')
         end
         set(gcf, 'color', 'white');
@@ -350,6 +362,44 @@ for k = 1:numel(targetVar)
             set(get(hcb,'label'),'string','Mean relative error','Rotation',90);
             axis equal off
             saveas(gcf,strcat(outDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
+
+            % -------------------------------------------------------------------------
+            
+            synDates = synImages.date;
+            dates = datetime(synDates, 'ConvertFrom', 'yyyyMMdd', 'format', 'dd/MM/yyyy');
+            cellData = synImages.(strcat(targetVarL(k), "_Distances")); % Assuming this is a cell array with 25x1 arrays
+            minValues = cellfun(@min, cellData);
+            maxValues = cellfun(@max, cellData);
+            medianValues = cellfun(@median, cellData);
+
+            figure;
+            hold on;
+            fill([dates; flipud(dates)], [minValues; flipud(maxValues)], 'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+            for i = 1:numel(cellData)
+                scatter(repmat(dates(i), 25, 1), cellData{i}, 20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
+            end
+            plot(dates, medianValues, 'r--', 'LineWidth', 1.5);
+            xlabel('Date');
+            switch metricKNN
+                case 1
+                    ylabel('RMSE');
+                case 2
+                    ylabel('MAE');
+                case 3
+                    ylabel('1-bSPEM');
+                case 4
+                    ylabel('Hellinger Distance');
+                case 5
+                    ylabel('0.5*(1-bSPEM) + 0.5*Hellinger');
+                case 6
+                    ylabel('SPAEF');
+            end
+            title('Daily distance of the k candidates');
+            grid on;
+            hold off;
+
+            set(gcf, 'color', 'white');
+            saveas(gcf,strcat(outDir,['\distance_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
 
@@ -541,14 +591,17 @@ for k = 1:numel(targetVar)
                         % Set the title of the figure to the name of the images
                         if metricV == 1
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 2
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 3
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 4
+                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                        elseif metricV == 5
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                                 ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         end
@@ -638,14 +691,17 @@ for k = 1:numel(targetVar)
                         % Set the title of the figure to the name of the images
                         if metricV == 1
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 2
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 3
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         elseif metricV == 4
+                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                        elseif metricV == 5
                             sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
                                 ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
                         end
