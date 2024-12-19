@@ -1,9 +1,4 @@
-function kge = computeKGE(simulated, observed, nanValue)
-    % Remove any invalid data points
-    if ~isnan(nanValue)
-        observed(observed == nanValue) = nan;
-        simulated(isnan(observed))     = nan;
-    end
+function kge = computeKGE(simulated, observed)
 
     % Flatten the arrays to ensure they are treated as 1D vectors
     simulated = simulated(:);
