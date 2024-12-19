@@ -1,4 +1,4 @@
-function synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,geoRef,outputDir,generationType,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType)
+function synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,mps,geoRef,outputDir,generationType,nanValue,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType)
 
 %
 %
@@ -17,6 +17,22 @@ for i = 1:numel(targetVarL)
     % Preallocate variables for efficiency
     learningDatesDate = table2array(learningDates(:,'date'));
     learningData      = table2array(learningDates(:,i+1));
+
+    if generationType == 5
+        % Mask with shape of image
+        mask = double(~isnan(learningData{1,1}));
+        mask(mask==1) = nan;
+        mask(mask==0) = nanValue;
+        % Map with numbered pixels, to prevent pixel movement
+        values = 1:(size(mask,1) * size(mask,2));
+        loc = reshape(values, size(mask,1), size(mask,2));
+        mask = cat(3, mask, loc);
+        % Kernel creation
+        ki = ones(mps.kernel_dims);
+        for w = 1:length(mps.kernel_weights)
+            ki(:,:,w) = ki(:,:,w) .* mps.kernel_weights(w);
+        end
+    end
     
     if targetDim ~= 1
         imgLength = size(learningData{1},1);
@@ -307,6 +323,23 @@ for i = 1:numel(targetVarL)
             elseif generationType == 4
                 % Calculate the median and save it to resultImages
                 resultImages = median(selectedImages,3);
+            elseif generationType == 5 
+                % Perform MPS simulation to generate result
+                cellSelImages = cell(1, size(selectedImages, 3));
+                selectedImages(isnan(selectedImages)) = nanValue;
+                for img = 1:size(selectedImages, 3)
+                    cellSelImages{img} = cat(3, selectedImages(:, :, img), loc);
+                end
+                resultImages = g2s('-a','qs', ...
+                                   '-di',mask, ...
+                                   '-ti',cellSelImages, ...
+                                   '-ki',ki, ...
+                                   '-dt',mps.dataType, ...
+                                   '-k',mps.kValue, ...
+                                   '-n',mps.neighbours, ...
+                                   '-j',mps.processPwr);
+                resultImages = resultImages(:,:,1);
+                resultImages(resultImages==nanValue) = nan;
             else
                 error('Generation type not defined!')
             end
@@ -373,6 +406,24 @@ for i = 1:numel(targetVarL)
                 elseif generationType == 4
                     % Calculate the median and save it to resultImagesBS
                     resultImagesBS(:,:,bs) = median(selectedImages,3);
+                elseif generationType == 5
+                    % Perform MPS simulation to generate result
+                    cellSelImages = cell(1, size(selectedImages, 3));
+                    selectedImages(isnan(selectedImages)) = nanValue;
+                    for img = 1:size(selectedImages, 3)
+                        cellSelImages{img} = cat(3, selectedImages(:, :, img), loc);
+                    end
+                    resultImages = g2s('-a','qs', ...
+                                       '-di',mask, ...
+                                       '-ti',cellSelImages, ...
+                                       '-ki',ki, ...
+                                       '-dt',mps.dataType, ...
+                                       '-k',mps.kValue, ...
+                                       '-n',mps.neighbours, ...
+                                       '-j',mps.processPwr);
+                    resultImages = resultImages(:,:,1);
+                    resultImages(resultImages==nanValue) = nan;
+                    resultImagesBS(:,:,bs) = resultImages;
                 else
                     error('Generation type not defined!')
                 end
@@ -507,13 +558,34 @@ for i = 1:numel(targetVarL)
                 else
                     resultImages = median(selectedImages);
                 end
+            elseif generationType == 5
+                % Perform MPS simulation to generate result
+                if targetDim ~= 1
+                    cellSelImages = cell(1, size(selectedImages, 3));
+                    selectedImages(isnan(selectedImages)) = nanValue;
+                    for img = 1:size(selectedImages, 3)
+                        cellSelImages{img} = cat(3, selectedImages(:, :, img), loc);
+                    end
+                    resultImages = g2s('-a','qs', ...
+                                       '-di',mask, ...
+                                       '-ti',cellSelImages, ...
+                                       '-ki',ki, ...
+                                       '-dt',mps.dataType, ...
+                                       '-k',mps.kValue, ...
+                                       '-n',mps.neighbours, ...
+                                       '-j',mps.processPwr);
+                    resultImages = resultImages(:,:,1);
+                    resultImages(resultImages==nanValue) = nan;
+                else
+                    error('MPS not implemented for 1D data generation...')
+                end
             else
                 error('Generation type not defined!')
             end
             if targetDim ~= 1
                 map(:,:,rowIndex) = resultImages;
                 % Calculate the count of non-NaN values
-                availablePix(:,:,rowIndex) = sum(~isnan(weightedImages), 3);
+                availablePix(:,:,rowIndex) = sum(~isnan(selectedImages), 3);
                 if outputType == 1
                     % Write the resulting image to a GeoTIFF file
                     outputBaseName = string(sortedDates(rowIndex,1)) + targetVarL(i) + '.tif';
@@ -575,7 +647,7 @@ for i = 1:numel(targetVarL)
     % Save text file
     if targetDim == 1
         % Write the resulting image to a GeoTIFF file
-        outputBaseName = strcat(targetVar(i), '.txt');
+        outputBaseName = strcat(targetVarL(i), '.txt');
         fullDestinationFileName = fullfile(outputDir, outputBaseName);
         Dates = cell2mat(sortedDates(:,1));
         Discharge = map;
@@ -589,19 +661,20 @@ for i = 1:numel(targetVarL)
         fprintf('\n')
     end
     synImages.(targetVarL(i)) = map;
-    varDist = strcat(targetVar(i), "_BestDistance");
+    varDist = strcat(targetVarL(i), "_Distances");
     minDist = single(nan(size(sortedDates,1),1));
     for c = 1:size(sortedDates, 1)
         values = sortedDates{c,3};
         minDist(c) = min(values);
     end
-    synImages.(varDist) = minDist;
-    varPix = strcat(targetVar(i), "_AvailablePixels");
+    %synImages.(varDist) = minDist;
+    synImages.(varDist) = sortedDates(:,3);
+    varPix = strcat(targetVarL(i), "_AvailablePixels");
     synImages.(varPix) = (availablePix./nbImages).*100;
-    varName = strcat(targetVar(i), "_Variance");
+    varName = strcat(targetVarL(i), "_Variance");
     synImages.(varName) = varMap;
     if bootstrap == true
-        varBS = strcat(targetVar(i), "_Bootstrap");
+        varBS = strcat(targetVarL(i), "_Bootstrap");
         BSvar = strcat(varBS, "Variance");
         synImages.(varBS) = imagesSynAll;
         synImages.(BSvar) = varianceBS;
