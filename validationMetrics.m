@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(targetVar,targetDim,nanValue,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
 
 %
 %
@@ -62,14 +62,14 @@ for j = 1:numel(targetVar)
         else
             refImage = double(refImages(i));
         end
-        refImage(isnan(refImage)) = -999;
+        %refImage(isnan(refImage)) = nanValue;
         if bootstrap == false
             if targetDim ~= 1
                 synImage = double(synImagesAll(:,:,i));
             else
                 synImage = double(synImagesAll(i));
             end
-            synImage(isnan(synImage)) = -999;
+            %synImage(isnan(synImage)) = nanValue;
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
             if refImageDate == synImageDate
                 currentDate = refImageDate;
@@ -78,17 +78,20 @@ for j = 1:numel(targetVar)
             end
             validationResult(i,1) = currentDate;
             if metricV == 1
-                % Calculate the RMSE
-                validationResult(i,2) = sqrt(immse(synImage,refImage));
+                % Calculate the MAE
+                validationResult(i,2) = mean(abs(synImage - refImage), 'all', 'omitnan');
             elseif metricV == 2
+                % Calculate the RMSE
+                validationResult(i,2) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+            elseif metricV == 3
                 % Calculate the SPEM
                 validationResult(i,2) = spem(synImage,refImage);
-            elseif metricV == 3
+            elseif metricV == 4
                 % Calculate the SPAEF
                 validationResult(i,2) = spaef(synImage,refImage);
-            elseif metricV == 4  || metricV == 5
+            elseif metricV == 5  || metricV == 6
                 if targetDim == 2
-                    validationResult(i,2) = computeKGE(synImage,refImage,nanValue);
+                    validationResult(i,2) = computeKGE(synImage,refImage);
                 else
                     % Accumulate data for KGE calculation
                     accumulatedRef = [accumulatedRef; refImage(:)];
@@ -108,19 +111,22 @@ for j = 1:numel(targetVar)
             % Bootstrap ensembles
             for k = 1:ensemble
                 synImage = double(synImagesAll{i}(:,:,k));
-                synImage(isnan(synImage)) = -999;
+                %synImage(isnan(synImage)) = nanValue;
                 if metricV == 1
-                    % Calculate the RMSE
-                    validationResult{i,2}(k) = sqrt(immse(synImage,refImage));
+                    % Calculate the MAE
+                    validationResult{i,2}(k) = mean(abs(synImage - refImage), 'all', 'omitnan');
                 elseif metricV == 2
+                    % Calculate the RMSE
+                    validationResult{i,2}(k) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+                elseif metricV == 3
                     % Calculate the SPEM
                     validationResult{i,2}(k) = spem(synImage,refImage);
-                elseif metricV == 3
+                elseif metricV == 4
                     % Calculate the SPAEF
                     validationResult{i,2}(k) = spaef(synImage,refImage);
-                elseif metricV == 4 || metricV == 5
+                elseif metricV == 5 || metricV == 6
                     if targetDim == 2
-                        validationResult{i,2}(k) = computeKGE(synImage,refImage,nanValue);
+                        validationResult{i,2}(k) = computeKGE(synImage,refImage);
                     else
                         % Accumulate data for KGE calculation
                         accumulatedRef = [accumulatedRef; refImage(:)];
@@ -132,14 +138,17 @@ for j = 1:numel(targetVar)
             end
             % KNN result
             synImage = double(maps(:,:,i));
-            synImage(isnan(synImage)) = -999;
+            %synImage(isnan(synImage)) = nanValue;
             if metricV == 1
-                % Calculate the RMSE
-                validationResult{i,3} = sqrt(immse(synImage,refImage));
+                % Calculate the MAE
+                validationResult{i,3} = mean(abs(synImage - refImage), 'all', 'omitnan');
             elseif metricV == 2
+                % Calculate the RMSE
+                validationResult{i,3} = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+            elseif metricV == 3
                 % Calculate the SPEM
                 validationResult{i,3} = spem(synImage,refImage);
-            elseif metricV == 3
+            elseif metricV == 4
                 % Calculate the SPAEF
                 validationResult{i,3} = spaef(synImage,refImage);
             else
@@ -148,14 +157,14 @@ for j = 1:numel(targetVar)
         end
     end
     
-    if metricV == 4 && targetDim == 1 % Compute KGE for the entire time series
-        kgeValue = computeKGE(accumulatedSyn, accumulatedRef, nanValue);
+    if metricV == 5 && targetDim == 1 % Compute KGE for the entire time series
+        kgeValue = computeKGE(accumulatedSyn, accumulatedRef);
         if bootstrap == false
             validationResult(:,2) = kgeValue;
         else
             validationResult{:,2} = kgeValue;
         end
-    elseif metricV == 5 && targetDim == 1 % Compute NSE for the entire time series
+    elseif metricV == 6 && targetDim == 1 % Compute NSE for the entire time series
         nseValue = computeNSE(accumulatedSyn, accumulatedRef);
         if bootstrap == false
             validationResult(:,2) = nseValue;
