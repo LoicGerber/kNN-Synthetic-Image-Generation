@@ -3,7 +3,7 @@ function geoRef = extractGeoInfo(targetVar, coordRefSysCode, rawDir, inputDir)
 for i = 1:numel(targetVar)
     % Check file extension and use appropriate function
     tarVarL = lower(targetVar(i));
-    filePath = fullfile(rawDir,[convertStringsToChars(tarVarL(i)) '.nc']);
+    filePath = fullfile(rawDir,[convertStringsToChars(tarVarL) '.nc']);
     
     if exist(filePath, 'file') == 2 %strcmpi(ext, '.nc')
         ncid = netcdf.open(filePath, 'NOWRITE');

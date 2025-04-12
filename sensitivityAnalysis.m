@@ -51,7 +51,7 @@ for iRange = 1:length(nbImages_range)
         disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 
         disp('--- 4. VALIDATION ---')
-        validationMetric = validationMetrics(targetVar,targetDim,nanValue,metricV,false,refValidation,synImages,bootstrap,ensemble,outDir);
+        validationMetric = validationMetrics(targetVar,targetDim,metricV,false,refValidation,synImages,bootstrap,ensemble,outDir);
         disp('--- 4. VALIDATION DONE ---')
 
         % Store the sensitivity result in the array
@@ -80,7 +80,7 @@ else
 end
 best = sortedMeanTS(1,2);
 
-metrics = {'RMSE','SPEM','SPAEF','KGE','NSE'};
+metrics = {'MAE','RMSE','SPEM','SPAEF','KGE','NSE'};
 
 it = 0;
 bestDistImg = nan(size(sensitivityResults));

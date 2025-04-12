@@ -584,7 +584,7 @@ end
 
 sortedDates = sortedDates(~cellfun('isempty',sortedDates(:,1)),:);
 
-if optimPrep == false && saveMats == true
+if optimPrep == false %&& saveMats == true
     disp('Saving KNNSorting.mat file...')
     save(fullfile(inputDir,'KNNSorting.mat'),'sortedDates', '-v7.3','-nocompression'); % Save Ranked Learning Dates per Query Date
 else
