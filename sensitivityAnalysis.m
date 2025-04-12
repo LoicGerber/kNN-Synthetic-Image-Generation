@@ -1,5 +1,5 @@
 function [climateData,queryDates,learningDates,refValidation,additionalVars, ...
-    Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
+    Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
     nanValue,maxThreshold,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
 
 % Perform sensitivity analysis loop
@@ -36,14 +36,12 @@ for iRange = 1:length(nbImages_range)
         learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,false);
         disp('Extracting Query dates...')
         [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,true,false,outputTime,inDir,outDir,false);
-        disp('Extracting additional variables...')
-        additionalVars = extractAdditionalVars(addVars,rawData,climateData,QdateStart,QdateEnd,LdateStart,LdateEnd,maxThreshold,inDir);
         disp('Loading optimisedWeights.mat file...')
-        Weights = createWeights(targetVar,climateVars,addVars,inDir);
+        Weights = createWeights(targetVar,climateVars,inDir);
         disp('--- 1. READING DATA DONE ---')
 
         disp('--- 2. KNN DATA SORTING ---')
-        sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,false);
+        sortedDates = kNNDataSorting(targetVar,climateVars,queryDates,learningDates,climateData,additionalVars,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,false);
         disp('--- 2. KNN DATA SORTING DONE ---')
 
         disp('--- 3. SYNTHETIC IMAGES GENERATION ---')

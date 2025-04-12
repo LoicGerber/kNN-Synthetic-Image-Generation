@@ -1,4 +1,4 @@
-function rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,addVars,rawDir,inputDir)
+function rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir,inputDir)
 
 %
 %
@@ -18,7 +18,7 @@ if ~exist(inputDir, 'dir')
     mkdir(inputDir)
 end
 
-varsAll = [targetVar climateVars addVars];
+varsAll = [targetVar climateVars];
 fields  = [];
 
 rawData  = struct();
