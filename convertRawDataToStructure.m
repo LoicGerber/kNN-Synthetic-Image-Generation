@@ -56,7 +56,11 @@ if ~isempty(files)
                 catch
                     time_origin = datetime(time_units,'InputFormat','yyyy-MM-dd hh:mm:ss.s');
                 end
-                time_datenum = datenum(time_origin + hours(time_data));
+                if strcmp(time_step,'days')
+                    time_datenum = datenum(time_origin + days(time_data));
+                elseif strcmp(time_step,'hours')
+                    time_datenum = datenum(time_origin + hours(time_data));
+                end
             else
                 time_units   = strip(strrep(time_units,strcat(time_step,' since '),''));
                 time_origin  = datetime(time_units,'InputFormat','yyyy-MM-dd');
@@ -71,12 +75,15 @@ if ~isempty(files)
             num_days = length(time_datenum);
             data     = cell(num_days,1);
             dates    = cell(num_days,1);
+            
+            data_all = netcdf.getVar(ncid, varid);  
+
             for j=1:num_days
                 day_start = time_datenum(j);
                 day_end   = day_start + 1;
                 time_idx  = find(time_datenum >= day_start & time_datenum < day_end);
-                data{j}   = netcdf.getVar(ncid,varid,[0 0 time_idx-1],[dims{1,2} dims{2,2} 1],'single');
-                dates{j}  = datestr(day_start,'yyyymmdd');
+                data{j} = single(data_all(:, :, time_idx));
+                dates{j} = datestr(day_start, 'yyyymmdd');
             end
 
             data  = cellfun(@transpose,data,'UniformOutput',false);
