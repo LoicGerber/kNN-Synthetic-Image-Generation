@@ -32,11 +32,11 @@ for i = 1:numel(varLow)
 
     selectedImages = single(NaN(imgLength,imgWidth,nbImages));
     resultImages   = single(NaN(imgLength,imgWidth));
-    imagesSynAll = single(NaN(imgLength,imgWidth,size(sortedData,3)));
-    map          = imagesSynAll;
-    varMap       = imagesSynAll;
-    availablePix = imagesSynAll;
-    varianceBS   = imagesSynAll;
+    imagesSynAll   = single(NaN(imgLength,imgWidth,size(sortedData,3)));
+    map            = imagesSynAll;
+    varMap         = imagesSynAll;
+    availablePix   = imagesSynAll;
+    varianceBS     = imagesSynAll;
 
     if bootstrap == true
         imagesSynAll = cell(size(sortedData,1),1);
@@ -570,7 +570,7 @@ for i = 1:numel(varLow)
         synImages.date = dates;
         fprintf('\n')
     end
-    synImages.(targetVar(i)) = map;
+    synImages.(varLow(i)) = map;
     %varDist = strcat(targetVar(i), "_BestDistance");
     %minDist = single(nan(size(sortedData,1),1));
 %     for c = 1:size(sortedData, 1)
@@ -578,12 +578,12 @@ for i = 1:numel(varLow)
 %         minDist(c) = min(values);
 %     end
     %synImages.(varDist) = minDist;
-    varPix = strcat(targetVar(i), "_AvailablePixels");
+    varPix = strcat(varLow(i), "_AvailablePixels");
     synImages.(varPix) = (availablePix./nbImages).*100;
-    varName = strcat(targetVar(i), "_Variance");
+    varName = strcat(varLow(i), "_Variance");
     synImages.(varName) = varMap;
     if bootstrap == true
-        varBS = strcat(targetVar(i), "_Bootstrap");
+        varBS = strcat(varLow(i), "_Bootstrap");
         BSvar = strcat(varBS, "Variance");
         synImages.(varBS) = imagesSynAll;
         synImages.(BSvar) = varianceBS;

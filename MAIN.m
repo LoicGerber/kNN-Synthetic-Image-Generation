@@ -2,7 +2,7 @@ function [geoRef,climateData,queryDates,learningDates,refValidation,additionalVa
     Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = MAIN(...
     rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats, ...
     maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise,createGIF, ...
     metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
@@ -78,6 +78,18 @@ if sensiAnalysis == false
         Weights = optimisedWeights.optimisedWeights;
     end
     
+    % TEMPORARY FIX FOR PIXELWISE SIZE MISMATCH
+%     learningDatesMod = learningDates;
+%     for row = 1:size(learningDatesMod, 1)
+%         originalMatrix = cell2mat(learningDatesMod{row, 2});
+%         topNaNRow = NaN(1, size(originalMatrix, 2));
+%         matrixWithTopNaN = [topNaNRow; originalMatrix];
+%         rightNaNColumn = NaN(size(matrixWithTopNaN, 1), 1);
+%         matrixWithTopAndRightNaN = [matrixWithTopNaN, rightNaNColumn];
+%         learningDatesMod{row, 2} = {matrixWithTopAndRightNaN};
+%     end
+%     learningDates = learningDatesMod;
+
     disp('--- 1. READING DATA DONE ---')
     
     %% The function for Ranking the learning dates
@@ -88,7 +100,7 @@ if sensiAnalysis == false
         if pixelWise == false
             sortedDates = kNNDataSorting(targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir,saveMats);
         else
-            sortedDates = pixelWise_kNNDataSorting(maskDir,targetVar,climateVars,addVars,queryDates,learningDates,climateData,additionalVars,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir);
+            sortedDates = pixelWise_kNNDataSorting(maskDir,climateVars,queryDates,learningDates,climateData,longWindow,daysRange,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir);
         end
     elseif kNNsorting == false && validationPrep == false && (optimPrep == false && optimisation == false)
         disp('Loading sortedDates.mat file...')
@@ -105,7 +117,7 @@ if sensiAnalysis == false
     %% Generation of Synthetic Images
     disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
     
-    if (generateImage == true || validation == true) && optimisation == false
+    if (generateImage == true && validation == true) && optimisation == false
         if pixelWise == false
             synImages = generateSynImages(targetVar,targetDim,learningDates,sortedDates,mps,geoRef,outDir,generationType,nanValue,validation,optimisation,bootstrap,bsSaveAll,nbImages,ensemble,outputType);
         else
@@ -130,8 +142,8 @@ if sensiAnalysis == false
         disp('--- 4. VALIDATION ---')
         
         validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outDir);
-        visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir);
-        
+        visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,bootstrap,outDir,createGIF);
+
         disp('--- 4. VALIDATION DONE ---')
     else
         validationMetric = [];

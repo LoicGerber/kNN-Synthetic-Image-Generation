@@ -1,4 +1,4 @@
-function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,bootstrap,outDir)
+function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,bootstrap,outDir,createGIF)
 
 %
 %
@@ -172,7 +172,7 @@ for k = 1:numel(targetVar)
             end
             xlabel('Date')
             ylabel('Discharge [m^{3}/s]')
-            title(targetVar)
+            title(targetVar(k))
             legend()
             set(gcf, 'color', 'white');
             grid on
@@ -251,41 +251,41 @@ for k = 1:numel(targetVar)
 
             % --------------------------------------------------------------------
 
-%             % Set the filter order (adjust as needed)
-%             filterOrder = 3;
-%             % Set the cutoff frequency for the high-pass filter (adjust as needed)
-%             cutoffFrequency = 0.01; % Adjust this value based on your data characteristics
-%             % Design a Butterworth high-pass filter
-%             [b, a] = butter(filterOrder, cutoffFrequency, 'high');
-% 
-%             % Apply the filter to both reference and synthetic datasets
-%             refDataHighPass = filtfilt(b, a, double(meanRefData));
-%             synDataHighPass = filtfilt(b, a, double(meanSynData));
-% 
-%             % Plot the original and high-pass filtered data
-%             figure('WindowState', 'maximized');
-%             date = datetime(validationMetric.(targetVarL(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
-%             plot(date, refDataHighPass, 'r-', date, synDataHighPass, 'k-');
-%             legend('Reference', 'Synthetic', 'Location', 'southeast');
-%             title('High-Pass Filtered Data');
-%             xlabel('Date');
-%             ylabel(strcat('Detrended ', varLegend));
-%             grid on;
-%             r = corr(synDataHighPass,refDataHighPass);
-%             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-%             alpha = std(synDataHighPass)/std(refDataHighPass);
-%             beta  = mean(synDataHighPass)/mean(refDataHighPass);
-%             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-%             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-%             subtitle(str)
-%             grid on
-%             box off
-%             %legend boxoff
-%             set(gcf, 'color', 'white');
-%             saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
+            %             % Set the filter order (adjust as needed)
+            %             filterOrder = 3;
+            %             % Set the cutoff frequency for the high-pass filter (adjust as needed)
+            %             cutoffFrequency = 0.01; % Adjust this value based on your data characteristics
+            %             % Design a Butterworth high-pass filter
+            %             [b, a] = butter(filterOrder, cutoffFrequency, 'high');
+            %
+            %             % Apply the filter to both reference and synthetic datasets
+            %             refDataHighPass = filtfilt(b, a, double(meanRefData));
+            %             synDataHighPass = filtfilt(b, a, double(meanSynData));
+            %
+            %             % Plot the original and high-pass filtered data
+            %             figure('WindowState', 'maximized');
+            %             date = datetime(validationMetric.(targetVarL(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
+            %             plot(date, refDataHighPass, 'r-', date, synDataHighPass, 'k-');
+            %             legend('Reference', 'Synthetic', 'Location', 'southeast');
+            %             title('High-Pass Filtered Data');
+            %             xlabel('Date');
+            %             ylabel(strcat('Detrended ', varLegend));
+            %             grid on;
+            %             r = corr(synDataHighPass,refDataHighPass);
+            %             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
+            %             alpha = std(synDataHighPass)/std(refDataHighPass);
+            %             beta  = mean(synDataHighPass)/mean(refDataHighPass);
+            %             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
+            %             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
+            %             subtitle(str)
+            %             grid on
+            %             box off
+            %             %legend boxoff
+            %             set(gcf, 'color', 'white');
+            %             saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
 
             % --------------------------------------------------------------------
-            
+
             varRefData = squeeze(var(refData,0,[1 2],'omitnan'));
             varSynData = squeeze(var(synData,0,[1 2],'omitnan'));
             figure('WindowState', 'maximized');
@@ -309,26 +309,26 @@ for k = 1:numel(targetVar)
             saveas(gcf,strcat(outDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
-            
-            refData   = refValidation.(targetVarL(k));
-            synData   = synImages.(targetVarL(k));
+
             absDayErr = zeros(size(synData));
             dayErr    = absDayErr;
             relErr    = absDayErr;
             for i = 1:size(synData,3)
                 absDayErr(:,:,i) = abs(synData(:,:,i) - refData(:,:,i));
                 dayErr(:,:,i)    = synData(:,:,i) - refData(:,:,i);
-                relErr(:,:,i)    = abs((synData(:,:,i) - refData(:,:,i))./refData(:,:,i));
+                relErr(:,:,i)    = absDayErr(:,:,i)./refData(:,:,i);
             end
+            relErr(relErr==Inf) = 0; % PROBLEMATIC !!! USED IN CASE REFdATA HAS 0 VALUES
             meanError  = mean(absDayErr,3);
             meanBias   = mean(dayErr,3);
             meanRelErr = mean(relErr,3);
-            
+
+            % MEAN ABSOLUTE ERROR
             figure;
             figMean = imagesc(meanError);
             set(figMean, 'AlphaData', ~isnan(meanError))
             colormap(gca, turbo(256));
-            caxis([0.2 0.6])
+            %caxis([0.2 0.6])
             title('Mean absolute error')
             subtitle(['Mean MAE: ' num2str(mean(mean(meanError,'omitnan'),'omitnan'),'%1.5f')])
             set(gcf, 'color', 'white');
@@ -336,12 +336,13 @@ for k = 1:numel(targetVar)
             set(get(hcb,'label'),'string','Mean absolute error [mm/day]','Rotation',90);
             axis equal off
             saveas(gcf,strcat(outDir,['\mae_' convertStringsToChars(targetVar(k)) '.png']))
-            
+
+            % BIAS
             figure;
             figMean = imagesc(meanBias);
             set(figMean, 'AlphaData', ~isnan(meanBias))
             colormap(gca, turbo(256));
-            caxis([-0.2 0.2])
+            %caxis([-0.2 0.2])
             title('Bias')
             subtitle(['Mean bias: ' num2str(mean(mean(meanBias,'omitnan'),'omitnan'),'%1.5f')])
             set(gcf, 'color', 'white');
@@ -349,12 +350,13 @@ for k = 1:numel(targetVar)
             set(get(hcb,'label'),'string','Bias [mm/day]','Rotation',90);
             axis equal off
             saveas(gcf,strcat(outDir,['\bias_' convertStringsToChars(targetVar(k)) '.png']))
-            
+
+            % MEAN RELATIVE ERROR
             figure;
             figMean = imagesc(meanRelErr);
             set(figMean, 'AlphaData', ~isnan(meanRelErr))
             colormap(gca, turbo(256));
-            caxis([0 1])
+            %caxis([0 10])
             title('Mean relative error')
             subtitle(['Mean: ' num2str(mean(mean(meanRelErr,'omitnan'),'omitnan'),'%1.5f')])
             set(gcf, 'color', 'white');
@@ -364,357 +366,363 @@ for k = 1:numel(targetVar)
             saveas(gcf,strcat(outDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
 
             % -------------------------------------------------------------------------
-            
-            synDates = synImages.date;
-            dates = datetime(synDates, 'ConvertFrom', 'yyyyMMdd', 'format', 'dd/MM/yyyy');
-            cellData = synImages.(strcat(targetVarL(k), "_Distances")); % Assuming this is a cell array with 25x1 arrays
-            minValues = cellfun(@min, cellData);
-            maxValues = cellfun(@max, cellData);
-            medianValues = cellfun(@median, cellData);
+            if outputTime == 1 && pixelWise == false
+                synDates = synImages.date;
+                dates = datetime(synDates, 'ConvertFrom', 'yyyyMMdd', 'format', 'dd/MM/yyyy');
+                cellData = synImages.(strcat(targetVarL(k), "_Distances"));
+                minValues = cellfun(@min, cellData);
+                maxValues = cellfun(@max, cellData);
+                medianValues = cellfun(@median, cellData);
 
-            figure;
-            hold on;
-            fill([dates; flipud(dates)], [minValues; flipud(maxValues)], 'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
-            for i = 1:numel(cellData)
-                scatter(repmat(dates(i), 25, 1), cellData{i}, 20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
-            end
-            plot(dates, medianValues, 'r--', 'LineWidth', 1.5);
-            xlabel('Date');
-            switch metricKNN
-                case 1
-                    ylabel('RMSE');
-                case 2
-                    ylabel('MAE');
-                case 3
-                    ylabel('1-bSPEM');
-                case 4
-                    ylabel('Hellinger Distance');
-                case 5
-                    ylabel('0.5*(1-bSPEM) + 0.5*Hellinger');
-                case 6
-                    ylabel('SPAEF');
-            end
-            title('Daily distance of the k candidates');
-            grid on;
-            hold off;
+                figure;
+                hold on;
+                fill([dates; flipud(dates)], [minValues; flipud(maxValues)], 'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+                numK = numel(cellData{1});
+                for i = 1:numel(cellData)
+                    scatter(repmat(dates(i), numK, 1), cellData{i}, 20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
+                end
+                plot(dates, medianValues, 'r--', 'LineWidth', 1.5);
+                xlabel('Date');
+                switch metricKNN
+                    case 1
+                        ylabel('RMSE');
+                    case 2
+                        ylabel('MAE');
+                    case 3
+                        ylabel('1-bSPEM');
+                    case 4
+                        ylabel('Hellinger Distance');
+                    case 5
+                        ylabel('0.5*(1-bSPEM) + 0.5*Hellinger');
+                    case 6
+                        ylabel('SPAEF');
+                end
+                title('Daily distance of the k candidates');
+                grid on;
+                hold off;
 
-            set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outDir,['\distance_' convertStringsToChars(targetVar(k)) '.png']))
+                set(gcf, 'color', 'white');
+                saveas(gcf,strcat(outDir,['\distance_' convertStringsToChars(targetVar(k)) '.png']))
+            end
 
             % -------------------------------------------------------------------------
 
-            % Set the output GIF file name
-            if pixelWise == false
-                gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
-
-                refDates = refValidation.date;
-                synDates = synImages.date;
-                dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
-                bdName   = [convertStringsToChars(targetVar(k)) '_BestDistance'];
-                analogs  = sortedDates(:,2);
-                currentDOY  = nan(numel(analogs{1}),numel(dates));
-                meanDOY     = nan(numel(dates),1);
-                diffDOY     = nan(numel(analogs{1}),1);
-                diffBest    = nan(numel(dates),1);
-                bestAnalog  = nan(numel(dates),1);
-                bestDist    = synImages.(bdName);
-                currentBest = nan(size(synDates));
-                q1DOY     = [];
-                q3DOY     = [];
-                minOut      = [];
-                maxOut      = [];
-                minCurDOY   = nan(numel(dates),1);
-                maxCurDOY   = nan(numel(dates),1);
-
-                % Create an empty figure
-                figure('WindowState', 'maximized');
-                % Loop over each file in the synthetic directory and find the corresponding
-                % file in the reference directory
-                for i = 1:size(synData,3)
-                    % Find the corresponding file in the reference directory with the same name
-                    referenceIndex = find(refDates == synDates(i));
-
-                    analogDOY  = day(datetime(sort(analogs{i},'descend'),'ConvertFrom','yyyyMMdd'),'dayofyear');
-                    bestAnalog = day(datetime(analogs{i}(1),'ConvertFrom','yyyyMMdd'),'dayofyear');
-                    refDOY     = day(datetime(refDates(i),'ConvertFrom','yyyyMMdd'),'dayofyear');
-                    % Check for circular transition
-                    % Compute the minimum and maximum range boundaries
-                    minRange = refDOY - daysRange;
-                    maxRange = refDOY + daysRange;
-                    % Handle circular transition for minRangeQ
-                    if minRange <= 0
-                        minRange = 365 + minRange;
-                    end
-                    % Handle circular transition for maxRangeQ
-                    if maxRange > 365
-                        maxRange = maxRange - 365;
-                    end
-                    % Construct the rangeTot array
-                    if minRange < maxRange
-                        rangeTot = minRange:maxRange;
-                    else
-                        rangeQmin = minRange:365;
-                        rangeQmax = 1:maxRange;
-                        rangeTot    = [rangeQmin rangeQmax];
-                    end
-                    if refDOY == 366
-                        refDOY = 1;
-                    end
-                    rangeTot = rangeTot';
-                    % Find the index of refDOY and analogDOY(i) in rangeTot
-                    indexRef = find(rangeTot == refDOY);
-                    for di = 1:numel(analogDOY)
-                        if analogDOY(di) == 366
-                            analogDOY(di) = 1;
-                        end
-                        indexAnalog   = find(rangeTot == analogDOY(di));
-                        diffDOY(di)   = indexRef - indexAnalog;
-                    end
-                    if bestAnalog == 366
-                        bestAnalog = 1;
-                    end
-                    idxBestAnalog = find(rangeTot == bestAnalog);
-                    diffBest(i)   = indexRef - idxBestAnalog;
-
-                    % If a matching file is found, display the two images side by side
-                    if ~isempty(referenceIndex)
-                        % Load the two images
-                        synthetic = synData(:,:,i);
-                        %synthetic(synthetic==min(min(synthetic))) = NaN;
-                        %synthetic(synthetic==-999) = NaN;
-                        reference = refData(:,:,referenceIndex);
-                        %reference(reference==min(min(reference))) = NaN;
-                        %reference(reference==-999) = NaN;
-
-                        sgtitle(targetVar(k))
-
-                        % Create a figure with three subplots
-                        subplot(3,3,[1,4]);
-                        img1 = imshow(synthetic);
-                        colormap(gca, turbo(256));
-                        set(img1, 'AlphaData', ~isnan(synthetic))
-                        %caxis([0 maxColor])
-                        caxis(varRange)
-                        axis equal
-                        title('Synthetic');
-                        %colorbar(gca,'southoutside')
-
-                        subplot(3,3,[2,5]);
-                        img2 = imshow(reference);
-                        colormap(gca, turbo(256));
-                        set(img2, 'AlphaData', ~isnan(synthetic))
-                        %caxis([0 maxColor])
-                        caxis(varRange)
-                        axis equal
-                        title('Reference');
-                        h = colorbar(gca,'southoutside');
-
-                        % ERROR MAP
-                        error  = synthetic - reference;
-                        subplot(3,3,[3,6])
-                        errMap = imshow(error);
-                        set(errMap, 'AlphaData', ~isnan(synthetic))
-                        colormap(gca, coolwarm(256));
-                        caxis(errRange)
-                        title('Error');
-                        axis equal
-                        h_err = colorbar(gca,'southoutside');
-
-                        % Add a colorbar to the reference image subplot
-                        %h = colorbar('southoutside');
-                        set(h, 'Position', [0.13 0.4 0.5 0.03]);
-                        set(get(h,'label'),'string',varLegend);
-                        set(h_err, 'Position', [0.7 0.4 0.205 0.03])
-                        set(get(h_err,'label'),'string',varLegend);
-
-                        % DOY difference
-                        subplot(3,3,[7,8,9])
-                        currentDOY(:,i) = diffDOY;
-                        meanDOY(i)      = mean(currentDOY(:,i));
-                        %if numel(dates)<60
-                        %    boxchart(currentDOY);%,synDates(i));
-                        %else
-                        if nbImages > 1
-                            inBetweenRegionX = [(1:i), fliplr(1:i)];
-                            %inBetweenRegionX = [1:numel(dates), fliplr(1:numel(dates))];
-                            quartileDOY = quantile(currentDOY(:,i),4);
-                            q1DOY = [q1DOY quartileDOY(1)];
-                            q3DOY = [q3DOY quartileDOY(3)];
-                            inBetweenRegionY = [q3DOY, fliplr(q1DOY)];
-                            itqDOY(i) = iqr(currentDOY(:,i));
-                            minOut = [minOut, min(currentDOY(currentDOY(:,i) > (q1DOY(i) - itqDOY(i)),i))];
-                            maxOut = [maxOut, max(currentDOY(currentDOY(:,i) < (q3DOY(i) + itqDOY(i)),i))];
-                            inBetweenRegionY2 = [minOut, fliplr(maxOut)];
-                            minCurDOY(i) = min(currentDOY(:,i));
-                            maxCurDOY(i) = max(currentDOY(:,i));
-                            patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.15)
-                            hold on
-                            patch(inBetweenRegionX, inBetweenRegionY2, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.1)
-                            hold on
-                            plot(1:i,minCurDOY(1:i),'LineStyle','--','Color','k')
-                            hold on
-                            plot(1:i,maxCurDOY(1:i),'LineStyle','--','Color','k')
-                        end
-                        %end
-                        hold on
-                        if nbImages > 1
-                            plot(1:i,meanDOY(1:i),"Color",'red')
-                        end
-                        scatter(1:i,diffBest(1:i),"red")
-                        %plot(dates(1:i),meanDOY(1:i),"Color",'red')
-                        hold off
-                        xlim([1 numel(dates)])
-                        %xlim([min(dates) max(dates)])
-                        ylim([-daysRange-10 daysRange+10])
-                        title(['Mean DOY difference: ' num2str(mean(diffDOY),'%2.0f')]);
-                        ylabel('DOY difference')
-                        xlabel('Date')
-                        grid on
-                        ax = gca();
-                        %ax.XTick = categorical(1:0.5:numel(dates));
-                        %ax.XTickLabels = char(dates);
-
-                        %                 % Best candidate MAE
-                        %                 subplot(3,3,[7,8,9])
-                        %                 currentBest(1:i) = bestDist(1:i);
-                        %                 plot(dates,currentBest);
-                        %                 hold on
-                        %                 plot(dates(i),bestDist(i),"Marker","o","Color",'red')
-                        %                 hold off
-                        %                 xlim([min(dates) max(dates)])
-                        %                 ylim([0.5 2])
-                        %                 title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
-                        %                 ylabel('MAE')
-                        %                 xlabel('Date')
-                        %                 grid on
-
-                        % Set the title of the figure to the name of the images
-                        if metricV == 1
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 2
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 3
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 4
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 5
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        end
-
-                        % Save the current frame as a GIF
-                        set(gcf, 'color', 'white');
-                        frame = getframe(gcf);
-                        im = frame2im(frame);
-                        [imind, cm] = rgb2ind(im, 256);
-                        if i == 1
-                            imwrite(imind, cm, gifVal, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
-                        else
-                            imwrite(imind, cm, gifVal, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
-                        end
-                    end
-                end
-            else
-
-                % -------------------------------------------------------------------------
-
+            if createGIF == true
                 % Set the output GIF file name
-                gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
+                if pixelWise == false
+                    gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
 
-                refDates = refValidation.date;
-                synDates = synImages.date;
-                dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
+                    refDates = refValidation.date;
+                    synDates = synImages.date;
+                    dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
+                    bdName   = [convertStringsToChars(targetVar(k)) '_BestDistance'];
+                    analogs  = sortedDates(:,2);
+                    currentDOY  = nan(numel(analogs{1}),numel(dates));
+                    meanDOY     = nan(numel(dates),1);
+                    diffDOY     = nan(numel(analogs{1}),1);
+                    diffBest    = nan(numel(dates),1);
+                    %bestAnalog  = nan(numel(dates),1);
+                    %bestDist    = synImages.(bdName);
+                    %currentBest = nan(size(synDates));
+                    q1DOY     = [];
+                    q3DOY     = [];
+                    minOut      = [];
+                    maxOut      = [];
+                    minCurDOY   = nan(numel(dates),1);
+                    maxCurDOY   = nan(numel(dates),1);
 
-                % Create an empty figure
-                figure('WindowState', 'maximized');
-                % Loop over each file in the synthetic directory and find the corresponding
-                % file in the reference directory
-                for i = 1:size(synData,3)
-                    % Find the corresponding file in the reference directory with the same name
-                    referenceIndex = find(refDates == synDates(i));
+                    % Create an empty figure
+                    figure('WindowState', 'maximized');
+                    % Loop over each file in the synthetic directory and find the corresponding
+                    % file in the reference directory
+                    for i = 1:size(synData,3)
+                        % Find the corresponding file in the reference directory with the same name
+                        referenceIndex = find(refDates == synDates(i));
 
-                    % If a matching file is found, display the two images side by side
-                    if ~isempty(referenceIndex)
-                        % Load the two images
-                        synthetic = synData(:,:,i);
-                        %synthetic(synthetic==min(min(synthetic))) = NaN;
-                        %synthetic(synthetic==-999) = NaN;
-                        reference = refData(:,:,referenceIndex);
-                        %reference(reference==min(min(reference))) = NaN;
-                        %reference(reference==-999) = NaN;
-
-                        sgtitle(targetVar(k))
-
-                        % Create a figure with three subplots
-                        subplot(1,3,1);
-                        img1 = imshow(synthetic);
-                        colormap(gca, turbo(256));
-                        set(img1, 'AlphaData', ~isnan(synthetic))
-                        %caxis([0 maxColor])
-                        caxis(varRange)
-                        axis equal
-                        title('Synthetic');
-                        %colorbar(gca,'southoutside')
-
-                        subplot(1,3,2);
-                        img2 = imshow(reference);
-                        colormap(gca, turbo(256));
-                        set(img2, 'AlphaData', ~isnan(synthetic))
-                        %caxis([0 maxColor])
-                        caxis(varRange)
-                        axis equal
-                        title('Reference');
-                        h = colorbar(gca,'southoutside');
-
-                        % ERROR MAP
-                        error  = synthetic - reference;
-                        subplot(1,3,3)
-                        errMap = imshow(error);
-                        set(errMap, 'AlphaData', ~isnan(synthetic))
-                        colormap(gca, coolwarm(256));
-                        caxis(errRange)
-                        title('Error');
-                        axis equal
-                        h_err = colorbar(gca,'southoutside');
-
-                        % Add a colorbar to the reference image subplot
-                        %h = colorbar('southoutside');
-                        set(h, 'Position', [0.13 0.2 0.5 0.03]);
-                        set(get(h,'label'),'string',varLegend);
-                        set(h_err, 'Position', [0.7 0.2 0.205 0.03])
-                        set(get(h_err,'label'),'string',varLegend);
-
-                        % Set the title of the figure to the name of the images
-                        if metricV == 1
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 2
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 3
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 4
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
-                        elseif metricV == 5
-                            sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
-                                ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                        analogDOY  = day(datetime(sort(analogs{i},'descend'),'ConvertFrom','yyyyMMdd'),'dayofyear');
+                        bestAnalog = day(datetime(analogs{i}(1),'ConvertFrom','yyyyMMdd'),'dayofyear');
+                        refDOY     = day(datetime(refDates(i),'ConvertFrom','yyyyMMdd'),'dayofyear');
+                        % Check for circular transition
+                        % Compute the minimum and maximum range boundaries
+                        minRange = refDOY - daysRange;
+                        maxRange = refDOY + daysRange;
+                        % Handle circular transition for minRangeQ
+                        if minRange <= 0
+                            minRange = 365 + minRange;
                         end
-
-                        % Save the current frame as a GIF
-                        set(gcf, 'color', 'white');
-                        frame = getframe(gcf);
-                        im = frame2im(frame);
-                        [imind, cm] = rgb2ind(im, 256);
-                        if i == 1
-                            imwrite(imind, cm, gifVal, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
+                        % Handle circular transition for maxRangeQ
+                        if maxRange > 365
+                            maxRange = maxRange - 365;
+                        end
+                        % Construct the rangeTot array
+                        if minRange < maxRange
+                            rangeTot = minRange:maxRange;
                         else
-                            imwrite(imind, cm, gifVal, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+                            rangeQmin = minRange:365;
+                            rangeQmax = 1:maxRange;
+                            rangeTot    = [rangeQmin rangeQmax];
+                        end
+                        if refDOY == 366
+                            refDOY = 1;
+                        end
+                        rangeTot = rangeTot';
+                        % Find the index of refDOY and analogDOY(i) in rangeTot
+                        indexRef = find(rangeTot == refDOY);
+                        for di = 1:numel(analogDOY)
+                            if analogDOY(di) == 366
+                                analogDOY(di) = 1;
+                            end
+                            indexAnalog   = find(rangeTot == analogDOY(di));
+                            diffDOY(di)   = indexRef - indexAnalog;
+                        end
+                        if bestAnalog == 366
+                            bestAnalog = 1;
+                        end
+                        idxBestAnalog = find(rangeTot == bestAnalog);
+                        diffBest(i)   = indexRef - idxBestAnalog;
+
+                        % If a matching file is found, display the two images side by side
+                        if ~isempty(referenceIndex)
+                            % Load the two images
+                            synthetic = synData(:,:,i);
+                            %synthetic(synthetic==min(min(synthetic))) = NaN;
+                            %synthetic(synthetic==-999) = NaN;
+                            reference = refData(:,:,referenceIndex);
+                            %reference(reference==min(min(reference))) = NaN;
+                            %reference(reference==-999) = NaN;
+
+                            sgtitle(targetVar(k))
+
+                            % Create a figure with three subplots
+                            subplot(3,3,[1,4]);
+                            img1 = imshow(synthetic);
+                            colormap(gca, turbo(256));
+                            set(img1, 'AlphaData', ~isnan(synthetic))
+                            %caxis([0 maxColor])
+                            caxis(varRange)
+                            axis equal
+                            title('Synthetic');
+                            %colorbar(gca,'southoutside')
+
+                            subplot(3,3,[2,5]);
+                            img2 = imshow(reference);
+                            colormap(gca, turbo(256));
+                            set(img2, 'AlphaData', ~isnan(synthetic))
+                            %caxis([0 maxColor])
+                            caxis(varRange)
+                            axis equal
+                            title('Reference');
+                            h = colorbar(gca,'southoutside');
+
+                            % ERROR MAP
+                            error  = synthetic - reference;
+                            subplot(3,3,[3,6])
+                            errMap = imshow(error);
+                            set(errMap, 'AlphaData', ~isnan(synthetic))
+                            colormap(gca, coolwarm(256));
+                            caxis(errRange)
+                            title('Error');
+                            axis equal
+                            h_err = colorbar(gca,'southoutside');
+
+                            % Add a colorbar to the reference image subplot
+                            %h = colorbar('southoutside');
+                            set(h, 'Position', [0.13 0.4 0.5 0.03]);
+                            set(get(h,'label'),'string',varLegend);
+                            set(h_err, 'Position', [0.7 0.4 0.205 0.03])
+                            set(get(h_err,'label'),'string',varLegend);
+
+                            % DOY difference
+                            subplot(3,3,[7,8,9])
+                            currentDOY(:,i) = diffDOY;
+                            meanDOY(i)      = mean(currentDOY(:,i));
+                            %if numel(dates)<60
+                            %    boxchart(currentDOY);%,synDates(i));
+                            %else
+                            if nbImages > 1
+                                inBetweenRegionX = [(1:i), fliplr(1:i)];
+                                %inBetweenRegionX = [1:numel(dates), fliplr(1:numel(dates))];
+                                quartileDOY = quantile(currentDOY(:,i),4);
+                                q1DOY = [q1DOY quartileDOY(1)];
+                                q3DOY = [q3DOY quartileDOY(3)];
+                                inBetweenRegionY = [q3DOY, fliplr(q1DOY)];
+                                itqDOY(i) = iqr(currentDOY(:,i));
+                                minOut = [minOut, min(currentDOY(currentDOY(:,i) > (q1DOY(i) - itqDOY(i)),i))];
+                                maxOut = [maxOut, max(currentDOY(currentDOY(:,i) < (q3DOY(i) + itqDOY(i)),i))];
+                                inBetweenRegionY2 = [minOut, fliplr(maxOut)];
+                                minCurDOY(i) = min(currentDOY(:,i));
+                                maxCurDOY(i) = max(currentDOY(:,i));
+                                patch(inBetweenRegionX, inBetweenRegionY, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.15)
+                                hold on
+                                patch(inBetweenRegionX, inBetweenRegionY2, 'k', 'LineStyle', 'none', 'FaceAlpha', 0.1)
+                                hold on
+                                plot(1:i,minCurDOY(1:i),'LineStyle','--','Color','k')
+                                hold on
+                                plot(1:i,maxCurDOY(1:i),'LineStyle','--','Color','k')
+                            end
+                            %end
+                            hold on
+                            if nbImages > 1
+                                plot(1:i,meanDOY(1:i),"Color",'red')
+                            end
+                            scatter(1:i,diffBest(1:i),"red")
+                            %plot(dates(1:i),meanDOY(1:i),"Color",'red')
+                            hold off
+                            xlim([1 numel(dates)])
+                            %xlim([min(dates) max(dates)])
+                            ylim([-daysRange-10 daysRange+10])
+                            title(['Mean DOY difference: ' num2str(mean(diffDOY),'%2.0f')]);
+                            ylabel('DOY difference')
+                            xlabel('Date')
+                            grid on
+                            ax = gca();
+                            %ax.XTick = categorical(1:0.5:numel(dates));
+                            %ax.XTickLabels = char(dates);
+
+                            %                 % Best candidate MAE
+                            %                 subplot(3,3,[7,8,9])
+                            %                 currentBest(1:i) = bestDist(1:i);
+                            %                 plot(dates,currentBest);
+                            %                 hold on
+                            %                 plot(dates(i),bestDist(i),"Marker","o","Color",'red')
+                            %                 hold off
+                            %                 xlim([min(dates) max(dates)])
+                            %                 ylim([0.5 2])
+                            %                 title(['Best candidate MAE: ' num2str(bestDist(i),'%1.5f')]);
+                            %                 ylabel('MAE')
+                            %                 xlabel('Date')
+                            %                 grid on
+
+                            % Set the title of the figure to the name of the images
+                            if metricV == 1
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 2
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 3
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 4
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 5
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            end
+
+                            % Save the current frame as a GIF
+                            set(gcf, 'color', 'white');
+                            frame = getframe(gcf);
+                            im = frame2im(frame);
+                            [imind, cm] = rgb2ind(im, 256);
+                            if i == 1
+                                imwrite(imind, cm, gifVal, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
+                            else
+                                imwrite(imind, cm, gifVal, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+                            end
+                        end
+                    end
+                else
+
+                    % -------------------------------------------------------------------------
+
+                    % Set the output GIF file name
+                    gifVal = fullfile(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.gif']);
+
+                    refDates = refValidation.date;
+                    refData  = refValidation.(targetVarL(k));
+                    synDates = synImages.date;
+                    synData  = synImages.(targetVarL(k));
+                    dates    = datetime(synDates,'ConvertFrom','yyyyMMdd','format','dd/MM/yyyy');
+
+                    % Create an empty figure
+                    figure('WindowState', 'maximized');
+                    % Loop over each file in the synthetic directory and find the corresponding
+                    % file in the reference directory
+                    for i = 1:size(synData,3)
+                        % Find the corresponding file in the reference directory with the same name
+                        referenceIndex = find(refDates == synDates(i));
+
+                        % If a matching file is found, display the two images side by side
+                        if ~isempty(referenceIndex)
+                            % Load the two images
+                            synthetic = synData(:,:,i);
+                            %synthetic(synthetic==min(min(synthetic))) = NaN;
+                            %synthetic(synthetic==-999) = NaN;
+                            reference = refData(:,:,referenceIndex);
+                            %reference(reference==min(min(reference))) = NaN;
+                            %reference(reference==-999) = NaN;
+
+                            sgtitle(targetVar(k))
+
+                            % Create a figure with three subplots
+                            subplot(1,3,1);
+                            img1 = imshow(synthetic);
+                            colormap(gca, turbo(256));
+                            set(img1, 'AlphaData', ~isnan(synthetic))
+                            %caxis([0 maxColor])
+                            caxis(varRange)
+                            axis equal
+                            title('Synthetic');
+                            %colorbar(gca,'southoutside')
+
+                            subplot(1,3,2);
+                            img2 = imshow(reference);
+                            colormap(gca, turbo(256));
+                            set(img2, 'AlphaData', ~isnan(synthetic))
+                            %caxis([0 maxColor])
+                            caxis(varRange)
+                            axis equal
+                            title('Reference');
+                            h = colorbar(gca,'southoutside');
+
+                            % ERROR MAP
+                            error  = synthetic - reference;
+                            subplot(1,3,3)
+                            errMap = imshow(error);
+                            set(errMap, 'AlphaData', ~isnan(synthetic))
+                            colormap(gca, coolwarm(256));
+                            caxis(errRange)
+                            title('Error');
+                            axis equal
+                            h_err = colorbar(gca,'southoutside');
+
+                            % Add a colorbar to the reference image subplot
+                            %h = colorbar('southoutside');
+                            set(h, 'Position', [0.13 0.2 0.5 0.03]);
+                            set(get(h,'label'),'string',varLegend);
+                            set(h_err, 'Position', [0.7 0.2 0.205 0.03])
+                            set(get(h_err,'label'),'string',varLegend);
+
+                            % Set the title of the figure to the name of the images
+                            if metricV == 1
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'MAE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 2
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'RMSE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 3
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'SPEM: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 4
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'SPAEF: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            elseif metricV == 5
+                                sgtitle({['{\bf\fontsize{14}' char(dates(i)) '}'], ...
+                                    ['{\fontsize{13}' 'KGE: ' num2str(validationMetric.(targetVarL(k))(i,2),'%1.5f') '}']})
+                            end
+
+                            % Save the current frame as a GIF
+                            set(gcf, 'color', 'white');
+                            frame = getframe(gcf);
+                            im = frame2im(frame);
+                            [imind, cm] = rgb2ind(im, 256);
+                            if i == 1
+                                imwrite(imind, cm, gifVal, 'gif', 'Loopcount', size(synData,3), 'DelayTime', 0.1);
+                            else
+                                imwrite(imind, cm, gifVal, 'gif', 'WriteMode', 'append', 'DelayTime', 0.1);
+                            end
                         end
                     end
                 end
