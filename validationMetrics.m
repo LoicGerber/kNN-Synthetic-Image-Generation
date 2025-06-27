@@ -1,4 +1,4 @@
-function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,bootstrap,ensemble,outputDir)
+function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,stochastic,ensemble,outputDir)
 
 %
 %
@@ -15,15 +15,15 @@ validOptim = 0;
 targetVarL = lower(targetVar);
 
 for j = 1:numel(targetVar)
-    refImages = refValidation.(targetVarL(j));
+    refImages = double(refValidation.(targetVarL(j)));
     refDates  = refValidation.date;
     synDates  = synValidation.date;
 
-    if bootstrap == false
+    if stochastic == false
         % Initialize an array to store the RMSE values
         if targetDim ~= 1
             validationResult = zeros(size(refImages,3), 2);
-            synImagesAll = synValidation.(targetVarL(j));
+            synImagesAll = double(synValidation.(targetVarL(j)));
             if size(refImages,3) ~= size(synImagesAll,3)
                 error('Numbers of reference and synthetic images do not match');
             end
@@ -37,7 +37,7 @@ for j = 1:numel(targetVar)
     else
         % Initialize an array to store the RMSE values
         validationResult = cell(size(refImages,3), 3);
-        varBS = strcat(targetVar(j), "_Bootstrap");
+        varBS = strcat(targetVar(j), "_stochastic");
         synImagesAll = synValidation.(varBS);
         maps = synValidation.(targetVarL(j));
         if size(refImages,3) ~= size(synImagesAll,1)
@@ -63,7 +63,7 @@ for j = 1:numel(targetVar)
             refImage = double(refImages(i));
         end
         %refImage(isnan(refImage)) = nanValue;
-        if bootstrap == false
+        if stochastic == false
             if targetDim ~= 1
                 synImage = double(synImagesAll(:,:,i));
             else
@@ -108,7 +108,7 @@ for j = 1:numel(targetVar)
                 error('Dates do not match')
             end
             validationResult{i,1} = currentDate;
-            % Bootstrap ensembles
+            % stochastic ensembles
             for k = 1:ensemble
                 synImage = double(synImagesAll{i}(:,:,k));
                 %synImage(isnan(synImage)) = nanValue;
@@ -159,14 +159,14 @@ for j = 1:numel(targetVar)
     
     if metricV == 5 && targetDim == 1 % Compute KGE for the entire time series
         kgeValue = computeKGE(accumulatedSyn, accumulatedRef);
-        if bootstrap == false
+        if stochastic == false
             validationResult(:,2) = kgeValue;
         else
             validationResult{:,2} = kgeValue;
         end
     elseif metricV == 6 && targetDim == 1 % Compute NSE for the entire time series
         nseValue = computeNSE(accumulatedSyn, accumulatedRef);
-        if bootstrap == false
+        if stochastic == false
             validationResult(:,2) = nseValue;
         else
             validationResult{:,2} = nseValue;

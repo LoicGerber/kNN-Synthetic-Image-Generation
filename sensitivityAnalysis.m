@@ -1,6 +1,6 @@
-function [climateData,queryDates,learningDates,refValidation,additionalVars, ...
+function [climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-    nanValue,maxThreshold,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
+    nanValue,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
 
 % Perform sensitivity analysis loop
 iteration = 0;
@@ -21,7 +21,6 @@ for iRange = 1:length(nbImages_range)
             queryDates     = [];
             learningDates  = [];
             refValidation  = [];
-            additionalVars = [];
             Weights        = [];
             climateData    = [];
             geoRef         = [];
@@ -35,13 +34,13 @@ for iRange = 1:length(nbImages_range)
         disp('Extracting Learning dates...')
         learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,false);
         disp('Extracting Query dates...')
-        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,true,false,outputTime,inDir,outDir,false);
+        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,outDir,false);
         disp('Loading optimisedWeights.mat file...')
         Weights = createWeights(targetVar,climateVars,inDir);
         disp('--- 1. READING DATA DONE ---')
 
         disp('--- 2. KNN DATA SORTING ---')
-        sortedDates = kNNDataSorting(targetVar,climateVars,queryDates,learningDates,climateData,additionalVars,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,false);
+        sortedDates = kNNDataSorting(climateVars,queryDates,learningDates,climateData,normMethods,0,longWindow,daysRange,Weights,nbImages,metricKNN,false,false,parallelComputing,inDir,false);
         disp('--- 2. KNN DATA SORTING DONE ---')
 
         disp('--- 3. SYNTHETIC IMAGES GENERATION ---')

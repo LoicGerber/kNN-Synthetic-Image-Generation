@@ -1,4 +1,4 @@
-function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,maxThreshold,validationPrep,optimPrep,outputTime,inputDir,outputDir,saveMats)
+function [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,validationPrep,optimPrep,outputTime,inputDir,outputDir,saveMats)
 
 %
 %
@@ -155,7 +155,7 @@ if validationPrep == false && optimPrep == false % validation OFF
     for i = 1:numel(queryDates)
         %[nearest, nearestIdx(i)] = min(abs(learningDatesDate - queryDates(i)));  % find index of closest date
         [nearest, nearestIdx(i)] = min(abs(datetime(learningDatesDate,'ConvertFrom','yyyymmdd') - datetime(queryDates(i),'ConvertFrom','yyyyMMdd')));
-        if days(nearest) > maxThreshold %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
+        if days(nearest) > 100 %%% MAX THRESHOLD <--------------------------------------------------------------------------------------------------------------------------------
             nearestIdx(i) = nan;
         end
     end

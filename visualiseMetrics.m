@@ -318,10 +318,10 @@ for k = 1:numel(targetVar)
                 dayErr(:,:,i)    = synData(:,:,i) - refData(:,:,i);
                 relErr(:,:,i)    = absDayErr(:,:,i)./refData(:,:,i);
             end
-            relErr(relErr==Inf) = 0; % PROBLEMATIC !!! USED IN CASE REFdATA HAS 0 VALUES
-            meanError  = mean(absDayErr,3);
-            meanBias   = mean(dayErr,3);
-            meanRelErr = mean(relErr,3);
+            relErr(relErr==Inf) = nan; % PROBLEMATIC !!! USED IN CASE REFdATA HAS 0 VALUES
+            meanError  = mean(absDayErr,3,'omitnan');
+            meanBias   = mean(dayErr,3,'omitnan');
+            meanRelErr = mean(relErr,3,'omitnan');
 
             % MEAN ABSOLUTE ERROR
             figure;
