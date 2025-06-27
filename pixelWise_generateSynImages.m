@@ -292,9 +292,11 @@ for i = 1:numel(varLow)
                 resultImages = mode(selectedImages,3);
             elseif generationType == 2
                 % Calculate the mean and save it to resultImages
-                selectedDist = 1./sortedData{qDate,3};
+                selectedDist = sortedData{qDate,3};
+                selectedDist(selectedDist == 0) = eps('single');
+                invDist = 1./selectedDist;
                 % Normalize the selectedDist values
-                normalizedWeights = selectedDist / sum(selectedDist);
+                normalizedWeights = invDist / sum(invDist);
                 % Perform element-wise multiplication with the weights
                 weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, nbImages)); %length(sortedData{qDate,2})
                 varMap(:,:,qDate) = var(selectedImages,normalizedWeights,3);
@@ -353,9 +355,13 @@ for i = 1:numel(varLow)
                     end
                     selectedImages(:,:,imageIndex) = learningData{dateIndex(imageIndex)};
                 end
-                selectedDist = 1./sortedData{qDate,3}(distIndex);
+                
                 % Normalize the selectedDist values
-                normalizedWeights = selectedDist / sum(selectedDist);
+                selectedDist = sortedData{qDate,3}(distIndex);
+                selectedDist(selectedDist == 0) = eps('single');
+                invDist = 1./selectedDist;
+                % Normalize the selectedDist values
+                normalizedWeights = invDist / sum(invDist);
                 % Perform element-wise multiplication with the weights
                 weightedImages = bsxfun(@times, selectedImages, reshape(normalizedWeights, 1, 1, nbImages)); %length(sortedData{qDate,2})
                 % Calculate either the mode or the mean of the selected images
@@ -483,9 +489,11 @@ for i = 1:numel(varLow)
                     for yPix = 1:size(sortedData,1)
                         if maskData(yPix,xPix) == 1
                             % Calculate the mean and save it to resultImages
-                            selectedDist = 1./sortedData{yPix,xPix,qDate}(1:nbImages,2);
+                            selectedDists = sortedData{yPix,xPix,qDate}(1:nbImages,2);
+                            selectedDists(selectedDists == 0) = eps('single');
+                            invDist = 1./selectedDists;
                             % Normalize the selectedDist values
-                            normalizedWeights = selectedDist / sum(selectedDist);
+                            normalizedWeights = invDist / sum(invDist);
                             % Perform element-wise multiplication with the weights
                             weightedPixels = bsxfun(@times, selectedImages(yPix,xPix,:), reshape(normalizedWeights, 1, 1, nbImages)); %length(sortedData{yPix,xPix,qDate}(:,2))
                             varMap(yPix,xPix,qDate) = var(selectedImages(yPix,xPix,:),normalizedWeights,3);
@@ -541,7 +549,7 @@ for i = 1:numel(varLow)
                 netcdf.putVar(ncid, timeid, qDate - 1, 1, time - 719529); % 719529 = 1970-01-01
                 % Write data to the variable (hydrological map) for the current date
                 nanImages = resultImages;
-                nanImages(isnan(nanImages)) = -998;
+                nanImages(isnan(nanImages)) = -999;
                 ncwrite(fullDestinationFileName, varLow(i), single(nanImages)', [1, 1, qDate]);
             else
                 error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')

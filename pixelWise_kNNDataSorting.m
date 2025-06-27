@@ -18,7 +18,16 @@ elseif any(size(queryDates)==0)
 end
 
 climateDates      = table2array(climateData(:,'date'));
-climateMaps       = table2array(removevars(climateData,'date'));
+climateCells       = table2array(removevars(climateData,'date'));
+% Get sizes
+[nTime, nVar] = size(climateCells);
+[xSize, ySize] = size(climateCells{1,1});  % Assuming all cells contain same-size [x y] matrices
+% Flatten each [x y] matrix into a column vector
+flatData = cellfun(@(m) reshape(m, [], 1), climateCells, 'UniformOutput', false);
+% Stack all vectors horizontally: size will be [x*y x (nTime*nVar)]
+stacked = cat(2, flatData{:});
+% Reshape into 4D array: [x y time variable]
+climateMaps = reshape(stacked, xSize, ySize, nTime, nVar);
 
 queryDatesDate = table2array(queryDates(:,1));
 learningDatesDate = table2array(learningDates(:,1));
@@ -56,20 +65,14 @@ if parallelComputing == true
         distMapQd = cell(size(maskData));
 
         % Extract the longWindow climate for the current query date
-        queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            kj = 1;
-            for k = (longWindow-1):-1:0
-                queryClimate(kj,:) = climateMaps(idx-k,:);
-                kj = kj+1;
-            end
+            queryClimate = climateMaps(:, :, idx-(longWindow-1):idx, :);
 
             % Compute the distances between the query climate and the climate for each learning date
             climateDistance = cell(totLDates,2);
             % Display progress - only for serial computing
             for ld = 1:totLDates
-                learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
                 if dayOfYearL == 366
@@ -79,30 +82,18 @@ if parallelComputing == true
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        kj = 1;
-                        for k = (longWindow-1):-1:0
-                            learningClimate(kj,:) = climateMaps(idx-k,:);
-                            kj = kj+1;
-                        end
-
-                        % Concatenate time dimension (rows) into 3D arrays per variable
-                        learningStack = cellfun(@(col) cat(3, col{:}), num2cell(learningClimate, 1), 'UniformOutput', false);
-                        queryStack    = cellfun(@(col) cat(3, col{:}), num2cell(queryClimate, 1), 'UniformOutput', false);
+                        learningClimate = climateMaps(:, :, idx-(longWindow-1):idx, :);
                         
                         % Compute absolute difference and mean across time (3rd dimension)
                         if metricKNN == 1 % RMSE
-                            climateDistAll = cellfun(@(a, b) sqrt(mean((a - b).^2, 3, 'omitnan')), ...
-                                                     learningStack, queryStack, ...
-                                                     'UniformOutput', false);
+                            climateDistAll = sqrt(mean((learningClimate - queryClimate).^2, 3, 'omitnan'));
                         elseif metricKNN == 2 % MAE
-                            climateDistAll = cellfun(@(a, b) mean(abs(a - b), 3, 'omitnan'), ...
-                                                     learningStack, queryStack, ...
-                                                     'UniformOutput', false);
+                            climateDistAll = mean(abs(learningClimate - queryClimate), 3, 'omitnan');
                         else
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
-                        climateDistance{ld,2} = sum(cat(3, climateDistAll{:}), 3, 'omitnan');  
+                        climateDistance{ld,2} = sum(sum(climateDistAll, 3, 'omitnan'), 4, 'omitnan');
                     else
                         continue
                     end
@@ -176,14 +167,9 @@ else % serial computing
         distMapQd = cell(size(maskData));
 
         % Extract the longWindow climate for the current query date
-        queryClimate = cell(longWindow, numel(climateVars));
         idx = find(climateDates == currentQDate);
         if idx > longWindow
-            kj = 1;
-            for k = (longWindow-1):-1:0
-                queryClimate(kj,:) = climateMaps(idx-k,:);
-                kj = kj+1;
-            end
+            queryClimate = climateMaps(:, :, idx-(longWindow-1):idx, :);
 
             % Compute the distances between the query climate and the climate for each learning date
             climateDistance = cell(totLDates,2);
@@ -191,7 +177,6 @@ else % serial computing
             progress = 0;
             fprintf(1,'\n    Progress for current query date: %3.0f%%\n',progress);
             for ld = 1:totLDates
-                learningClimate = cell(longWindow, numel(climateVars));
                 currentLDate    = learningDatesDate(ld);
                 dayOfYearL      = day(datetime(currentLDate,'ConvertFrom','yyyyMMdd'),'dayofyear');
                 if dayOfYearL == 366
@@ -201,30 +186,18 @@ else % serial computing
                 if ismember(dayOfYearL,rangeQ) % if learning date is not within 3 months of the query date, it is skipped
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
-                        kj = 1;
-                        for k = (longWindow-1):-1:0
-                            learningClimate(kj,:) = climateMaps(idx-k,:);
-                            kj = kj+1;
-                        end
-
-                        % Concatenate time dimension (rows) into 3D arrays per variable
-                        learningStack = cellfun(@(col) cat(3, col{:}), num2cell(learningClimate, 1), 'UniformOutput', false);
-                        queryStack    = cellfun(@(col) cat(3, col{:}), num2cell(queryClimate, 1), 'UniformOutput', false);
+                        learningClimate = climateMaps(:, :, idx-(longWindow-1):idx, :);
                         
                         % Compute absolute difference and mean across time (3rd dimension)
                         if metricKNN == 1 % RMSE
-                            climateDistAll = cellfun(@(a, b) sqrt(mean((a - b).^2, 3, 'omitnan')), ...
-                                                     learningStack, queryStack, ...
-                                                     'UniformOutput', false);
+                            climateDistAll = sqrt(mean((learningClimate - queryClimate).^2, 3, 'omitnan'));
                         elseif metricKNN == 2 % MAE
-                            climateDistAll = cellfun(@(a, b) mean(abs(a - b), 3, 'omitnan'), ...
-                                                     learningStack, queryStack, ...
-                                                     'UniformOutput', false);
+                            climateDistAll = mean(abs(learningClimate - queryClimate), 3, 'omitnan');
                         else
                             error('Bad metricKNN parameter')
                         end
                         climateDistance{ld,1} = currentLDate;
-                        climateDistance{ld,2} = sum(cat(3, climateDistAll{:}), 3, 'omitnan');  
+                        climateDistance{ld,2} = sum(sum(climateDistAll, 3, 'omitnan'), 4, 'omitnan');
                     else
                         continue
                     end
