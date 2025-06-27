@@ -1,4 +1,4 @@
-function Weights = createWeights(targetVar,climateVars,inputDir)
+function Weights = createWeights(climateVars,metricKNN,inputDir)
 
 %
 %
@@ -10,9 +10,14 @@ function Weights = createWeights(targetVar,climateVars,inputDir)
 
 climShort = strcat(climateVars,'_ShortW');
 climLong  = strcat(climateVars,'_LongW');
-targetW   = strcat(targetVar,'_W');
 
-varsAll = [targetW climShort climLong];
+if metricKNN == 5
+    spemHel = ["SPEM" "Hellinger"];
+else
+    spemHel = [];
+end
+
+varsAll = [climShort climLong spemHel];
 
 data = ones(1, length(varsAll));
 
