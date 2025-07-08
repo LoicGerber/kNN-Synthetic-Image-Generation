@@ -41,13 +41,11 @@ for i = 1:numel(targetVarL)
             disp(['  stochastic switch ON, using ' num2str(ensemble) ' ensembles'])
         end
         % Display progress
-        if optimisation == false
-            progress = 0;
-            if outputType == 1
-                fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
-            else
-                fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
-            end
+        progress = 0;
+        if outputType == 1
+            fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+        else
+            fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
         end
 
         % netCDF file definition
@@ -633,11 +631,9 @@ for i = 1:numel(targetVarL)
                 map(rowIndex) = resultImages;
             end
         end
-        if optimisation == false
-            % Display computation progress
-            progress = (100*(rowIndex/size(sortedDates,1)));
-            fprintf(1,'\b\b\b\b%3.0f%%',progress);
-        end
+        % Display computation progress
+        progress = (100*(rowIndex/size(sortedDates,1)));
+        fprintf(1,'\b\b\b\b%3.0f%%',progress);
     end
     if outputType == 2 && stochastic == false && targetDim ~= 1
         % Close the main netCDF file after the loop
@@ -685,7 +681,7 @@ for i = 1:numel(targetVarL)
     end
 end
 
-if optimisation == false && validation == true
+if validation == true
     %fprintf('\n')
     disp('Saving synValidation.mat file...')
     save(fullfile(outputDir,'synValidation.mat'),'synImages', '-v7.3','-nocompression');

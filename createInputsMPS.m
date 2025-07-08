@@ -41,9 +41,10 @@ end
 
 % CREATE SP
 rng(mps.seed)
+values = randperm(numel(mask));
+sp = reshape(values, size(mask));
 if mps.useMask == true
-    sp = rand(size(mask));
     sp(mask==0) = -inf;
-else
-    sp = rand(size(di(:,:,1)));
+end
+
 end

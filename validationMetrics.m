@@ -10,8 +10,6 @@ function validationMetric = validationMetrics(targetVar,targetDim,metricV,optimi
 
 synValidation = synImages;
 
-validOptim = 0;
-
 targetVarL = lower(targetVar);
 
 for j = 1:numel(targetVar)
@@ -176,7 +174,7 @@ for j = 1:numel(targetVar)
     if optimisation == false
         validationMetric.(targetVarL(j)) = validationResult;
     else
-        validOptim = validOptim + mean(validationResult(:,2));
+        validOptim = mean(validationResult(:,2));
     end
 end
 

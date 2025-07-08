@@ -1,6 +1,6 @@
 function [climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-    nanValue,daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
+    daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
 
 % Perform sensitivity analysis loop
 iteration = 0;
@@ -36,7 +36,7 @@ for iRange = 1:length(nbImages_range)
         disp('Extracting Query dates...')
         [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,outDir,false);
         disp('Loading optimisedWeights.mat file...')
-        Weights = createWeights(targetVar,climateVars,inDir);
+        Weights = createWeights(climateVars,metricKNN,inDir);
         disp('--- 1. READING DATA DONE ---')
 
         disp('--- 2. KNN DATA SORTING ---')

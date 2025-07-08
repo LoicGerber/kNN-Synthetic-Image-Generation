@@ -24,7 +24,7 @@ end
 climateDates = table2array(climateData(:,'date'));
 climateCells = table2array(removevars(climateData,'date'));
 [~, nVar]    = size(climateCells);
-climateMaps       = cell(1, nVar);
+climateMaps  = cell(1, nVar);
 % Fill each cell with a [x y time] matrix
 for v = 1:nVar
     % Extract the column for variable v and stack along the 3rd dimension
@@ -61,6 +61,8 @@ if metricKNN == 5
     idxHel     = contains(Weights.Properties.VariableNames,'Hellinger');
     helW       = table2array(Weights(:,idxHel));
     spemHelW   = cat(2, spemW, helW);
+else
+    spemHelW   = [];
 end
 
 disp('Starting loop to sort learning dates for each query date...')
@@ -140,7 +142,7 @@ if parallelComputing == true
                             climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x, y) squeeze(mean(mean(abs(x - y), 1, 'omitnan'), 2, 'omitnan')), ...
                                 learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                         elseif metricKNN == 3 % 1-bSPEM
-                            climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) squeeze(spem(x, y)), ...
+                            climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) squeeze((1 - spem(x, y))), ...
                                 learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                         elseif metricKNN == 4 % Hellinger
                             climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) hellingerDist(x, y), ...
@@ -151,7 +153,7 @@ if parallelComputing == true
                                     computeHellingerSPEM(x, y, @spem, @hellingerDist, spemHelW), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                             else
-                                climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) spem(x, y), ...
+                                climateDistAll{ld,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) (1 - spem(x, y)), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                                 climateDistAll{ld,2}(:, otherIdx) = cell2mat(cellfun(@(x,y) hellingerDist(x, y), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
@@ -164,9 +166,9 @@ if parallelComputing == true
                         end
                         climateDistance{ld,1} = currentLDate;
                         if shortWindow > 0
-                            climateDistance{ld,2}(1,:) = sum(climateDistAll{ld,1}(1:shortWindow,:),1,'omitnan');
+                            climateDistance{ld,2}(1,:) = sum(climateDistAll{ld,1}(1:shortWindow,:),1);
                             if optimPrep == true && metricKNN == 5
-                                climateDistance{ld,3}(1,:) = sum(climateDistAll{ld,2}(1:shortWindow,:),1,'omitnan');
+                                climateDistance{ld,3}(1,:) = sum(climateDistAll{ld,2}(1:shortWindow,:),1);
                             end
                         else
                             climateDistance{ld,2}(1,:) = zeros(1,size(climateDistAll{ld,1},2));
@@ -175,17 +177,17 @@ if parallelComputing == true
                             end
                         end
                         if optimPrep == false 
-                            climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1,'omitnan');
+                            climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1);
                         elseif optimPrep == true && metricKNN == 5
-                            climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1,'omitnan');
-                            climateDistance{ld,3}(2,:) = sum(climateDistAll{ld,2}(shortWindow+1:end,:),1,'omitnan');
+                            climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1);
+                            climateDistance{ld,3}(2,:) = sum(climateDistAll{ld,2}(shortWindow+1:end,:),1);
                         end
                         % Assign weights to corresponding index
                         if optimPrep == false
                             climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
                             climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan'); %targetDistance{ld,1}+
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},1);
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},2); %targetDistance{ld,1}+
                         end
                     else
                         % If not enough climate days available, skip until loop reaches longWindow
@@ -206,22 +208,21 @@ if parallelComputing == true
         end
 
         % Learning dates distance: 1 date, 2 distance
-        distance        = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
+        distance = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
         %targetDistance  = targetDistance(~cellfun('isempty',targetDistance),:);
         if optimPrep == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
-            distancesBest   = distancesSort(1:nbImages,1);
+            distancesDates  = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
             sortedDates{qd} = currentQDate;
-            sortedData{qd}  = cell2mat(distancesBest);
+            sortedData{qd}  = cell2mat(distancesDates);
             sortedDist{qd}  = cell2mat(distSorted);
         else
-            distancesBest     = distance(:,1);
+            distancesDates    = distance(:,1);
             distSorted        = distance(:,2:end);
             sortedDates{qd}   = currentQDate;
-            sortedData{qd}    = distancesBest;
+            sortedData{qd}    = distancesDates;
             sortedDist{qd}    = distSorted;
-
         end
     end
 
@@ -306,7 +307,7 @@ else % serial computing
                             climateDistAll(:, otherIdx) = cell2mat(cellfun(@(x, y) squeeze(mean(mean(abs(x - y), 1, 'omitnan'), 2, 'omitnan')), ...
                                 learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                         elseif metricKNN == 3 % 1-bSPEM
-                            climateDistAll(:, otherIdx) = cell2mat(cellfun(@(x, y) spem(x, y), ...
+                            climateDistAll(:, otherIdx) = cell2mat(cellfun(@(x, y) (1 - spem(x, y)), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                         elseif metricKNN == 4 % Hellinger
                             climateDistAll(:, otherIdx) = cell2mat(cellfun(@(x, y) hellingerDist(x, y), ...
@@ -317,7 +318,7 @@ else % serial computing
                                     computeHellingerSPEM(x, y, @spem, @hellingerDist, spemHelW), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                             else
-                                climateDistAll{:,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) spem(x, y), ...
+                                climateDistAll{:,1}(:, otherIdx) = cell2mat(cellfun(@(x,y) (1 - spem(x, y)), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
                                 climateDistAll{:,2}(:, otherIdx) = cell2mat(cellfun(@(x,y) hellingerDist(x, y), ...
                                     learningClimate(:, otherIdx), queryClimate(:, otherIdx), 'UniformOutput', false));
@@ -332,10 +333,10 @@ else % serial computing
            
                         if shortWindow > 0
                             if optimPrep == false
-                                climateDistance{ld,2}(1,:) = sum(climateDistAll(1:shortWindow,:),1,'omitnan');
+                                climateDistance{ld,2}(1,:) = sum(climateDistAll(1:shortWindow,:),1);
                             elseif optimPrep == true && metricKNN == 5
-                                climateDistance{ld,2}(1,:) = sum(climateDistAll{:,1}(1:shortWindow,:),1,'omitnan');
-                                climateDistance{ld,3}(1,:) = sum(climateDistAll{:,2}(1:shortWindow,:),1,'omitnan');
+                                climateDistance{ld,2}(1,:) = sum(climateDistAll{:,1}(1:shortWindow,:),1);
+                                climateDistance{ld,3}(1,:) = sum(climateDistAll{:,2}(1:shortWindow,:),1);
                             end
                         else
                             if optimPrep == false
@@ -346,18 +347,18 @@ else % serial computing
                             end
                         end
                         if optimPrep == false 
-                            climateDistance{ld,2}(2,:) = sum(climateDistAll(shortWindow+1:end,:),1,'omitnan');
+                            climateDistance{ld,2}(2,:) = sum(climateDistAll(shortWindow+1:end,:),1);
                         elseif optimPrep == true && metricKNN == 5
-                            climateDistance{ld,2}(2,:) = sum(climateDistAll{:,1}(shortWindow+1:end,:),1,'omitnan');
-                            climateDistance{ld,3}(2,:) = sum(climateDistAll{:,2}(shortWindow+1:end,:),1,'omitnan');
+                            climateDistance{ld,2}(2,:) = sum(climateDistAll{:,1}(shortWindow+1:end,:),1);
+                            climateDistance{ld,3}(2,:) = sum(climateDistAll{:,2}(shortWindow+1:end,:),1);
                         end
 
                         % Assign weights to corresponding index
                         if optimPrep == false
                             climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
                             climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},1,'omitnan');
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},2,'omitnan'); %+targetDistance{ld}
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},1);
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},2); %+targetDistance{ld}
                         end
                     else
                         % If not enough climate days available, skip until loop reaches longWindow
@@ -384,20 +385,20 @@ else % serial computing
         end
 
         % Learning dates distance: 1 date, 2 distance
-        distance        = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
+        distance = climateDistance(~cellfun('isempty',climateDistance(:,1)),:);
         %targetDistance  = targetDistance(~cellfun('isempty',targetDistance),:);
         if optimPrep == false
             distancesSort   = sortrows(distance,2); % Sort rows in ascending order according to column 2
-            distancesBest   = distancesSort(1:nbImages,1);
+            distancesDates  = distancesSort(1:nbImages,1);
             distSorted      = distancesSort(1:nbImages,2);
             sortedDates{qd} = currentQDate;
-            sortedData{qd}  = cell2mat(distancesBest);
+            sortedData{qd}  = cell2mat(distancesDates);
             sortedDist{qd}  = cell2mat(distSorted);
         else
-            distancesBest     = distance(:,1);
-            distSorted        = distance(:,2);
+            distancesDates    = distance(:,1);
+            distSorted        = distance(:,2:end);
             sortedDates{qd}   = currentQDate;
-            sortedData{qd}    = distancesBest;
+            sortedData{qd}    = distancesDates;
             sortedDist{qd}    = distSorted;
         end
 
