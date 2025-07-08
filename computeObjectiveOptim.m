@@ -35,7 +35,7 @@ helW        = 1 - spemW;
 
 %sortedDates = KNNSortingOptim(var,addVars,shortWindow,bayesWeights,nbImages,inputDir);
 sortedDatesOptim = kNNSortingOptim(sortedDates,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,spemW,helW,metricKNN,nbImages,saveOptimPrep,inDir);
-synImagesOptim = generateSynImages_ParamOptim(targetVar,targetDim,learningDates,sortedDatesOptim,nbImages,generationType);
+synImagesOptim = generateSynImgsOptim(targetVar,targetDim,learningDates,sortedDatesOptim,nbImages,generationType);
 % Compute the validation metric using the updated code
 objective = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImagesOptim,false,[],outputDir);
 if metricV == 1
