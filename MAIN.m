@@ -118,7 +118,7 @@ if sensiAnalysis == false
         else
             synImages = pixelWise_generateSynImages(maskDir,targetVar,learningDates,sortedDates,geoRef,outDir,generationType,validation,optimisation,stochastic,stoSaveAll,nbImages,ensemble,outputType);
         end
-    elseif optimisation == true && validation == false
+    elseif (optimisation == true || optimPrep == true) && validation == false
         disp('Optimisation run, synthetic image generation skipped...')
         synImages = [];
     elseif metricViz == true
@@ -154,7 +154,7 @@ if sensiAnalysis == true
     
     [climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-                                             nanValue,daysRange,metricKNN,ensemble,generationType,parallelComputing,stochastic,stoSaveAll,metricV);
+                                             daysRange,metricKNN,ensemble,generationType,parallelComputing,stochastic,stoSaveAll,metricV);
     optimisedWeights = [];
 
     disp('--- SENSITIVITY ANALYSIS DONE')
