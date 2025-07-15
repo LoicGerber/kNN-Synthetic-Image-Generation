@@ -34,7 +34,7 @@ for iRange = 1:length(nbImages_range)
         disp('Extracting Learning dates...')
         learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,false);
         disp('Extracting Query dates...')
-        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,outDir,false);
+        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,false);
         disp('Loading optimisedWeights.mat file...')
         Weights = createWeights(climateVars,metricKNN,inDir);
         disp('--- 1. READING DATA DONE ---')

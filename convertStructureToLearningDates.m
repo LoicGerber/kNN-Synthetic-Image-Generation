@@ -44,15 +44,15 @@ else
 end
 % Keep only the target variable data corresponding to the common dates
 r = find(learningDates>=LdateStart & learningDates<=LdateEnd);
-if optimPrep == true && (LdateStart ~= QdateStart)
+if optimPrep == true && (LdateStart ~= QdateStart(1))
     % if in preparation for optimisation, include Query dates in Learning dates
-    rQ = find(learningDates>=QdateStart & learningDates<=QdateEnd);
+    rQ = find(learningDates>=QdateStart(1) & learningDates<=QdateEnd(end));
     r = unique([r; rQ]);
 end
-if min(learningDates)>LdateStart
-    warning(['Target data first date > Learning period start (',num2str(min(learningDates)),' vs ',num2str(LdateStart),')'])
-elseif max(learningDates)<LdateEnd
-    warning(['Target data last date < Learning period end (',num2str(max(learningDates)),' vs ',num2str(LdateEnd),')'])
+if min(learningDates)>LdateStart(1)
+    warning(['Target data first date > Learning period start (',num2str(min(learningDates)),' vs ',num2str(LdateStart(1)),')'])
+elseif max(learningDates)<LdateEnd(end)
+    warning(['Target data last date < Learning period end (',num2str(max(learningDates)),' vs ',num2str(LdateEnd(end)),')'])
 end
 learningDates = learningDates(r);
 if targetDim ~= 1

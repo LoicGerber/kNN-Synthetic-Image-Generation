@@ -38,7 +38,7 @@ if sensiAnalysis == false
         disp('Extracting Learning dates...')
         learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,optimPrep,inDir,saveMats);
         disp('Extracting Query dates...')
-        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,validationPrep,optimPrep,outputTime,inDir,outDir,saveMats);
+        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,validationPrep,optimPrep,outputTime,inDir,saveMats);
     elseif netCDFtoInputs == false && validationPrep == false
         disp('Loading QueryDates.mat file...')
         queryDates     = load(fullfile(inDir,'queryDates.mat'));

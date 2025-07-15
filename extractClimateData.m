@@ -76,6 +76,11 @@ climateData.Properties.VariableNames = matchingDataFields;
 climateData.("date") = rawData.(datesFields(1));
 climateData = movevars(climateData,'date','Before',1);
 
+if length(QdateStart) > 1
+    QdateStart = QdateStart(1);
+    QdateEnd   = QdateEnd(end);
+end
+
 [rLD,~] = find(datetime(climateData.date,'ConvertFrom','yyyymmdd')>=datetime(LdateStart,'ConvertFrom','yyyymmdd')-days(longWindow) ...
     & datetime(climateData.date,'ConvertFrom','yyyymmdd')<=datetime(LdateEnd,'ConvertFrom','yyyymmdd'));
 if min(datetime(climateData.date,'ConvertFrom','yyyymmdd'))>datetime(LdateStart,'ConvertFrom','yyyymmdd')
