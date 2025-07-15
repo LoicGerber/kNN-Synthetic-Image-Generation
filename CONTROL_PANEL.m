@@ -15,13 +15,12 @@ rawDir            = 'path\to\raw\data';                         % Path to raw da
 outputDir         = 'path\to\outputs';                          % Path to results, will be automatically created
 optiWeightsDir    = 'path\to\optimised\weights\matrix.mat';     % OPTIONAL - Path to optimised weights matrix .mat file (if available, otherwise '')
 maskDir           = 'path\to\binary\mask';                      % OPTIONAL - Path to binary mask delimiting the area to generate with the pixel-based approach (.tif image)
+lulcDir           = 'path\to\lulc\map';                         % OPTIONAL - Path to land use land cover map
 
 % ConvertStructureToInputs
 targetVar         = ["Et"];                         % Variables to be generated, with ["example1","example2"]
 climateVars       = ["Tavg","Tmin","Tmax","Pre"];   % Input variables considered for the data generation, with ["example1","example2"]
-addVars           = ["sm","twsa"];                  % Additional input variables, with ["example1","example2"], if empty use []
 normMethods       = [1,1,1,4];                      % Method of normalisation of the climate data. 0 = No normalisation, 1 = MinMax, 2 = Q5-Q95, 3 = log(x(x>0)+1), 4 = log(x(x>0)+1), with 1-Hamming dist. + Hellinger dist.
-maxThreshold      = 30;                             % Days, max threshold for closest additional variables attribution
 QdateStart        = 19500101;                       % YYYYMMDD - Start of the Generation period
 QdateEnd          = 19791231;                       % YYYYMMDD - End of the Generation period
 LdateStart        = 19800101;                       % YYYYMMDD - Start of the Learning period
@@ -37,6 +36,7 @@ longWindow        = 20;         % Number of days to consider for the long climat
 nbImages          = 10;         % K, number of days to consider for the generation of images
 metricKNN         = 6;          % 1 = RMSE, 2 = MAE, 3 = 1-bSPEM, 4 = Hellinger, 5 = 0.5*(1-bSPEM) + 0.5*Hellinger, 6 = SPAEF
 daysRange         = 90;         % Range of possible learning days (before and after) the query date's DOY
+useDOY            = true;       % Use day of year for distance computation
 
 % GenerateSynImages
 ensemble          = 10;         % When using bootstrap, number of ensembles created
@@ -64,6 +64,18 @@ nanValue          = -9999;          % Value of NaN values in target variable (e.
 varLegend         = 'Test [m^3]';   % Legend of the graphs
 varRange          = [0, 50];        % Range of values to visualise in reference and synthetic maps
 errRange          = [-10, 10];      % Range of error to visualise in error maps
+createGIF         = true;           % Switch to create final GIF
+
+% Parameters for MPS generation
+mps.servAd         = 'localhost';
+mps.kernel_dims    = [3, 3, 4];     % Size of kernel to use (X, Y, Z) - Z1 is target, Z2 is lat, Z3 is lon, Z4 (optional) is LULC map
+mps.kernel_weights = [1, 1, 1, 1];  % Uniform weight per layer
+mps.dataType       = [0, 0, 0, 1];  % 0 = continuous, 1 = categorical
+mps.kValue         = 1;             % Number of best candidates to consider ∈ [1 ∞]
+mps.neighbours     = [1, 1, 1, 1];  % N closest neighbors to consider
+mps.processPwr     = 0.5;           % Percentage of logical cores to be used
+mps.useMask        = true;          % Create simulation path
+mps.seed           = 42;            % Seed for reproductability
 
 % Sensitivity analysis
 sensiAnalysis     = false;      % true = sensitivity analysis ON, false = sensitivity analysis OFF (!!! BYPASSES PREVIOUS SWITCHES !!!)
@@ -80,8 +92,8 @@ nbOptiRuns        = 50;         % Number of runs for the Bayesian optimisation a
 [geoRef,climateData,queryDates,learningDates,refValidation,additionalVars, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = ...
     MAIN(...
-    rawDir,outputDir,optiWeightsDir,maskDir,targetVar,climateVars,addVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats         , ...
-    maxThreshold,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,bootstrap,bsSaveAll,validationPrep,validation,pixelWise, ...
+    rawDir,outputDir,optiWeightsDir,maskDir,lulcDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats, ...
+    useDOY,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,stochastic,stoSaveAll,validationPrep,validation,pixelWise,createGIF, ...
     metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns);
 

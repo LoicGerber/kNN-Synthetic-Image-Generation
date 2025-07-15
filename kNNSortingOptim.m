@@ -1,4 +1,4 @@
-function sortedDate = kNNSortingOptim(sortedDates,Tavg_ShortW,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tavg_LongW,Tmin_LongW,Tmax_LongW,Pre_LongW,spemW,helW,metricKNN,nbImages,saveOptimPrep,inputDir)
+function sortedDate = kNNSortingOptim(sortedDates,Tmin_ShortW,Tmax_ShortW,Pre_ShortW,Tmin_LongW,Tmax_LongW,Pre_LongW,doyW,spemW,helW,metricKNN,nbImages,useDOY,saveOptimPrep,inputDir)
 
 %
 %
@@ -16,14 +16,16 @@ else
     distances = sortedDates;
 end
 
-weightsShort = [Pre_ShortW, Tavg_ShortW, Tmin_ShortW, Tmax_ShortW];
-weightsLong  = [Pre_LongW, Tavg_LongW, Tmin_LongW, Tmax_LongW];
+weightsShort = [Pre_ShortW, Tmin_ShortW, Tmax_ShortW];
+weightsLong  = [Pre_LongW, Tmin_LongW, Tmax_LongW];
 
 totQDates = size(distances, 1);
 
 sortedDate = cell(totQDates, 1);
 sortedData = cell(totQDates, 1);
 sortedDist = cell(totQDates, 1);
+
+fprintf('  Progress:   0.0%%');
 
 for qd = 1:totQDates
     currentQDate = distances{qd, 1};
@@ -38,7 +40,6 @@ for qd = 1:totQDates
 
     % Preallocate and concatenate distance matrices
     cdist = cat(3, distCell{:, 1});
-    hdist = cat(3, distCell{:, 2});
 
     % Apply weights and aggregate
     D1 = squeeze(cdist(1, :, :))';
@@ -48,6 +49,8 @@ for qd = 1:totQDates
     D2_weighted = D2 .* weightsLong;
 
     if metricKNN == 5
+        hdist = cat(3, distCell{:, 2});
+
         H1 = squeeze(hdist(1, :, :))';
         H2 = squeeze(hdist(2, :, :))';
 
@@ -56,6 +59,10 @@ for qd = 1:totQDates
     end
 
     totalDistance = sum(D1_weighted + D2_weighted, 2);
+    
+    if useDOY
+        totalDistance = totalDistance + squeeze(cat(3, distCell{:, 3}));
+    end
 
     climateDistance(:, 2) = totalDistance;
 
@@ -67,7 +74,11 @@ for qd = 1:totQDates
     sortedDate{qd} = currentQDate;
     sortedData{qd} = distancesBest;
     sortedDist{qd} = distSorted;
+
+    progress = qd / totQDates * 100;
+    fprintf('\b\b\b\b\b\b\b%6.1f%%', progress);
 end
+fprintf('\n');
 
 sortedDatesAll = [sortedDate, sortedData, sortedDist];
 sortedDate = sortedDatesAll;

@@ -1,7 +1,7 @@
 function [geoRef,climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = MAIN(...
     rawDir,outputDir,optiWeightsDir,maskDir,lulcDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats, ...
-    shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
+    useDOY,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
     netCDFtoInputs,createGenWeights,kNNsorting,generateImage,stochastic,stoSaveAll,validationPrep,validation,pixelWise,createGIF, ...
     metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
@@ -66,7 +66,7 @@ if sensiAnalysis == false
     end
     if createGenWeights == true || optimPrep == true || optimisation == true
         disp('Creating generic weights...')
-        Weights = createWeights(climateVars,metricKNN,inDir);
+        Weights = createWeights(climateVars,metricKNN,useDOY,inDir);
     elseif createGenWeights == false
         disp('Loading optimisedWeights.mat file...')
         optimisedWeights = load(optiWeightsDir);
@@ -93,7 +93,7 @@ if sensiAnalysis == false
     % Generate ranked Learning Dates for each Query Date
     if kNNsorting == true || validationPrep == true || optimPrep == true
         if pixelWise == false
-            sortedDates = kNNDataSorting(climateVars,queryDates,learningDates,climateData,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir,saveMats);
+            sortedDates = kNNDataSorting(climateVars,queryDates,learningDates,climateData,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir,useDOY);
         else
             sortedDates = pixelWise_kNNDataSorting(maskDir,climateVars,queryDates,learningDates,climateData,longWindow,daysRange,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inDir);
         end
@@ -174,24 +174,26 @@ if optimisation == true
     % Iterate over each variable
     for i = 1:numel(variableNames)
         bayesWeights(i) = optimizableVariable(variableNames{i}, [0, 1], 'Type', 'real');
+        initialW.(variableNames{i}) = 1;
     end
+    initialW = struct2table(initialW);
     % Set up the Bayesian optimization
-    fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), x.(9), ...
+    fun = @(x)computeObjectiveOptim(x.(1), x.(2), x.(3), x.(4), x.(5), x.(6), x.(7), x.(8), ...
         targetVar, targetDim, learningDates, sortedDates, refValidation, saveOptimPrep, metricKNN, nbImages, ...
-        generationType, metricV, optimisation, inDir, outDir);
+        generationType, metricV, optimisation, useDOY, inDir, outDir);
     % Run the Bayesian optimization
     %if parallelComputing == true
     %    results = bayesopt(fun,bayesWeights,'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'UseParallel',true);
     %else
-    results = bayesopt(fun,bayesWeights(1:9),'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns);
+    results = bayesopt(fun,bayesWeights(1:8),'Verbose',0,'AcquisitionFunctionName','expected-improvement-plus','MaxObjectiveEvaluations',nbOptiRuns,'InitialX',initialW(:,1:8));
     %end
     % Retrieve the optimal weights
     disp('  Saving optimisedWeights.mat...')
     optimisedWeights = results.XAtMinObjective;
     % Normalize weights (variables and metrics separately)
     optimisedWeightsArray = table2array(optimisedWeights);
-    variablesWeights = optimisedWeightsArray(1:8);
-    metricsWeights   = optimisedWeightsArray(9);
+    variablesWeights = optimisedWeightsArray(1:7);
+    metricsWeights   = optimisedWeightsArray(8);
     helWeight        = 1 - metricsWeights;
     metricsWeights   = [metricsWeights helWeight];
     

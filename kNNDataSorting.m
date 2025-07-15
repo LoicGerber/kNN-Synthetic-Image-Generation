@@ -1,4 +1,4 @@
-function sortedDates = kNNDataSorting(climateVars,queryDates,learningDates,climateData,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir,saveMats)
+function sortedDates = kNNDataSorting(climateVars,queryDates,learningDates,climateData,normMethods,shortWindow,longWindow,daysRange,Weights,nbImages,metricKNN,optimPrep,saveOptimPrep,parallelComputing,inputDir,useDOY)
 
 %
 %
@@ -64,6 +64,10 @@ if metricKNN == 5
 else
     spemHelW   = [];
 end
+if useDOY
+    idxDOY    = contains(Weights.Properties.VariableNames,'DOY');
+    weightDOY = table2array(Weights(:,idxDOY));
+end
 
 disp('Starting loop to sort learning dates for each query date...')
 
@@ -116,22 +120,26 @@ if parallelComputing == true
                         % Climate distance
                         % 1 date, 2 distance
                         climateDistAll = cell(ld,1);
-                        hammingDist    = cell(ld,1);
-                        hellingDist    = cell(ld,1);
-                        climateDistHH  = cell(ld,1);
                         climVarIdx     = zeros(1,numel(climateVarsNames));
                         otherIdx       = ~climVarIdx;
+
+                        % DOY distance
+                        if useDOY
+                            absDiff = abs(dayOfYearQ - dayOfYearL);
+                            doyDist = min(absDiff, 365-absDiff)/daysRange;
+                        end
+
                         if sum(ismember(normMethods,4))>=1
                             normMeIdx  = find(normMethods==4);
                             climVarIdx = strcmpi(climateVars(normMeIdx),climateVarsNames);
                             otherIdx   = ~climVarIdx;
                             binaryLClim = cellfun(@(x) (x>0)+isnan(x).*x, learningClimate(:,climVarIdx), 'UniformOutput', false);
                             binaryQClim = cellfun(@(x) (x>0)+isnan(x).*x, queryClimate(:,climVarIdx), 'UniformOutput', false);
-                            hammingDist{ld,1} = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
-                            hellingDist{ld,1} = cellfun(@(x,y) single(hellingerDist(x(x>0), y(y>0))), ...
+                            hammingDist = cellfun(@(x,y) single(mean(x(:) ~= y(:))),binaryLClim,binaryQClim,'UniformOutput',false); % Hamming distance
+                            hellingDist = cellfun(@(x,y) single(hellingerDist(x(x>0), y(y>0))), ...
                                 learningClimate(:,climVarIdx),queryClimate(:,climVarIdx),'UniformOutput',false); % Hellinger distance
-                            climateDistHH{ld,1} = cellfun(@(x,y) (x/2)+(y/2),hammingDist{ld,1},hellingDist{ld,1},'UniformOutput',false); % Total Hamming + Hellinger distance
-                            climateDistAll{ld,1}(:,climVarIdx) = climateDistHH{ld,1}(:);
+                            climateDistHH = cellfun(@(x,y) (x/2)+(y/2),hammingDist,hellingDist,'UniformOutput',false); % Total Hamming + Hellinger distance
+                            climateDistAll{ld,1}(:,climVarIdx) = climateDistHH(:);
                         end
 %                         learningSubset = learningClimate(:, otherIdx);
 %                         querySubset    = queryClimate(:, otherIdx);
@@ -181,13 +189,18 @@ if parallelComputing == true
                         elseif optimPrep == true && metricKNN == 5
                             climateDistance{ld,2}(2,:) = sum(climateDistAll{ld,1}(shortWindow+1:end,:),1);
                             climateDistance{ld,3}(2,:) = sum(climateDistAll{ld,2}(shortWindow+1:end,:),1);
+                            if useDOY
+                                climateDistance{ld,4} = weightDOY * doyDist;
+                            end
                         end
                         % Assign weights to corresponding index
                         if optimPrep == false
                             climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
                             climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},1);
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},2); %targetDistance{ld,1}+
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},'all');
+                            if useDOY
+                                climateDistance{ld,2} = climateDistance{ld,2} + (weightDOY * doyDist);
+                            end
                         end
                     else
                         % If not enough climate days available, skip until loop reaches longWindow
@@ -218,11 +231,11 @@ if parallelComputing == true
             sortedData{qd}  = cell2mat(distancesDates);
             sortedDist{qd}  = cell2mat(distSorted);
         else
-            distancesDates    = distance(:,1);
-            distSorted        = distance(:,2:end);
-            sortedDates{qd}   = currentQDate;
-            sortedData{qd}    = distancesDates;
-            sortedDist{qd}    = distSorted;
+            distancesDates  = distance(:,1);
+            distSorted      = distance(:,2:end);
+            sortedDates{qd} = currentQDate;
+            sortedData{qd}  = distancesDates;
+            sortedDist{qd}  = distSorted;
         end
     end
 
@@ -280,6 +293,13 @@ else % serial computing
                     if idx >= longWindow % skips learning dates that are in the longWindow
                         % Learning dates climate
                         learningClimate = cellfun(@(M) M(:,:,idx-(longWindow-1):idx), climateMaps, 'UniformOutput', false);
+
+                        % DOY distance
+                        if useDOY
+                            absDiff = abs(dayOfYearQ - dayOfYearL);
+                            doyDist = min(absDiff, 365-absDiff)/daysRange;
+                        end
+
                         % Climate distance
                         % 1 date, 2 distance
                         climVarIdx = zeros(1,numel(climateVarsNames));
@@ -351,14 +371,19 @@ else % serial computing
                         elseif optimPrep == true && metricKNN == 5
                             climateDistance{ld,2}(2,:) = sum(climateDistAll{:,1}(shortWindow+1:end,:),1);
                             climateDistance{ld,3}(2,:) = sum(climateDistAll{:,2}(shortWindow+1:end,:),1);
+                            if useDOY
+                                climateDistance{ld,4} = weightDOY * doyDist;
+                            end
                         end
 
                         % Assign weights to corresponding index
                         if optimPrep == false
                             climateDistance{ld,2}(1,:) = climateDistance{ld,2}(1,:) .* weightsShort;
                             climateDistance{ld,2}(2,:) = climateDistance{ld,2}(2,:) .* weightsLong;
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},1);
-                            climateDistance{ld,2} = sum(climateDistance{ld,2},2); %+targetDistance{ld}
+                            climateDistance{ld,2} = sum(climateDistance{ld,2},'all');
+                            if useDOY
+                                climateDistance{ld,2} = climateDistance{ld,2} + (weightDOY * doyDist);
+                            end
                         end
                     else
                         % If not enough climate days available, skip until loop reaches longWindow
@@ -395,11 +420,11 @@ else % serial computing
             sortedData{qd}  = cell2mat(distancesDates);
             sortedDist{qd}  = cell2mat(distSorted);
         else
-            distancesDates    = distance(:,1);
-            distSorted        = distance(:,2:end);
-            sortedDates{qd}   = currentQDate;
-            sortedData{qd}    = distancesDates;
-            sortedDist{qd}    = distSorted;
+            distancesDates  = distance(:,1);
+            distSorted      = distance(:,2:end);
+            sortedDates{qd} = currentQDate;
+            sortedData{qd}  = distancesDates;
+            sortedDist{qd}  = distSorted;
         end
 
         % Display progression - for parallel computing

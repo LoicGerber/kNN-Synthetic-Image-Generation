@@ -1,4 +1,4 @@
-function Weights = createWeights(climateVars,metricKNN,inputDir)
+function Weights = createWeights(climateVars,metricKNN,useDOY,inputDir)
 
 %
 %
@@ -16,8 +16,13 @@ if metricKNN == 5
 else
     spemHel = [];
 end
+if useDOY
+    doy = "DOY";
+else
+    doy = [];
+end
 
-varsAll = [climShort climLong spemHel];
+varsAll = [climShort climLong doy spemHel];
 
 data = ones(1, length(varsAll));
 

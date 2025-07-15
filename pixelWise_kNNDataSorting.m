@@ -17,23 +17,22 @@ elseif any(size(queryDates)==0)
     error('At least one dimension of QueryDates is 0! Code exited...')
 end
 
-climateDates      = table2array(climateData(:,'date'));
-climateCells       = table2array(removevars(climateData,'date'));
+climateDates = table2array(climateData(:,'date'));
+climateCells = table2array(removevars(climateData,'date'));
 % Get sizes
-[nTime, nVar] = size(climateCells);
+[nTime, nVar]  = size(climateCells);
 [xSize, ySize] = size(climateCells{1,1});  % Assuming all cells contain same-size [x y] matrices
 % Flatten each [x y] matrix into a column vector
-flatData = cellfun(@(m) reshape(m, [], 1), climateCells, 'UniformOutput', false);
+flatData       = cellfun(@(m) reshape(m, [], 1), climateCells, 'UniformOutput', false);
 % Stack all vectors horizontally: size will be [x*y x (nTime*nVar)]
-stacked = cat(2, flatData{:});
+stacked        = cat(2, flatData{:});
 % Reshape into 4D array: [x y time variable]
-climateMaps = reshape(stacked, xSize, ySize, nTime, nVar);
+climateMaps    = reshape(stacked, xSize, ySize, nTime, nVar);
 
-queryDatesDate = table2array(queryDates(:,1));
+queryDatesDate    = table2array(queryDates(:,1));
 learningDatesDate = table2array(learningDates(:,1));
 
 if optimPrep == false
-    % Define learningDates as itself minus the query dates
     ismem = ismember(learningDatesDate, queryDatesDate);
     learningDatesDate = learningDatesDate(~ismem);
 end
