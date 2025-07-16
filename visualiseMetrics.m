@@ -63,12 +63,14 @@ for k = 1:numel(targetVar)
         beta  = mean(synData)/mean(refData);
         kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
         str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-        if strcmp(startLdate, startQdate)
-            subtitle([['Learning periode: ' endQdate '-' endLdate] str])
-        elseif strcmp(endQdate, endLdate)
-            subtitle([['Learning periode: ' startLdate '-' startQdate] str])
-        else
-            subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+        if length(startQdate) == 1
+            if strcmp(startLdate, startQdate)
+                subtitle([['Learning periode: ' endQdate '-' endLdate] str])
+            elseif strcmp(endQdate, endLdate)
+                subtitle([['Learning periode: ' startLdate '-' startQdate] str])
+            else
+                subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+            end
         end
         xlabel('Date')
         ylabel(strcat("Mean ", targetVar(k)))
@@ -126,12 +128,14 @@ for k = 1:numel(targetVar)
         end
         %str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['Mean ensemble RMSE: ' num2str(mean(meanValuesVal),'%.5f')]};
         str = {['Mean RMSE: ' num2str(mean(singleDataVal),'%.5f')], ['RMSE - MAE correlation: ' num2str(corr(singleDataVal,bestDist),'%.5f')]};
-        if strcmp(startLdate, startQdate)
-            subtitle([['Learning periode: ' endQdate '-' endLdate] str])
-        elseif strcmp(endQdate, endLdate)
-            subtitle([['Learning periode: ' startLdate '-' startQdate] str])
-        else
-            subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+        if length(startQdate) == 1
+            if strcmp(startLdate, startQdate)
+                subtitle([['Learning periode: ' endQdate '-' endLdate] str])
+            elseif strcmp(endQdate, endLdate)
+                subtitle([['Learning periode: ' startLdate '-' startQdate] str])
+            else
+                subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+            end
         end
         xlabel('Date')
         if metricV == 1
@@ -163,12 +167,14 @@ for k = 1:numel(targetVar)
             plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
                 synImages.(targetVarL(k)),'Color','b','DisplayName','Synthetic')
             hold off
-            if strcmp(startLdate, startQdate)
-                subtitle(['Learning periode: ' endQdate '-' endLdate])
-            elseif strcmp(endQdate, endLdate)
-                subtitle(['Learning periode: ' startLdate '-' startQdate])
-            else
-                subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
+            if length(startQdate) == 1
+                if strcmp(startLdate, startQdate)
+                    subtitle([['Learning periode: ' endQdate '-' endLdate] str])
+                elseif strcmp(endQdate, endLdate)
+                    subtitle([['Learning periode: ' startLdate '-' startQdate] str])
+                else
+                    subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+                end
             end
             xlabel('Date')
             ylabel('Discharge [m^{3}/s]')
@@ -194,12 +200,14 @@ for k = 1:numel(targetVar)
         elseif metricV == 5
             title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
         end
-        if strcmp(startLdate, startQdate)
-            subtitle(['Learning periode: ' endQdate '-' endLdate])
-        elseif strcmp(endQdate, endLdate)
-            subtitle(['Learning periode: ' startLdate '-' startQdate])
-        else
-            subtitle(['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate])
+        if length(startQdate) == 1
+            if strcmp(startLdate, startQdate)
+                subtitle([['Learning periode: ' endQdate '-' endLdate] str])
+            elseif strcmp(endQdate, endLdate)
+                subtitle([['Learning periode: ' startLdate '-' startQdate] str])
+            else
+                subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+            end
         end
         xlabel('Date')
         if metricV == 1

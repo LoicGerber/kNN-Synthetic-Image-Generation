@@ -33,7 +33,7 @@ end
 
 climateVarsNames  = string(removevars(climateData,'date').Properties.VariableNames);
 
-queryDatesDate = table2array(queryDates(:,1));
+queryDatesDate = queryDates;
 
 learningDatesDate = table2array(learningDates(:,1));
 

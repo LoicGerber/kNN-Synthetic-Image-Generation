@@ -29,7 +29,7 @@ stacked        = cat(2, flatData{:});
 % Reshape into 4D array: [x y time variable]
 climateMaps    = reshape(stacked, xSize, ySize, nTime, nVar);
 
-queryDatesDate    = table2array(queryDates(:,1));
+queryDatesDate    = queryDates;
 learningDatesDate = table2array(learningDates(:,1));
 
 if optimPrep == false
