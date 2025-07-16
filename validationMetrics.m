@@ -42,7 +42,7 @@ for j = 1:numel(targetVar)
             error('Numbers of reference and synthetic images do not match');
         end
     end
-    
+
     % Initialize accumulation variables
     accumulatedRef = [];
     accumulatedSyn = [];
@@ -75,28 +75,27 @@ for j = 1:numel(targetVar)
                 error('Dates do not match')
             end
             validationResult(i,1) = currentDate;
-            if metricV == 1
-                % Calculate the MAE
-                validationResult(i,2) = mean(abs(synImage - refImage), 'all', 'omitnan');
-            elseif metricV == 2
-                % Calculate the RMSE
-                validationResult(i,2) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
-            elseif metricV == 3
-                % Calculate the SPEM
-                validationResult(i,2) = spem(synImage,refImage);
-            elseif metricV == 4
-                % Calculate the SPAEF
-                validationResult(i,2) = spaef(synImage,refImage);
-            elseif metricV == 5  || metricV == 6
-                if targetDim == 2
-                    validationResult(i,2) = computeKGE(synImage,refImage);
-                else
-                    % Accumulate data for KGE calculation
-                    accumulatedRef = [accumulatedRef; refImage(:)];
-                    accumulatedSyn = [accumulatedSyn; synImage(:)];
-                end
-            else
-                error('Invalid metric flag...')
+            switch metricV
+                case 1
+                    % Calculate the MAE
+                    validationResult(i,2) = mean(abs(synImage - refImage), 'all', 'omitnan');
+                case 2
+                    % Calculate the RMSE
+                    validationResult(i,2) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+                case 3
+                    % Calculate the SPEM
+                    validationResult(i,2) = spem(synImage,refImage);
+                case 4
+                    % Calculate the SPAEF
+                    validationResult(i,2) = spaef(synImage,refImage);
+                case 5 || 6
+                    if targetDim == 2
+                        validationResult(i,2) = computeKGE(synImage,refImage);
+                    else
+                        % Accumulate data for KGE calculation
+                        accumulatedRef = [accumulatedRef; refImage(:)];
+                        accumulatedSyn = [accumulatedSyn; synImage(:)];
+                    end
             end
         else
             %currentDate = datetime(strrep(refImageDate,'.tif',''),'InputFormat','uuuuMMdd');
@@ -110,51 +109,49 @@ for j = 1:numel(targetVar)
             for k = 1:ensemble
                 synImage = double(synImagesAll{i}(:,:,k));
                 %synImage(isnan(synImage)) = nanValue;
-                if metricV == 1
-                    % Calculate the MAE
-                    validationResult{i,2}(k) = mean(abs(synImage - refImage), 'all', 'omitnan');
-                elseif metricV == 2
-                    % Calculate the RMSE
-                    validationResult{i,2}(k) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
-                elseif metricV == 3
-                    % Calculate the SPEM
-                    validationResult{i,2}(k) = spem(synImage,refImage);
-                elseif metricV == 4
-                    % Calculate the SPAEF
-                    validationResult{i,2}(k) = spaef(synImage,refImage);
-                elseif metricV == 5 || metricV == 6
-                    if targetDim == 2
-                        validationResult{i,2}(k) = computeKGE(synImage,refImage);
-                    else
-                        % Accumulate data for KGE calculation
-                        accumulatedRef = [accumulatedRef; refImage(:)];
-                        accumulatedSyn = [accumulatedSyn; synImage(:)];
-                    end
-                else
-                    error('Invalid metric flag...')
+                switch metricV
+                    case 1
+                        % Calculate the MAE
+                        validationResult{i,2}(k) = mean(abs(synImage - refImage), 'all', 'omitnan');
+                    case 2
+                        % Calculate the RMSE
+                        validationResult{i,2}(k) = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+                    case 3
+                        % Calculate the SPEM
+                        validationResult{i,2}(k) = spem(synImage,refImage);
+                    case 4
+                        % Calculate the SPAEF
+                        validationResult{i,2}(k) = spaef(synImage,refImage);
+                    case 5 || 6
+                        if targetDim == 2
+                            validationResult{i,2}(k) = computeKGE(synImage,refImage);
+                        else
+                            % Accumulate data for KGE calculation
+                            accumulatedRef = [accumulatedRef; refImage(:)];
+                            accumulatedSyn = [accumulatedSyn; synImage(:)];
+                        end
                 end
             end
             % KNN result
             synImage = double(maps(:,:,i));
             %synImage(isnan(synImage)) = nanValue;
-            if metricV == 1
-                % Calculate the MAE
-                validationResult{i,3} = mean(abs(synImage - refImage), 'all', 'omitnan');
-            elseif metricV == 2
-                % Calculate the RMSE
-                validationResult{i,3} = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
-            elseif metricV == 3
-                % Calculate the SPEM
-                validationResult{i,3} = spem(synImage,refImage);
-            elseif metricV == 4
-                % Calculate the SPAEF
-                validationResult{i,3} = spaef(synImage,refImage);
-            else
-                error('Invalid metric flag...')
+            switch metricV
+                case 1
+                    % Calculate the MAE
+                    validationResult{i,3} = mean(abs(synImage - refImage), 'all', 'omitnan');
+                case 2
+                    % Calculate the RMSE
+                    validationResult{i,3} = sqrt(mean((synImage - refImage).^2, 'all', 'omitnan'));
+                case 3
+                    % Calculate the SPEM
+                    validationResult{i,3} = spem(synImage,refImage);
+                case 4
+                    % Calculate the SPAEF
+                    validationResult{i,3} = spaef(synImage,refImage);
             end
         end
     end
-    
+
     if metricV == 5 && targetDim == 1 % Compute KGE for the entire time series
         kgeValue = computeKGE(accumulatedSyn, accumulatedRef);
         if stochastic == false
@@ -178,12 +175,20 @@ for j = 1:numel(targetVar)
     end
 end
 
-if optimisation == false
-    disp('Saving validationMetric.mat table...')
-    validationSave = fullfile(outputDir,'validationMetric.mat');
-    save(validationSave, 'validationMetric');
-else % for optimisation run
-    validationMetric = validOptim;
-end
+switch metricV
+    case 1, disp(['  Mean MAE: ' num2str(mean(validationResult(:,2)))])
+    case 2, disp(['  Mean RMSE: ' num2str(mean(validationResult(:,2)))])
+    case 3, disp(['  Mean SPEM: ' num2str(mean(validationResult(:,2)))])
+    case 4, disp(['  Mean SPAEF: ' num2str(mean(validationResult(:,2)))])
+    case 5, disp(['  Mean KGE: ' num2str(mean(validationResult(:,2)))])
+    case 6, disp(['  Mean NSE: ' num2str(mean(validationResult(:,2)))])
+
+        if optimisation == false
+            disp('Saving validationMetric.mat table...')
+            validationSave = fullfile(outputDir,'validationMetric.mat');
+            save(validationSave, 'validationMetric');
+        else % for optimisation run
+            validationMetric = validOptim;
+        end
 
 end

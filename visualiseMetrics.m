@@ -8,16 +8,18 @@ function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,s
 %
 %
 
-startLdate = char(datetime(LdateStart,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'));
-startQdate = char(datetime(QdateStart,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy')-days(1));
-endLdate   = char(datetime(LdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'));
-endQdate   = char(datetime(QdateEnd,'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy')+days(1));
+startLdate = datetime(LdateStart,'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+startQdate = datetime(QdateStart,'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+endLdate   = datetime(LdateEnd,'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+endQdate   = datetime(QdateEnd,'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+
+numPeriods = length(startQdate);
 
 targetVarL = lower(targetVar);
 
 for k = 1:numel(targetVar)
+    dates = datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
     if bootstrap == true
-        dates = datetime(cell2mat(validationMetric.(targetVarL(k))(:,1)),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
         % Validation data
         singleDataVal = cell2mat(validationMetric.(targetVarL(k))(:,3));
         maxValuesVal  = zeros(size(validationMetric.(targetVarL(k)), 1), 1);
@@ -161,11 +163,9 @@ for k = 1:numel(targetVar)
     else
         if targetDim == 1
             figure('WindowState', 'maximized');
-            plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
-                refValidation.(targetVarL(k)),'Color','r','DisplayName','Reference');
+            plot(dates, refValidation.(targetVarL(k)),'Color','r','DisplayName','Reference');
             hold on
-            plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
-                synImages.(targetVarL(k)),'Color','b','DisplayName','Synthetic')
+            plot(dates, synImages.(targetVarL(k)),'Color','b','DisplayName','Synthetic')
             hold off
             if length(startQdate) == 1
                 if strcmp(startLdate, startQdate)
@@ -184,233 +184,428 @@ for k = 1:numel(targetVar)
             grid on
             saveas(gcf,strcat(outDir,['\' convertStringsToChars(targetVar(k)) '.png']))
         end
-        figure('WindowState', 'maximized');
-        plot(datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy'), ...
-            validationMetric.(targetVarL(k))(:,2));
-        yline(mean(validationMetric.(targetVarL(k))(:,2)),'-',['Mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2)))],'Color','r')
-        %ylim([0 1.4])
-        if metricV == 1
-            title([convertStringsToChars(targetVar(k)) ' - MAE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
-        elseif metricV == 2
-            title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
-        elseif metricV == 3
-            title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
-        elseif metricV == 4
-            title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
-        elseif metricV == 5
-            title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(validationMetric.(targetVarL(k))(:,2))) ')'])
-        end
-        if length(startQdate) == 1
-            if strcmp(startLdate, startQdate)
-                subtitle([['Learning periode: ' endQdate '-' endLdate] str])
-            elseif strcmp(endQdate, endLdate)
-                subtitle([['Learning periode: ' startLdate '-' startQdate] str])
-            else
-                subtitle([['Learning periode: ' startLdate '-' startQdate ' - ' endQdate '-' endLdate] str])
+
+        % --------------------------------------------------------------------
+        % === Plot for each individual validation period ===
+        if numPeriods > 1
+            for period = 1:numPeriods
+                figure('WindowState', 'maximized');
+                % Filter data for current validation period
+                periodIndices = dates >= startQdate(period) & dates <= endQdate(period);
+                periodData = validationMetric.(targetVarL(k))(periodIndices, :);
+                % Plotting
+                plot(datetime(periodData(:,1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy'), periodData(:,2));
+                yline(mean(periodData(:,2)), '-', ['Mean: ' num2str(mean(periodData(:,2)))], 'Color', 'r');
+                % Title
+                switch metricV
+                    case 1, title([convertStringsToChars(targetVar(k)) ' - MAE (mean: ' num2str(mean(periodData(:,2))) ')']);
+                    case 2, title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(periodData(:,2))) ')']);
+                    case 3, title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(periodData(:,2))) ')']);
+                    case 4, title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(periodData(:,2))) ')']);
+                    case 5, title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(periodData(:,2))) ')']);
+                end
+                xlabel('Date');
+                switch metricV
+                    case 1, ylabel('MAE');
+                    case 2, ylabel('RMSE');
+                    case 3, ylabel('SPEM');
+                    case 4, ylabel('SPAEF');
+                    case 5, ylabel('KGE');
+                end
+                set(gcf, 'color', 'white');
+                grid on;
+                % Save figure
+                saveas(gcf, fullfile(outDir, ...
+                    ['validation_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                close(gcf);
             end
         end
-        xlabel('Date')
-        if metricV == 1
-            ylabel('MAE')
-        elseif metricV == 2
-            ylabel('RMSE')
-        elseif metricV == 3
-            ylabel('SPEM')
-        elseif metricV == 4
-            ylabel('SPAEF')
-        elseif metricV == 5
-            ylabel('KGE')
+        % === Plot for the total validation period (from first start to last end) ===
+        figure('WindowState', 'maximized');
+        % Compute overall period range
+        totalStart = startQdate(1);
+        totalEnd   = endQdate(end);
+        % Filter data for total period
+        totalIndices = dates >= totalStart & dates <= totalEnd;
+        totalData = validationMetric.(targetVarL(k))(totalIndices, :);
+        % Plotting
+        plot(datetime(totalData(:,1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy'), totalData(:,2));
+        yline(mean(totalData(:,2)), '-', ['Mean: ' num2str(mean(totalData(:,2)))], 'Color', 'r');
+        % Title
+        switch metricV
+            case 1, title([convertStringsToChars(targetVar(k)) ' - MAE (mean: ' num2str(mean(totalData(:,2))) ')']);
+            case 2, title([convertStringsToChars(targetVar(k)) ' - RMSE (mean: ' num2str(mean(totalData(:,2))) ')']);
+            case 3, title([convertStringsToChars(targetVar(k)) ' - SPEM (mean: ' num2str(mean(totalData(:,2))) ')']);
+            case 4, title([convertStringsToChars(targetVar(k)) ' - SPAEF (mean: ' num2str(mean(totalData(:,2))) ')']);
+            case 5, title([convertStringsToChars(targetVar(k)) ' - KGE (mean: ' num2str(mean(totalData(:,2))) ')']);
+        end
+        xlabel('Date');
+        switch metricV
+            case 1, ylabel('MAE');
+            case 2, ylabel('RMSE');
+            case 3, ylabel('SPEM');
+            case 4, ylabel('SPAEF');
+            case 5, ylabel('KGE');
         end
         set(gcf, 'color', 'white');
-        grid on
-        saveas(gcf,strcat(outDir,['\validation_' convertStringsToChars(targetVar(k)) '.png']))
+        grid on;
+        % Save total period plot
+        saveas(gcf, fullfile(outDir, ...
+            ['validation_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+        close(gcf);
 
         % --------------------------------------------------------------------
         if targetDim ~= 1
-
-            refData  = refValidation.(targetVarL(k));
+            refData = refValidation.(targetVarL(k));
             synData = synImages.(targetVarL(k));
+            % Handle nan values
+            if ~isnan(nanValue)
+                refData(refData == nanValue) = nan;
+                synData(isnan(refData)) = nan;  % Mask synthetic data where reference is NaN
+            end
+            % === Plot for each individual validation period ===
+            if numPeriods > 1
+                for period = 1:numPeriods
+                    % Time filtering
+                    periodIndices = dates >= startQdate(period) & dates <= endQdate(period);
+                    % Compute spatial means over time for current period
+                    meanRefData = squeeze(mean(mean(refData(:,:,periodIndices), 1, 'omitnan'), 2, 'omitnan'));
+                    meanSynData = squeeze(mean(mean(synData(:,:,periodIndices), 1, 'omitnan'), 2, 'omitnan'));
+                    % Plot
+                    figure('WindowState', 'maximized');
+                    plot(dates(periodIndices), meanRefData, 'r-', ...
+                        dates(periodIndices), meanSynData, 'k-');
+                    legend('Reference', 'Synthetic', 'Location', 'southeast');
+                    xlabel('Date');
+                    ylabel(varLegend);
+                    title(['Mean ' convertStringsToChars(targetVarL(k))]);
+                    % KGE and stats
+                    r = corr(meanSynData, meanRefData, 'rows', 'complete');
+                    alpha = std(meanSynData, 'omitnan') / std(meanRefData, 'omitnan');
+                    beta = mean(meanSynData, 'omitnan') / mean(meanRefData, 'omitnan');
+                    kgeSynRef = 1 - sqrt((r - 1)^2 + (alpha - 1)^2 + (beta - 1)^2);
+                    str = {['KGE: ' num2str(kgeSynRef, '%.5f')], ...
+                        ['r: ' num2str(r, '%.5f') ', \alpha: ' num2str(alpha, '%.5f') ', \beta: ' num2str(beta, '%.5f')]};
+                    subtitle(str);
+                    grid on; box off;
+                    set(gcf, 'color', 'white');
+                    % Save figure
+                    saveas(gcf, fullfile(outDir, ...
+                        ['correlation_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                    close(gcf);
+                end
+            end
+            % === Plot for the total period (from first start to last end) ===
+            totalStart = startQdate(1);
+            totalEnd = endQdate(end);
+            totalIndices = dates >= totalStart & dates <= totalEnd;
+            % Compute spatial means over time for full period
+            meanRefData = squeeze(mean(mean(refData(:,:,totalIndices), 1, 'omitnan'), 2, 'omitnan'));
+            meanSynData = squeeze(mean(mean(synData(:,:,totalIndices), 1, 'omitnan'), 2, 'omitnan'));
+            figure('WindowState', 'maximized');
+            plot(dates(totalIndices), meanRefData, 'r-', ...
+                dates(totalIndices), meanSynData, 'k-');
+            legend('Reference', 'Synthetic', 'Location', 'southeast');
+            xlabel('Date');
+            ylabel(varLegend);
+            title(['Mean ' convertStringsToChars(targetVarL(k))]);
+            % KGE and stats for total period
+            r = corr(meanSynData, meanRefData, 'rows', 'complete');
+            alpha = std(meanSynData, 'omitnan') / std(meanRefData, 'omitnan');
+            beta = mean(meanSynData, 'omitnan') / mean(meanRefData, 'omitnan');
+            kgeSynRef = 1 - sqrt((r - 1)^2 + (alpha - 1)^2 + (beta - 1)^2);
+            str = {['KGE: ' num2str(kgeSynRef, '%.5f')], ...
+                ['r: ' num2str(r, '%.5f') ', \alpha: ' num2str(alpha, '%.5f') ', \beta: ' num2str(beta, '%.5f')]};
+            subtitle(str);
+            grid on; box off;
+            set(gcf, 'color', 'white');
+            % Save total plot
+            saveas(gcf, fullfile(outDir, ...
+                ['correlation_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+            close(gcf);
+
+            % --------------------------------------------------------------------
+
+            refData = refValidation.(targetVarL(k));
+            synData = synImages.(targetVarL(k));
+            % Handle nan values
+            if ~isnan(nanValue)
+                refData(refData == nanValue) = nan;
+                synData(isnan(refData)) = nan;  % Mask synthetic data where reference is NaN
+            end
+            % === Plot variance for each individual validation period ===
+            if numPeriods > 1
+                for period = 1:numPeriods
+                    % Time filtering
+                    periodIndices = dates >= startQdate(period) & dates <= endQdate(period);
+                    % Compute spatial variance over time for current period
+                    varRefData = squeeze(var(refData(:,:,periodIndices), 0, [1 2], 'omitnan'));
+                    varSynData = squeeze(var(synData(:,:,periodIndices), 0, [1 2], 'omitnan'));
+                    % Plot
+                    figure('WindowState', 'maximized');
+                    plot(dates(periodIndices), varRefData, 'r-', ...
+                        dates(periodIndices), varSynData, 'k-');
+                    legend('Reference', 'Synthetic', 'Location', 'northeast');
+                    xlabel('Date');
+                    ylabel([varLegend '^2']);
+                    title([convertStringsToChars(targetVar(k)) ' variance']);
+                    % KGE and stats
+                    r = corr(varSynData, varRefData, 'rows', 'complete');
+                    alpha = std(varSynData, 'omitnan') / std(varRefData, 'omitnan');
+                    beta = mean(varSynData, 'omitnan') / mean(varRefData, 'omitnan');
+                    kgeSynRef = 1 - sqrt((r - 1)^2 + (alpha - 1)^2 + (beta - 1)^2);
+                    str = {['KGE: ' num2str(kgeSynRef, '%.5f')], ...
+                        ['r: ' num2str(r, '%.5f') ', \alpha: ' num2str(alpha, '%.5f') ', \beta: ' num2str(beta, '%.5f')]};
+                    subtitle(str);
+                    grid on; box off;
+                    set(gcf, 'color', 'white');
+                    % Save figure
+                    saveas(gcf, fullfile(outDir, ...
+                        ['variance_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                    close(gcf);
+                end
+            end
+            % === Plot variance for the total period (from first start to last end) ===
+            totalStart = startQdate(1);
+            totalEnd = endQdate(end);
+            totalIndices = dates >= totalStart & dates <= totalEnd;
+            % Compute spatial variance over time for total period
+            varRefData = squeeze(var(refData(:,:,totalIndices), 0, [1 2], 'omitnan'));
+            varSynData = squeeze(var(synData(:,:,totalIndices), 0, [1 2], 'omitnan'));
+            figure('WindowState', 'maximized');
+            plot(dates(totalIndices), varRefData, 'r-', ...
+                dates(totalIndices), varSynData, 'k-');
+            legend('Reference', 'Synthetic', 'Location', 'northeast');
+            xlabel('Date');
+            ylabel([varLegend '^2']);
+            title([convertStringsToChars(targetVar(k)) ' variance']);
+            % KGE and stats for total period
+            r = corr(varSynData, varRefData, 'rows', 'complete');
+            alpha = std(varSynData, 'omitnan') / std(varRefData, 'omitnan');
+            beta = mean(varSynData, 'omitnan') / mean(varRefData, 'omitnan');
+            kgeSynRef = 1 - sqrt((r - 1)^2 + (alpha - 1)^2 + (beta - 1)^2);
+            str = {['KGE: ' num2str(kgeSynRef, '%.5f')], ...
+                ['r: ' num2str(r, '%.5f') ', \alpha: ' num2str(alpha, '%.5f') ', \beta: ' num2str(beta, '%.5f')]};
+            subtitle(str);
+            grid on; box off;
+            set(gcf, 'color', 'white');
+            % Save total plot
+            saveas(gcf, fullfile(outDir, ...
+                ['variance_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+            close(gcf);
+
+            % -------------------------------------------------------------------------
+
+            refData = refValidation.(targetVarL(k));
+            synData = synImages.(targetVarL(k));
+            % Handle nan values
             if ~isnan(nanValue)
                 refData(refData == nanValue) = nan;
                 synData(isnan(refData)) = nan;
             end
+            % === Loop over each validation period ===
+            if numPeriods > 1
+            for period = 1:numPeriods
+                % Time slice
+                periodIndices = dates >= startQdate(period) & dates <= endQdate(period);
+                refSlice = refData(:,:,periodIndices);
+                synSlice = synData(:,:,periodIndices);
+                % Initialize error matrices
+                absDayErr = abs(synSlice - refSlice);
+                dayErr    = synSlice - refSlice;
+                relErr    = absDayErr ./ refSlice;
+                % Clean up
+                relErr(relErr == Inf | relErr == -Inf) = nan;   % <--------------------------------------------------------------
+                % Temporal average of error metrics
+                meanError  = mean(absDayErr, 3, 'omitnan');
+                meanBias   = mean(dayErr, 3, 'omitnan');
+                meanRelErr = mean(relErr, 3, 'omitnan');
 
-            meanRefData = squeeze(mean(mean(refData,1,'omitnan'),2,'omitnan'));  % Extract mean of ref variable
-            meanSynData = squeeze(mean(mean(synData,1,'omitnan'),2,'omitnan'));
-            figure('WindowState', 'maximized');
-            date = datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-            plot(date, meanRefData, 'r-', date, meanSynData, 'k-');
-            legend('Reference','Synthetic','Location','southeast')
-            xlabel('Date')
-            ylabel(varLegend)
-            title(['Mean ' convertStringsToChars(targetVarL(k))])
-            r = corr(meanSynData,meanRefData);
-            %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            alpha = std(meanSynData)/std(meanRefData);
-            beta  = mean(meanSynData)/mean(meanRefData);
-            kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-            str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-            subtitle(str)
-            grid on
-            box off
-            %legend boxoff
-            set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '.png']))
+                % MAE
+                figure;
+                figMean = imagesc(meanError);
+                set(figMean, 'AlphaData', ~isnan(meanError));
+                colormap(gca, turbo(256));
+                title('Mean absolute error');
+                subtitle(['Mean MAE: ' num2str(mean(mean(meanError, 'omitnan'), 'omitnan'), '%1.5f')]);
+                set(gcf, 'color', 'white');
+                hcb = colorbar;
+                set(get(hcb, 'label'), 'string', 'Mean absolute error [mm/day]', 'Rotation', 90);
+                axis equal off;
+                saveas(gcf, fullfile(outDir, ...
+                    ['mae_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                close(gcf);
 
-            % --------------------------------------------------------------------
+                % Bias
+                figure;
+                figMean = imagesc(meanBias);
+                set(figMean, 'AlphaData', ~isnan(meanBias));
+                colormap(gca, turbo(256));
+                title('Bias');
+                subtitle(['Mean bias: ' num2str(mean(mean(meanBias, 'omitnan'), 'omitnan'), '%1.5f')]);
+                set(gcf, 'color', 'white');
+                hcb = colorbar;
+                set(get(hcb, 'label'), 'string', 'Bias [mm/day]', 'Rotation', 90);
+                axis equal off;
+                saveas(gcf, fullfile(outDir, ...
+                    ['bias_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                close(gcf);
 
-            %             % Set the filter order (adjust as needed)
-            %             filterOrder = 3;
-            %             % Set the cutoff frequency for the high-pass filter (adjust as needed)
-            %             cutoffFrequency = 0.01; % Adjust this value based on your data characteristics
-            %             % Design a Butterworth high-pass filter
-            %             [b, a] = butter(filterOrder, cutoffFrequency, 'high');
-            %
-            %             % Apply the filter to both reference and synthetic datasets
-            %             refDataHighPass = filtfilt(b, a, double(meanRefData));
-            %             synDataHighPass = filtfilt(b, a, double(meanSynData));
-            %
-            %             % Plot the original and high-pass filtered data
-            %             figure('WindowState', 'maximized');
-            %             date = datetime(validationMetric.(targetVarL(k))(:, 1), 'ConvertFrom', 'yyyyMMdd', 'Format', 'dd/MM/yyyy');
-            %             plot(date, refDataHighPass, 'r-', date, synDataHighPass, 'k-');
-            %             legend('Reference', 'Synthetic', 'Location', 'southeast');
-            %             title('High-Pass Filtered Data');
-            %             xlabel('Date');
-            %             ylabel(strcat('Detrended ', varLegend));
-            %             grid on;
-            %             r = corr(synDataHighPass,refDataHighPass);
-            %             %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            %             alpha = std(synDataHighPass)/std(refDataHighPass);
-            %             beta  = mean(synDataHighPass)/mean(refDataHighPass);
-            %             kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-            %             str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-            %             subtitle(str)
-            %             grid on
-            %             box off
-            %             %legend boxoff
-            %             set(gcf, 'color', 'white');
-            %             saveas(gcf,strcat(outDir,['\correlation_' convertStringsToChars(targetVar(k)) '_highpass.png']))
-
-            % --------------------------------------------------------------------
-
-            varRefData = squeeze(var(refData,0,[1 2],'omitnan'));
-            varSynData = squeeze(var(synData,0,[1 2],'omitnan'));
-            figure('WindowState', 'maximized');
-            date = datetime(validationMetric.(targetVarL(k))(:,1),'ConvertFrom','yyyyMMdd','Format','dd/MM/yyyy');
-            plot(date, varRefData, 'r-', date, varSynData, 'k-');
-            legend('Reference','Synthetic','Location','northeast')
-            xlabel('Date')
-            ylabel(strcat(varLegend,'^2'))
-            title([convertStringsToChars(targetVar(k)) ' variance'])
-            r = corr(varSynData,varRefData);
-            %nseSynRef = 1-(sum((synData-refData).^2)/sum((synData-mean(synData)).^2));
-            alpha = std(varSynData)/std(varRefData);
-            beta  = mean(varSynData)/mean(varRefData);
-            kgeSynRef = 1-(sqrt((r-1)^2 + (alpha-1)^2 + (beta-1)^2));
-            str = {['KGE: ' num2str(kgeSynRef,'%.5f')] ['r: ' num2str(r,'%.5f') ', \alpha: ' num2str(alpha,'%.5f') ', \beta: ' num2str(beta,'%.5f')]};
-            subtitle(str)
-            grid on
-            box off
-            %legend boxoff
-            set(gcf, 'color', 'white');
-            saveas(gcf,strcat(outDir,['\variance_' convertStringsToChars(targetVar(k)) '.png']))
-
-            % -------------------------------------------------------------------------
-
-            absDayErr = zeros(size(synData));
-            dayErr    = absDayErr;
-            relErr    = absDayErr;
-            for i = 1:size(synData,3)
-                absDayErr(:,:,i) = abs(synData(:,:,i) - refData(:,:,i));
-                dayErr(:,:,i)    = synData(:,:,i) - refData(:,:,i);
-                relErr(:,:,i)    = absDayErr(:,:,i)./refData(:,:,i);
+                % MRE
+                figure;
+                figMean = imagesc(meanRelErr);
+                set(figMean, 'AlphaData', ~isnan(meanRelErr));
+                colormap(gca, turbo(256));
+                title('Mean relative error');
+                subtitle(['Mean: ' num2str(mean(mean(meanRelErr, 'omitnan'), 'omitnan'), '%1.5f')]);
+                set(gcf, 'color', 'white');
+                hcb = colorbar;
+                set(get(hcb, 'label'), 'string', 'Mean relative error', 'Rotation', 90);
+                axis equal off;
+                saveas(gcf, fullfile(outDir, ...
+                    ['mre_' convertStringsToChars(targetVar(k)) '_' char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                close(gcf);
             end
-            relErr(relErr==Inf) = nan; % PROBLEMATIC !!! USED IN CASE REFdATA HAS 0 VALUES
-            meanError  = mean(absDayErr,3,'omitnan');
-            meanBias   = mean(dayErr,3,'omitnan');
-            meanRelErr = mean(relErr,3,'omitnan');
+            end
+            % === Now process the total period ===
+            totalStart = startQdate(1);
+            totalEnd   = endQdate(end);
+            totalIndices = dates >= totalStart & dates <= totalEnd;
+            refSlice = refData(:,:,totalIndices);
+            synSlice = synData(:,:,totalIndices);
+            absDayErr = abs(synSlice - refSlice);
+            dayErr    = synSlice - refSlice;
+            relErr    = absDayErr ./ refSlice;
+            relErr(relErr == Inf | relErr == -Inf) = nan; % <-----------------------------------------------------------------------------------
+            meanError  = mean(absDayErr, 3, 'omitnan');
+            meanBias   = mean(dayErr, 3, 'omitnan');
+            meanRelErr = mean(relErr, 3, 'omitnan');
 
-            % MEAN ABSOLUTE ERROR
+            % MAE (Total)
             figure;
             figMean = imagesc(meanError);
-            set(figMean, 'AlphaData', ~isnan(meanError))
+            set(figMean, 'AlphaData', ~isnan(meanError));
             colormap(gca, turbo(256));
-            %caxis([0.2 0.6])
-            title('Mean absolute error')
-            subtitle(['Mean MAE: ' num2str(mean(mean(meanError,'omitnan'),'omitnan'),'%1.5f')])
+            title('Mean absolute error');
+            subtitle(['Mean MAE: ' num2str(mean(mean(meanError, 'omitnan'), 'omitnan'), '%1.5f')]);
             set(gcf, 'color', 'white');
-            hcb=colorbar;
-            set(get(hcb,'label'),'string','Mean absolute error [mm/day]','Rotation',90);
-            axis equal off
-            saveas(gcf,strcat(outDir,['\mae_' convertStringsToChars(targetVar(k)) '.png']))
+            hcb = colorbar;
+            set(get(hcb, 'label'), 'string', 'Mean absolute error [mm/day]', 'Rotation', 90);
+            axis equal off;
+            saveas(gcf, fullfile(outDir, ...
+                ['mae_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+            close(gcf);
 
-            % BIAS
+            % Bias (Total)
             figure;
             figMean = imagesc(meanBias);
-            set(figMean, 'AlphaData', ~isnan(meanBias))
+            set(figMean, 'AlphaData', ~isnan(meanBias));
             colormap(gca, turbo(256));
-            %caxis([-0.2 0.2])
-            title('Bias')
-            subtitle(['Mean bias: ' num2str(mean(mean(meanBias,'omitnan'),'omitnan'),'%1.5f')])
+            title('Bias');
+            subtitle(['Mean bias: ' num2str(mean(mean(meanBias, 'omitnan'), 'omitnan'), '%1.5f')]);
             set(gcf, 'color', 'white');
-            hcb=colorbar;
-            set(get(hcb,'label'),'string','Bias [mm/day]','Rotation',90);
-            axis equal off
-            saveas(gcf,strcat(outDir,['\bias_' convertStringsToChars(targetVar(k)) '.png']))
+            hcb = colorbar;
+            set(get(hcb, 'label'), 'string', 'Bias [mm/day]', 'Rotation', 90);
+            axis equal off;
+            saveas(gcf, fullfile(outDir, ...
+                ['bias_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+            close(gcf);
 
-            % MEAN RELATIVE ERROR
+            % MRE (Total)
             figure;
             figMean = imagesc(meanRelErr);
-            set(figMean, 'AlphaData', ~isnan(meanRelErr))
+            set(figMean, 'AlphaData', ~isnan(meanRelErr));
             colormap(gca, turbo(256));
-            %caxis([0 10])
-            title('Mean relative error')
-            subtitle(['Mean: ' num2str(mean(mean(meanRelErr,'omitnan'),'omitnan'),'%1.5f')])
+            title('Mean relative error');
+            subtitle(['Mean: ' num2str(mean(mean(meanRelErr, 'omitnan'), 'omitnan'), '%1.5f')]);
             set(gcf, 'color', 'white');
-            hcb=colorbar;
-            set(get(hcb,'label'),'string','Mean relative error','Rotation',90);
-            axis equal off
-            saveas(gcf,strcat(outDir,['\mre_' convertStringsToChars(targetVar(k)) '.png']))
+            hcb = colorbar;
+            set(get(hcb, 'label'), 'string', 'Mean relative error', 'Rotation', 90);
+            axis equal off;
+            saveas(gcf, fullfile(outDir, ...
+                ['mre_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
+            close(gcf);
 
             % -------------------------------------------------------------------------
             if outputTime == 1 && pixelWise == false
-                synDates = synImages.date;
-                dates = datetime(synDates, 'ConvertFrom', 'yyyyMMdd', 'format', 'dd/MM/yyyy');
                 cellData = synImages.(strcat(targetVarL(k), "_Distances"));
-                minValues = cellfun(@min, cellData);
-                maxValues = cellfun(@max, cellData);
+                minValues    = cellfun(@min, cellData);
+                maxValues    = cellfun(@max, cellData);
                 medianValues = cellfun(@median, cellData);
-
-                figure;
-                hold on;
-                fill([dates; flipud(dates)], [minValues; flipud(maxValues)], 'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
                 numK = numel(cellData{1});
-                for i = 1:numel(cellData)
-                    scatter(repmat(dates(i), numK, 1), cellData{i}, 20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
+
+                % === Loop over each validation period ===
+                if numPeriods > 1
+                    for period = 1:numPeriods
+                        % Period selection
+                        idx = dates >= startQdate(period) & dates <= endQdate(period);
+                        periodDates      = dates(idx);
+                        periodMin        = minValues(idx);
+                        periodMax        = maxValues(idx);
+                        periodMedian     = medianValues(idx);
+                        periodCellData   = cellData(idx);
+                        % === Plot for the current period ===
+                        figure; hold on;
+                        fill([periodDates; flipud(periodDates)], [periodMin; flipud(periodMax)], ...
+                            'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+                        for i = 1:numel(periodCellData)
+                            scatter(repmat(periodDates(i), numK, 1), periodCellData{i}, ...
+                                20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
+                        end
+                        plot(periodDates, periodMedian, 'r--', 'LineWidth', 1.5);
+                        xlabel('Date');
+                        switch metricKNN
+                            case 1, ylabel('RMSE');
+                            case 2, ylabel('MAE');
+                            case 3, ylabel('1 - bSPEM');
+                            case 4, ylabel('Hellinger Distance');
+                            case 5, ylabel('(1 - bSPEM) + Hellinger');
+                            case 6, ylabel('SPAEF');
+                        end
+                        title('Daily distance of the k candidates');
+                        grid on; hold off;
+                        set(gcf, 'color', 'white');
+                        % Save figure with period in filename
+                        saveas(gcf, fullfile(outDir, ...
+                            ['distance_' convertStringsToChars(targetVar(k)) '_' ...
+                            char(startQdate(period)) '_' char(endQdate(period)) '.png']));
+                        close(gcf);
+                    end
                 end
-                plot(dates, medianValues, 'r--', 'LineWidth', 1.5);
+                % === Plot for the full validation period ===
+                totalStart = startQdate(1);
+                totalEnd   = endQdate(end);
+                idx = dates >= totalStart & dates <= totalEnd;
+                totalDates      = dates(idx);
+                totalMin        = minValues(idx);
+                totalMax        = maxValues(idx);
+                totalMedian     = medianValues(idx);
+                totalCellData   = cellData(idx);
+                figure; hold on;
+                fill([totalDates; flipud(totalDates)], [totalMin; flipud(totalMax)], ...
+                    'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+                for i = 1:numel(totalCellData)
+                    scatter(repmat(totalDates(i), numK, 1), totalCellData{i}, ...
+                        20, 'k', 'filled', 'MarkerFaceAlpha', 0.5);
+                end
+                plot(totalDates, totalMedian, 'r--', 'LineWidth', 1.5);
                 xlabel('Date');
                 switch metricKNN
-                    case 1
-                        ylabel('RMSE');
-                    case 2
-                        ylabel('MAE');
-                    case 3
-                        ylabel('1-bSPEM');
-                    case 4
-                        ylabel('Hellinger Distance');
-                    case 5
-                        ylabel('0.5*(1-bSPEM) + 0.5*Hellinger');
-                    case 6
-                        ylabel('SPAEF');
+                    case 1, ylabel('RMSE');
+                    case 2, ylabel('MAE');
+                    case 3, ylabel('1 - bSPEM');
+                    case 4, ylabel('Hellinger Distance');
+                    case 5, ylabel('(1 - bSPEM) + Hellinger');
+                    case 6, ylabel('SPAEF');
                 end
-                title('Daily distance of the k candidates');
-                grid on;
-                hold off;
-
+                title(['Daily distance of the k candidates (total period)']);
+                grid on; hold off;
                 set(gcf, 'color', 'white');
-                saveas(gcf,strcat(outDir,['\distance_' convertStringsToChars(targetVar(k)) '.png']))
+                % Save figure for total period
+                saveas(gcf, fullfile(outDir, ...
+                    ['distance_' convertStringsToChars(targetVar(k)) '_total_' ...
+                    char(totalStart) '_' char(totalEnd) '.png']));
+                close(gcf);
             end
 
             % -------------------------------------------------------------------------
