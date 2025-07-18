@@ -1,4 +1,4 @@
-function visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,bootstrap,outDir,createGIF)
+function visualiseMetrics(nbImages,pixelWise,targetVar,climateVars,targetDim,refValidation,synImages,validationMetric,sortedDates,climateData,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,bootstrap,outDir,createGIF)
 
 %
 %
@@ -525,8 +525,141 @@ for k = 1:numel(targetVar)
             saveas(gcf, fullfile(outDir, ...
                 ['mre_' convertStringsToChars(targetVar(k)) '_total_' char(totalStart) '_' char(totalEnd) '.png']));
             close(gcf);
+            
+            % -------------------------------------------------------------------------
+
+            targetVarL = lower(targetVar(k));
+            for cvVar = 1:numel(climateVars)
+                % Extract covariate data
+                covName = lower(climateVars(cvVar));
+                cov = table2array(climateData(:,covName));
+                cv = cat(3, cov{:});
+                datesCov = datetime(table2array(climateData(:,"date")),'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+
+                datasets = struct('name', {'Synthetic', 'Real'}, 'data', {synImages, refValidation});
+
+                for period = 1:numel(startQdate)
+                    densities = cell(1, numel(datasets));
+                    histograms = cell(1, numel(datasets));
+                    binCentersX = [];
+                    binCentersY = [];
+
+                    % Loop through syn and ref
+                    for d = 1:numel(datasets)
+                        tg = datasets(d).data.(targetVarL);
+                        datesTar = datetime(datasets(d).data.date, 'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+
+                        idxTar = datesTar >= startQdate(period) & datesTar <= endQdate(period);
+                        idxCov = datesCov >= startQdate(period) & datesCov <= endQdate(period);
+
+                        x = tg(:,:,idxTar);
+                        y = cv(:,:,idxCov);
+                        x = x(:);
+                        y = y(:);
+
+                        validIdx = isfinite(x) & isfinite(y);
+                        x = x(validIdx);
+                        y = y(validIdx);
+
+                        % Define bins
+                        nbins = 100;
+                        edgesX = linspace(min(x), max(x), nbins);
+                        edgesY = linspace(min(y), max(y), nbins);
+                        binCentersX = edgesX(1:end-1) + diff(edgesX)/2;
+                        binCentersY = edgesY(1:end-1) + diff(edgesY)/2;
+
+                        binX = discretize(x, edgesX);
+                        binY = discretize(y, edgesY);
+
+                        validBins = ~isnan(binX) & ~isnan(binY);
+                        xPlot = x(validBins);
+                        yPlot = y(validBins);
+                        binX = binX(validBins);
+                        binY = binY(validBins);
+
+                        binLinear = sub2ind([nbins, nbins], binX, binY);
+                        binCounts = accumarray(binLinear, 1);
+                        pointDensity = binCounts(binLinear);
+
+                        densities{d} = pointDensity;
+
+                        % Compute 2D histogram
+                        hist2D = accumarray([binX, binY], 1, [nbins, nbins]);
+                        histograms{d} = hist2D;
+                    end
+
+                    %% Match color scale
+                    allDensities = vertcat(densities{:});
+                    clim = [min(allDensities), max(allDensities)];
+
+                    % Plot syn and ref
+                    for d = 1:numel(datasets)
+                        tg = datasets(d).data.(targetVarL);
+                        datesTar = datetime(datasets(d).data.date, 'ConvertFrom','yyyyMMdd','Format','dd-MM-yyyy');
+
+                        idxTar = datesTar >= startQdate(period) & datesTar <= endQdate(period);
+                        idxCov = datesCov >= startQdate(period) & datesCov <= endQdate(period);
+
+                        x = tg(:,:,idxTar);
+                        y = cv(:,:,idxCov);
+                        x = x(:);
+                        y = y(:);
+                        validIdx = isfinite(x) & isfinite(y);
+                        x = x(validIdx);
+                        y = y(validIdx);
+
+                        edgesX = linspace(min(x), max(x), nbins);
+                        edgesY = linspace(min(y), max(y), nbins);
+                        binX = discretize(x, edgesX);
+                        binY = discretize(y, edgesY);
+                        validBins = ~isnan(binX) & ~isnan(binY);
+                        xPlot = x(validBins);
+                        yPlot = y(validBins);
+                        binX = binX(validBins);
+                        binY = binY(validBins);
+
+                        binLinear = sub2ind([nbins, nbins], binX, binY);
+                        binCounts = accumarray(binLinear, 1);
+                        pointDensity = binCounts(binLinear);
+
+                        figure('Color','white','Position',[100 100 700 600]);
+                        scatter(xPlot, yPlot, 5, pointDensity, 'filled', 'MarkerFaceAlpha', 0.5);
+                        colormap(turbo);
+                        caxis(clim);  % same colorbar limits
+                        colorbar;
+                        xlabel('Et');
+                        ylabel(covName);
+                        title(sprintf('%s – %s to %s', datasets(d).name, datestr(startQdate(period)), datestr(endQdate(period))));
+                        grid on;
+                        axis tight;
+
+                        fname = sprintf('%s_densityScatter_%s_%s_%s_%s.png', ...
+                            datasets(d).name, targetVarL, covName, ...
+                            char(startQdate(period)), char(endQdate(period)));
+                        saveas(gcf, fullfile(outDir, fname));
+                        close(gcf);
+                    end
+
+                    %% Compute histogram-based metrics
+                    % Normalize histograms
+                    h1 = histograms{1} / sum(histograms{1}(:));
+                    h2 = histograms{2} / sum(histograms{2}(:));
+
+                    % RMSE
+                    rmse = sqrt(mean((h1(:) - h2(:)).^2));
+
+                    % Hellinger Distance
+                    hellinger = sqrt(0.5 * sum((sqrt(h1(:)) - sqrt(h2(:))).^2));
+
+                    fprintf('Period %d [%s to %s]:\n', period, ...
+                        datestr(startQdate(period)), datestr(endQdate(period)));
+                    fprintf('  RMSE = %.4f\n', rmse);
+                    fprintf('  Hellinger = %.4f\n\n', hellinger);
+                end
+            end
 
             % -------------------------------------------------------------------------
+
             if outputTime == 1 && pixelWise == false
                 cellData = synImages.(strcat(targetVarL(k), "_Distances"));
                 minValues    = cellfun(@min, cellData);
