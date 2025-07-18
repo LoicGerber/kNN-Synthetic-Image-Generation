@@ -1,6 +1,6 @@
 function [climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-    daysRange,metricKNN,ensemble,generationType,parallelComputing,bootstrap,bsSaveAll,metricV)
+    daysRange,metricKNN,useDOY,ensemble,generationType,parallelComputing,stochastic,stoSaveAll,metricV)
 
 % Perform sensitivity analysis loop
 iteration = 0;
@@ -34,9 +34,9 @@ for iRange = 1:length(nbImages_range)
         disp('Extracting Learning dates...')
         learningDates  = convertStructureToLearningDates(targetVar,LdateStart,LdateEnd,QdateStart,QdateEnd,rawData,climateData,targetDim,false,inDir,false);
         disp('Extracting Query dates...')
-        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,false);
+        [queryDates,learningDates,refValidation] = convertStructureToQueryDates(targetVar,targetDim,QdateStart,QdateEnd,learningDates,climateData,true,false,outputTime,inDir,useDOY);
         disp('Loading optimisedWeights.mat file...')
-        Weights = createWeights(climateVars,metricKNN,inDir);
+        Weights = createWeights(climateVars,metricKNN,useDOY,inDir);
         disp('--- 1. READING DATA DONE ---')
 
         disp('--- 2. KNN DATA SORTING ---')
@@ -44,11 +44,11 @@ for iRange = 1:length(nbImages_range)
         disp('--- 2. KNN DATA SORTING DONE ---')
 
         disp('--- 3. SYNTHETIC IMAGES GENERATION ---')
-        synImages = generateSynImages_ParamOptim(targetVar,targetDim,learningDates,sortedDates,nbImages,outDir,generationType,true,false,bootstrap,bsSaveAll,ensemble);
+        synImages = generateSynImages_ParamOptim(targetVar,targetDim,learningDates,sortedDates,nbImages,outDir,generationType,true,false,stochastic,stoSaveAll,ensemble);
         disp('--- 3. SYNTHETIC IMAGES GENERATION DONE ---')
 
         disp('--- 4. VALIDATION ---')
-        validationMetric = validationMetrics(targetVar,targetDim,metricV,false,refValidation,synImages,bootstrap,ensemble,outDir);
+        validationMetric = validationMetrics(targetVar,targetDim,metricV,false,refValidation,synImages,stochastic,ensemble,outDir);
         disp('--- 4. VALIDATION DONE ---')
 
         % Store the sensitivity result in the array

@@ -2,7 +2,7 @@ function [geoRef,climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults,optimisedWeights] = MAIN(...
     rawDir,outputDir,optiWeightsDir,maskDir,lulcDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim,saveMats, ...
     useDOY,shortWindow,longWindow,daysRange,nbImages,metricKNN,ensemble,generationType,mps,outputType,coordRefSysCode,parallelComputing, ...
-    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,stochastic,stoSaveAll,validationPrep,validation,pixelWise,createGIF, ...
+    netCDFtoInputs,createGenWeights,kNNsorting,generateImage,saveNetCDF,stochastic,stoSaveAll,validationPrep,validation,pixelWise,createGIF, ...
     metricViz,metricV,nanValue,varLegend,varRange,errRange,sensiAnalysis,nbImages_range,longWindow_range,optimPrep,saveOptimPrep,optimisation,nbOptiRuns)
 
 %% Setup
@@ -19,6 +19,13 @@ end
 
 inDir = strcat(outputDir,'\inputData');
 outDir = strcat(outputDir,'\output');
+% Check if output directories exist, if not create them
+if ~exist(inDir, 'dir')
+    mkdir(inDir)
+end
+if ~exist(outDir, 'dir')
+    mkdir(outDir)
+end
 
 %% Reading the data needed for ranking learning dates using "KNNDataSorting" Function
 if sensiAnalysis == false
@@ -26,7 +33,7 @@ if sensiAnalysis == false
     
     if netCDFtoInputs == true || optimPrep == true || validationPrep == true
         disp('Formatting input data...')
-        rawData        = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir,inDir);
+        rawData        = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir);
         disp('Extracting georeference informations...')
         if targetDim ~= 1
             geoRef = extractGeoInfo(targetVar,coordRefSysCode,rawDir,inDir);
@@ -84,6 +91,16 @@ if sensiAnalysis == false
 %         learningDatesMod{row, 2} = {matrixWithTopAndRightNaN};
 %     end
 %     learningDates = learningDatesMod;
+%     refValidationMod = refValidation.e;
+%     for row = 1:size(refValidationMod,3)
+%         ogMatRef = refValidationMod(:,:,row);
+%         topNaNRow = NaN(1, size(ogMatRef, 2));
+%         matrixWithTopNaN = [topNaNRow; ogMatRef];
+%         rightNaNColumn = NaN(size(matrixWithTopNaN, 1), 1);
+%         matrixWithTopAndRightNaN = [matrixWithTopNaN, rightNaNColumn];
+%         newRefValidationMod(:,:,row) = matrixWithTopAndRightNaN;
+%     end
+%     refValidation.e = newRefValidationMod;
 
     disp('--- 1. READING DATA DONE ---')
     
@@ -114,7 +131,7 @@ if sensiAnalysis == false
     
     if (generateImage == true && validation == true) && optimisation == false
         if pixelWise == false
-            synImages = generateSynImages(maskDir,targetVar,targetDim,learningDates,sortedDates,mps,lulcDir,geoRef,outDir,generationType,validation,optimisation,stochastic,stoSaveAll,nbImages,ensemble,outputType);
+            synImages = generateSynImages(maskDir,targetVar,targetDim,learningDates,sortedDates,mps,lulcDir,geoRef,outDir,generationType,validation,saveNetCDF,stochastic,stoSaveAll,nbImages,ensemble,outputType);
         else
             synImages = pixelWise_generateSynImages(maskDir,targetVar,learningDates,sortedDates,geoRef,outDir,generationType,validation,optimisation,stochastic,stoSaveAll,nbImages,ensemble,outputType);
         end
@@ -137,7 +154,7 @@ if sensiAnalysis == false
         disp('--- 4. VALIDATION ---')
         
         validationMetric = validationMetrics(targetVar,targetDim,metricV,optimisation,refValidation,synImages,stochastic,ensemble,outDir);
-        visualiseMetrics(nbImages,pixelWise,targetVar,targetDim,refValidation,synImages,validationMetric,sortedDates,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,stochastic,outDir,createGIF);
+        visualiseMetrics(nbImages,pixelWise,targetVar,climateVars,targetDim,refValidation,synImages,validationMetric,sortedDates,climateData,metricV,nanValue,varLegend,varRange,errRange,metricKNN,LdateStart,LdateEnd,QdateStart,QdateEnd,daysRange,outputTime,stochastic,outDir,createGIF);
 
         disp('--- 4. VALIDATION DONE ---')
     else
@@ -148,13 +165,12 @@ end
 if sensiAnalysis == true
     disp('--- SENSITIVITY ANALYSIS')
     disp('Formatting input data...')
-    rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir,inDir);
-    disp('Extracting georeference informations...')
+    rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir);
     geoRef  = [];
     
     [climateData,queryDates,learningDates,refValidation, ...
     Weights,sortedDates,synImages,validationMetric,sensitivityResults] = sensitivityAnalysis(rawData,nbImages_range,longWindow_range,inDir,outDir,targetVar,climateVars,normMethods,QdateStart,QdateEnd,LdateStart,LdateEnd,outputTime,targetDim, ...
-                                             daysRange,metricKNN,ensemble,generationType,parallelComputing,stochastic,stoSaveAll,metricV);
+                                             daysRange,metricKNN,useDOY,ensemble,generationType,parallelComputing,stochastic,stoSaveAll,metricV);
     optimisedWeights = [];
 
     disp('--- SENSITIVITY ANALYSIS DONE')

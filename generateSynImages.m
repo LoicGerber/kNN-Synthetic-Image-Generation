@@ -1,4 +1,4 @@
-function synImages = generateSynImages(maskDir,targetVar,targetDim,learningDates,sortedDates,mps,lulcDir,geoRef,outputDir,generationType,validation,optimisation,stochastic,stoSaveAll,nbImages,ensemble,outputType)
+function synImages = generateSynImages(maskDir,targetVar,targetDim,learningDates,sortedDates,mps,lulcDir,geoRef,outputDir,generationType,validation,saveNetCDF,stochastic,stoSaveAll,nbImages,ensemble,outputType)
 
 %
 %
@@ -42,14 +42,18 @@ for i = 1:numel(targetVarL)
         end
         % Display progress
         progress = 0;
-        if outputType == 1
-            fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+        if saveNetCDF
+            if outputType == 1
+                fprintf(1,'  Downloading synthetic GeoTiff images: %3.0f%%\n',progress);
+            else
+                fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
+            end
         else
-            fprintf(1,'  Downloading synthetic images as NetCDF file: %3.0f%%\n',progress);
+            fprintf(1,'  Creating synthetic images: %3.0f%%\n',progress);
         end
 
         % netCDF file definition
-        if outputType == 2 && stochastic == false
+        if outputType == 2 && stochastic == false && saveNetCDF == true
             % Define the main netCDF file
             outputBaseName = strcat(targetVarL(i),'.nc');
             fullDestinationFileName = fullfile(outputDir, outputBaseName);
@@ -105,7 +109,7 @@ for i = 1:numel(targetVarL)
             % Assign latitude and longitude values to the corresponding variables
             netcdf.putVar(ncid,latid,lat);
             netcdf.putVar(ncid,lonid,lon);
-        elseif stochastic == true
+        elseif stochastic == true && saveNetCDF == true
             % ---- MININMAL ----
             % Define the main netCDF file
             outputBaseNameMin = strcat(targetVarL(i),'_min.nc');
@@ -459,22 +463,23 @@ for i = 1:numel(targetVarL)
                 end
             end
             % Save min, deterministic and max in netCDF
-            % Assign date
-            dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
-            yearStr  = dateStr(1:4);
-            monthStr = dateStr(5:6);
-            dayStr   = dateStr(7:8);
-            dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
-            % Write data for each date as a new time step along the 'time' dimension
-            time = datenum(dateStrFormatted, 'yyyy-mm-dd');
-            netcdf.putVar(ncid_min, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
-            netcdf.putVar(ncid_det, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
-            netcdf.putVar(ncid_max, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
-            % Write data to the variable (hydrological map) for the current date
-            ncwrite(fullDestinationFileNameMin, targetVarL(i), ensMin', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
-            ncwrite(fullDestinationFileNameDet, targetVarL(i), resultImages', [1, 1, rowIndex]);
-            ncwrite(fullDestinationFileNameMax, targetVarL(i), ensMax', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
-
+            if saveNetCDF == true
+                % Assign date
+                dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
+                yearStr  = dateStr(1:4);
+                monthStr = dateStr(5:6);
+                dayStr   = dateStr(7:8);
+                dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
+                % Write data for each date as a new time step along the 'time' dimension
+                time = datenum(dateStrFormatted, 'yyyy-mm-dd');
+                netcdf.putVar(ncid_min, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
+                netcdf.putVar(ncid_det, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
+                netcdf.putVar(ncid_max, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
+                % Write data to the variable (hydrological map) for the current date
+                ncwrite(fullDestinationFileNameMin, targetVarL(i), ensMin', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+                ncwrite(fullDestinationFileNameDet, targetVarL(i), resultImages', [1, 1, rowIndex]);
+                ncwrite(fullDestinationFileNameMax, targetVarL(i), ensMax', [1, 1, rowIndex]); % <-----------------------------------------------------------------------------------
+            end
             % Write the resulting image to a GeoTIFF file
             %outputBaseName = string(sortedDates(rowIndex,1)) + '_bsMean.tif';
             %fullDestinationFileName = fullfile(outputDir, var_low(i), outputBaseName);
@@ -588,43 +593,45 @@ for i = 1:numel(targetVarL)
                 map(:,:,rowIndex) = resultImages;
                 % Calculate the count of non-NaN values
                 availablePix(:,:,rowIndex) = sum(~isnan(selectedImages), 3);
-                if outputType == 1
-                    % Write the resulting image to a GeoTIFF file
-                    outputBaseName = string(sortedDates(rowIndex,1)) + targetVarL(i) + '.tif';
-                    fullDestinationFileName = fullfile(outputDir, targetVarL(i), outputBaseName);
-                    %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
-                    if isempty(GeoRef)
-                        %disp('    Georeferencing files missing! Unreferenced output...')
-                        t = Tiff(fullDestinationFileName, 'w');
-                        tagstruct.ImageLength         = imgLength;
-                        tagstruct.ImageWidth          = imgWidth;
-                        tagstruct.Compression         = Tiff.Compression.None;
-                        tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
-                        tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
-                        tagstruct.BitsPerSample       = 32;
-                        tagstruct.SamplesPerPixel     = 1;
-                        tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
-                        t.setTag(tagstruct);
-                        t.write(single(resultImages));
-                        t.close();
+                if saveNetCDF
+                    if outputType == 1
+                        % Write the resulting image to a GeoTIFF file
+                        outputBaseName = string(sortedDates(rowIndex,1)) + targetVarL(i) + '.tif';
+                        fullDestinationFileName = fullfile(outputDir, targetVarL(i), outputBaseName);
+                        %disp(['  Downlading image ' num2str(rowIndex) '/' num2str(size(sortedDates,1))])
+                        if isempty(GeoRef)
+                            %disp('    Georeferencing files missing! Unreferenced output...')
+                            t = Tiff(fullDestinationFileName, 'w');
+                            tagstruct.ImageLength         = imgLength;
+                            tagstruct.ImageWidth          = imgWidth;
+                            tagstruct.Compression         = Tiff.Compression.None;
+                            tagstruct.SampleFormat        = Tiff.SampleFormat.IEEEFP;
+                            tagstruct.Photometric         = Tiff.Photometric.MinIsBlack;
+                            tagstruct.BitsPerSample       = 32;
+                            tagstruct.SamplesPerPixel     = 1;
+                            tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+                            t.setTag(tagstruct);
+                            t.write(single(resultImages));
+                            t.close();
+                        else
+                            geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+                        end
+                    elseif outputType == 2
+                        % Assign date
+                        dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
+                        yearStr  = dateStr(1:4);
+                        monthStr = dateStr(5:6);
+                        dayStr   = dateStr(7:8);
+                        dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
+                        % Write data for each date as a new time step along the 'time' dimension
+                        time = datenum(dateStrFormatted, 'yyyy-mm-dd');
+                        netcdf.putVar(ncid, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
+                        % Write data to the variable for the current date
+                        %                     resultImages(isnan(resultImages)) = -999;
+                        ncwrite(fullDestinationFileName, targetVarL(i), single(resultImages)', [1, 1, rowIndex]);
                     else
-                        geotiffwrite(fullDestinationFileName,single(resultImages),GeoRef,'TiffTags',struct('Compression',Tiff.Compression.None));
+                        error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')
                     end
-                elseif outputType == 2
-                    % Assign date
-                    dateStr  = convertStringsToChars(string(sortedDates{rowIndex, 1}));
-                    yearStr  = dateStr(1:4);
-                    monthStr = dateStr(5:6);
-                    dayStr   = dateStr(7:8);
-                    dateStrFormatted = [yearStr '-' monthStr '-' dayStr];
-                    % Write data for each date as a new time step along the 'time' dimension
-                    time = datenum(dateStrFormatted, 'yyyy-mm-dd');
-                    netcdf.putVar(ncid, timeid, rowIndex - 1, 1, time - 719529); % 719529 = 1970-01-01
-                    % Write data to the variable for the current date
-%                     resultImages(isnan(resultImages)) = -999;
-                    ncwrite(fullDestinationFileName, targetVarL(i), single(resultImages)', [1, 1, rowIndex]);
-                else
-                    error('Unknown output type. Choose 1 for GeoTiff or 2 for NetCDF...')
                 end
             else
                 % For 1D data
@@ -635,7 +642,7 @@ for i = 1:numel(targetVarL)
         progress = (100*(rowIndex/size(sortedDates,1)));
         fprintf(1,'\b\b\b\b%3.0f%%',progress);
     end
-    if outputType == 2 && stochastic == false && targetDim ~= 1
+    if outputType == 2 && stochastic == false && targetDim ~= 1  && saveNetCDF == true
         % Close the main netCDF file after the loop
         netcdf.close(ncid);
     elseif stochastic == true

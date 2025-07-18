@@ -67,6 +67,8 @@ end
 if useDOY
     idxDOY    = contains(Weights.Properties.VariableNames,'DOY');
     weightDOY = table2array(Weights(:,idxDOY));
+else
+    weightDOY = [];
 end
 
 disp('Starting loop to sort learning dates for each query date...')

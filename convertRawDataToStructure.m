@@ -1,4 +1,4 @@
-function rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir,inputDir)
+function rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,rawDir)
 
 %
 %
@@ -12,11 +12,6 @@ function rawData = convertRawDataToStructure(targetVar,targetDim,climateVars,raw
 % Input directory containing NetCDF files
 % files must be named with the variable. Example: precipitation data must
 % be called pre.nc
-
-% Check if output directories exist, if not create them
-if ~exist(inputDir, 'dir')
-    mkdir(inputDir)
-end
 
 varsAll = [targetVar climateVars];
 fields  = [];
